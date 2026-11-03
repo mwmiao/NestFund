@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
@@ -12,9 +13,9 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function Card({ title, actions, children, className = '' }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
+export function Card({ title, actions, children, className = '', id }: { title?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; id?: string }) {
   return (
-    <section className={`card ${className}`}>
+    <section id={id} className={`card scroll-mt-20 ${className}`}>
       {(title || actions) && (
         <div className="mb-3 flex items-center justify-between gap-2">
           {title && <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{title}</h2>}
@@ -79,4 +80,24 @@ export function Dot({ color }: { color: string }) {
 
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="muted py-6 text-center text-sm">{children}</p>;
+}
+
+/** Friendly empty state with a single clear next action — used across the fresh-start screens. */
+export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: { href: string; label: string } }) {
+  return (
+    <div className="flex flex-col items-center px-4 py-8 text-center">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/10 text-brand-500" aria-hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </div>
+      <p className="font-medium">{title}</p>
+      {hint && <p className="muted mt-1 max-w-sm text-sm">{hint}</p>}
+      {action && (
+        <Link href={action.href} className="btn-primary mt-4">
+          {action.label}
+        </Link>
+      )}
+    </div>
+  );
 }

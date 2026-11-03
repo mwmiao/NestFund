@@ -10,3 +10,4 @@ data
 !.env.example
 coverage
 tests
+docs

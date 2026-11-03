@@ -49,12 +49,22 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
         <NumberField label={t('sim.monthlyContribution')} value={v.monthlyContribution} onChange={set('monthlyContribution')} suffix="€" />
         <NumberField label={t('sim.annualBonus')} value={v.annualBonus} onChange={set('annualBonus')} suffix="€" />
         <NumberField label={t('sim.initialBalance')} value={v.initialBalance} onChange={set('initialBalance')} suffix="€" />
-        <NumberField label={t('sim.tier1Rate')} value={v.tier1Rate} onChange={set('tier1Rate')} suffix="%" />
-        <NumberField label={t('sim.tier1Limit')} value={v.tier1Limit} onChange={set('tier1Limit')} suffix="€" />
-        <NumberField label={t('sim.tier2Rate')} value={v.tier2Rate} onChange={set('tier2Rate')} suffix="%" />
-        <NumberField label={t('sim.taxRate')} value={v.taxRate} onChange={set('taxRate')} suffix="%" />
         <NumberField label={t('sim.horizon')} value={v.years} onChange={set('years')} />
       </div>
+      <details className="rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+        <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('sim.ratesAndTax')}</summary>
+        <div className="mt-3 grid grid-cols-2 gap-3 pb-2 md:grid-cols-4">
+          <NumberField label={t('sim.tier1Rate')} value={v.tier1Rate} onChange={set('tier1Rate')} suffix="%" />
+          <NumberField label={t('sim.tier1Limit')} value={v.tier1Limit} onChange={set('tier1Limit')} suffix="€" />
+          <NumberField label={t('sim.tier2Rate')} value={v.tier2Rate} onChange={set('tier2Rate')} suffix="%" />
+          <NumberField label={t('sim.taxRate')} value={v.taxRate} onChange={set('taxRate')} suffix="%" />
+        </div>
+      </details>
+
+      {v.housePrice <= 0 ? (
+        <p className="rounded-xl bg-zinc-100 px-4 py-6 text-center text-sm text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">{t('sim.enterPrice')}</p>
+      ) : (
+        <>
 
       <div className="grid grid-cols-3 gap-3">
         {[
@@ -73,6 +83,8 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
           ? t('sim.reachedIn', { n: monthsToTarget, month: monthLabel(addMonths(start, monthsToTarget), locale) })
           : t('sim.notReached')}
       </p>
+        </>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[28rem] text-sm">

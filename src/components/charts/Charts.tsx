@@ -44,12 +44,30 @@ const tooltipStyle = {
   labelStyle: { color: '#a1a1aa', marginBottom: 4 },
 };
 
+
+// Animations are off: with React 19 Recharts 2 can leave shapes unrendered, and instant charts feel snappier.
+
+/** Empty or all-zero series render a calm placeholder instead of a broken, axis-only chart. */
+function hasValues(data: Record<string, string | number>[], keys: string[]) {
+  return data.some((row) => keys.some((k) => typeof row[k] === 'number' && Number.isFinite(row[k] as number) && row[k] !== 0));
+}
+
+function ChartEmpty({ height }: { height: number }) {
+  const { t } = useI18n();
+  return (
+    <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400" style={{ height }}>
+      {t('common.noDataYet')}
+    </div>
+  );
+}
+
 export function DonutChart({ data, height = 220 }: { data: { name: string; value: number; color: string }[]; height?: number }) {
   const m = useMoney();
+  if (!data.some((d) => d.value > 0)) return <ChartEmpty height={height} />;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius="58%" outerRadius="90%" paddingAngle={2} stroke="none">
+        <Pie data={data} dataKey="value" nameKey="name" isAnimationActive={false} innerRadius="58%" outerRadius="90%" paddingAngle={2} stroke="none">
           {data.map((d) => (
             <Cell key={d.name} fill={d.color} />
           ))}
@@ -74,6 +92,7 @@ export function BarsChart({
   height?: number;
 }) {
   const m = useMoney();
+  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
@@ -85,6 +104,7 @@ export function BarsChart({
         {series.map((s, i) => (
           <Bar
             key={s.key}
+            isAnimationActive={false}
             dataKey={s.key}
             name={s.name}
             fill={s.color}
@@ -100,6 +120,7 @@ export function BarsChart({
 
 export function LinesChart({ data, xKey, series, height = 260 }: { data: Record<string, string | number>[]; xKey: string; series: Series[]; height?: number }) {
   const m = useMoney();
+  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -109,7 +130,7 @@ export function LinesChart({ data, xKey, series, height = 260 }: { data: Record<
         <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {series.map((s) => (
-          <Line key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} dot={data.length < 16} />
+          <Line key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} dot={data.length < 16} />
         ))}
       </LineChart>
     </ResponsiveContainer>
@@ -118,6 +139,7 @@ export function LinesChart({ data, xKey, series, height = 260 }: { data: Record<
 
 export function GrowthChart({ data, xKey, series, height = 280 }: { data: Record<string, string | number>[]; xKey: string; series: Series[]; height?: number }) {
   const m = useMoney();
+  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -135,7 +157,7 @@ export function GrowthChart({ data, xKey, series, height = 280 }: { data: Record
         <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {series.map((s) => (
-          <Area key={s.key} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} fill={`url(#g-${s.key})`} />
+          <Area key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} fill={`url(#g-${s.key})`} />
         ))}
       </AreaChart>
     </ResponsiveContainer>

@@ -67,3 +67,15 @@ export function parseFlexibleDate(input: string): string | null {
   const iso = `${m[3]}-${pad(Number(m[2]))}-${pad(Number(m[1]))}`;
   return isISODate(iso) ? iso : null;
 }
+
+/** "03/11/2026, 17:10" in the server's timezone (TZ, Europe/Lisbon in Docker). */
+export function formatDateTime(iso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale === 'en-US' ? 'en-GB' : locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: process.env.TZ || 'Europe/Lisbon',
+  }).format(new Date(iso));
+}

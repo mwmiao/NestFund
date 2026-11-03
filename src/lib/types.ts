@@ -80,6 +80,8 @@ export interface Transaction {
   recurring: boolean;
   recurrence: Recurrence | null;
   parentId: number | null;
+  /** When the record was logged (UTC, 'YYYY-MM-DD HH:MM:SS'). */
+  createdAt?: string | null;
 }
 
 export interface BudgetItem {
@@ -124,6 +126,8 @@ export interface Snapshot {
   value: number;
   invested: number;
   notes: string | null;
+  /** When the balance was recorded; movements on the same day logged afterwards still count. */
+  createdAt?: string | null;
 }
 
 export interface Profile {

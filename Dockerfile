@@ -26,7 +26,7 @@ ENV NODE_ENV=production \
     APP_VERSION=${APP_VERSION}
 
 LABEL org.opencontainers.image.title="NestFund" \
-      org.opencontainers.image.description="Self-hosted personal finance planner and expense tracker" \
+      org.opencontainers.image.description="Personal finance dashboard for budgeting, expense tracking, savings goals and long-term investing" \
       org.opencontainers.image.source="https://github.com/mwmiao/NestFund" \
       org.opencontainers.image.version="${APP_VERSION}"
 

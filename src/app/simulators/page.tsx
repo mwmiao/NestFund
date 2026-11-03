@@ -20,10 +20,11 @@ export default async function SimulatorsPage() {
           <p className="muted -mt-1 mb-4 text-sm">{t('sim.houseHint')}</p>
           <HouseSimulator
             defaults={{
-              housePrice: 250_000,
+              // No preset price: the user types it. The percentages are generic market assumptions.
+              housePrice: 0,
               downPaymentPct: 10,
               purchaseCostsPct: 7,
-              monthlyContribution: sumKind('savings') || 600,
+              monthlyContribution: sumKind('savings'),
               annualBonus: profile.annualBonus,
               initialBalance: balances.traderepublic.balance,
             }}
@@ -31,7 +32,7 @@ export default async function SimulatorsPage() {
         </Card>
         <Card title={t('sim.etf')}>
           <p className="muted -mt-1 mb-4 text-sm">{t('sim.etfHint')}</p>
-          <EtfSimulator defaults={{ monthlyContribution: sumKind('etf') || 500, currentValue: balances.trading212.balance }} />
+          <EtfSimulator defaults={{ monthlyContribution: sumKind('etf'), currentValue: balances.trading212.balance }} />
         </Card>
       </div>
     </>

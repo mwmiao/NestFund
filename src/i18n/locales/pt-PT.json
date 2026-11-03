@@ -13,7 +13,9 @@
     "portfolio": "Carteira",
     "history": "Histórico",
     "categories": "Categorias",
-    "more": "Mais"
+    "more": "Mais",
+    "setup": "Configuração",
+    "settings": "Definições"
   },
   "common": {
     "save": "Guardar",
@@ -53,7 +55,8 @@
     "color": "Cor",
     "kind": "Tipo",
     "actions": "Ações",
-    "quickAdd": "Registar compra"
+    "quickAdd": "Registar compra",
+    "noDataYet": "Ainda sem dados"
   },
   "dashboard": {
     "title": "Painel mensal",
@@ -81,7 +84,7 @@
     "seeAll": "Ver todas",
     "goals": "Objetivos",
     "netWorth": "Património registado",
-    "netWorthHint": "ETF + conta remunerada (últimos registos)",
+    "netWorthHint": "Banco CTT, Revolut, Trading 212, Trade Republic e dinheiro",
     "budget": "Orçamento",
     "spent": "Gasto",
     "salaryReceived": "Ordenado recebido",
@@ -91,7 +94,21 @@
     "canSpend": "Ainda podes gastar",
     "canSpendHint": "Disponível real deste mês, depois de fixas, ETF e poupança",
     "houseFundHint": "{pct} de {target} · a reserva de emergência é preenchida primeiro",
-    "transferred": "Transferido este mês: {amount}"
+    "transferred": "Transferido este mês: {amount}",
+    "actions": {
+      "expense": "Despesa",
+      "transfer": "Transferir",
+      "balance": "Saldo",
+      "budget": "Orçamento"
+    },
+    "quickActions": "Ações rápidas",
+    "thisMonth": "Este mês",
+    "income": "Rendimento",
+    "spentOf": "{spent} gastos de {total}",
+    "leisureRevolut": "Lazer (Revolut)",
+    "emptyBudgetTitle": "Orçamento por definir",
+    "emptyBudgetHint": "Indica o teu salário e as despesas fixas para saberes quanto podes gastar.",
+    "emptyBudgetAction": "Definir orçamento"
   },
   "budget": {
     "title": "Orçamento mensal",
@@ -132,7 +149,8 @@
     "transportAllowance": "Subsídio de transporte (incluído no salário)",
     "annualBonus": "Bónus anual possível",
     "fixedNote": "As despesas fixas são contadas automaticamente. Se também as registares como transações na mesma categoria, não são contadas duas vezes.",
-    "account": "Conta"
+    "account": "Conta",
+    "emptyItems": "Ainda sem rubricas. Adiciona o salário em Configuração e as despesas fixas, ETF, poupança e lazer aqui."
   },
   "tx": {
     "title": "Transações",
@@ -196,7 +214,9 @@
     "anyAccount": "Todas as contas",
     "transferError": "Numa transferência, escolhe uma conta de destino diferente da origem.",
     "moreDetails": "Mais detalhes",
-    "transferNote": "Transferências entre contas não contam como despesa."
+    "transferNote": "Transferências entre contas não contam como despesa.",
+    "emptyTitle": "Ainda não há transações",
+    "emptyHint": "Regista a tua primeira compra ou despesa — demora poucos segundos."
   },
   "categories": {
     "title": "Categorias",
@@ -256,7 +276,10 @@
     },
     "account": "Conta associada",
     "manual": "Valor manual",
-    "fromAccount": "Calculado a partir do saldo de {account}"
+    "fromAccount": "Calculado a partir do saldo de {account}",
+    "emptyTitle": "Sem objetivos definidos",
+    "emptyHint": "Define a reserva de emergência e a entrada para casa para acompanhares o progresso.",
+    "emptyAction": "Definir objetivos"
   },
   "sim": {
     "title": "Simuladores",
@@ -292,7 +315,9 @@
     "contributed": "Capital investido",
     "projectedValue": "Valor projetado",
     "gain": "Ganho projetado",
-    "etfWarning": "Aviso: o retorno não é garantido. Os mercados podem cair e podes perder dinheiro. Isto é uma simulação ilustrativa, sem inflação, comissões ou impostos, e não é aconselhamento financeiro."
+    "etfWarning": "Aviso: o retorno não é garantido. Os mercados podem cair e podes perder dinheiro. Isto é uma simulação ilustrativa, sem inflação, comissões ou impostos, e não é aconselhamento financeiro.",
+    "ratesAndTax": "Taxas de juro e IRS",
+    "enterPrice": "Introduz o preço da casa para veres a entrada e os custos necessários."
   },
   "portfolio": {
     "title": "Carteira",
@@ -307,7 +332,7 @@
     "account": "Conta",
     "history": "Registos",
     "evolution": "Evolução",
-    "noBroker": "Os valores são introduzidos manualmente — sem ligação a corretoras nesta versão.",
+    "noBroker": "Valores introduzidos manualmente. Podes ligar a Trading 212 em Definições › Ligações.",
     "investedHint": "Na conta remunerada, o investido é o capital depositado."
   },
   "history": {
@@ -345,13 +370,111 @@
       "other": "Outras contas"
     },
     "balance": "Saldo",
-    "thisMonth": "Este mês: +{in} / −{out}",
+    "thisMonth": "Este mês: {movements}",
     "planned": "Planeado {planned} · transferido {done}",
     "leisureLeft": "Lazer gasto {spent} de {budget}",
     "since": "Desde o registo de {date}",
-    "noCheckIn": "Sem saldo registado — regista o saldo atual na Carteira",
+    "noCheckIn": "Ainda sem saldo",
     "checkIn": "Registar saldo",
     "checkInHint": "Regista o saldo real de uma conta numa data. Os movimentos posteriores são somados automaticamente.",
     "estimatedInterest": "Juros líquidos estimados/mês"
+  },
+  "setup": {
+    "title": "Configuração",
+    "subtitle": "Introduz os teus valores reais. Podes saltar qualquer passo e voltar quando quiseres.",
+    "steps": {
+      "balances": "Saldos",
+      "income": "Rendimento",
+      "fixed": "Despesas fixas",
+      "goals": "Objetivos"
+    },
+    "balancesHint": "Quanto tens hoje em cada conta? Deixa em branco as que não queres preencher agora.",
+    "investedHint": "Trading 212 — total investido (€, opcional)",
+    "incomeHint": "O salário líquido que recebes por mês e o carregamento do cartão de refeição.",
+    "salary": "Salário líquido mensal",
+    "fixedHint": "Despesas que se repetem todos os meses: ginásio, telemóvel, subscrições…",
+    "fixedNamePlaceholder": "Ex.: Ginásio",
+    "addRow": "Adicionar linha",
+    "goalsHint": "Quanto queres juntar para a reserva de emergência e para a entrada da casa?",
+    "goalsAccountNote": "Os dois objetivos usam o saldo da Trade Republic — a reserva de emergência é preenchida primeiro.",
+    "skip": "Saltar",
+    "saveContinue": "Guardar e continuar",
+    "later": "Fazer mais tarde",
+    "doneTitle": "Está tudo pronto",
+    "doneHint": "Regista as tuas compras à medida que acontecem. Podes definir o investimento mensal em ETF e a poupança no Orçamento.",
+    "adjustBudget": "Ajustar orçamento",
+    "cardTitle": "Configura o NestFund",
+    "cardHint": "Faltam {n} passos rápidos: saldos, rendimento, despesas fixas e objetivos.",
+    "start": "Começar",
+    "resume": "Continuar",
+    "notNow": "Agora não",
+    "sampleDetected": "Esta base de dados ainda tem os dados de exemplo da primeira versão.",
+    "resetTitle": "Apagar todos os dados",
+    "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas, anexos e a ligação à Trading 212. As categorias predefinidas e as preferências mantêm-se. Não pode ser desfeito.",
+    "resetConfirm": "Compreendo que todos os dados serão apagados",
+    "resetButton": "Começar do zero",
+    "resetDone": "Dados apagados. A app está pronta para os teus valores reais."
+  },
+  "settings": {
+    "title": "Definições",
+    "connections": "Ligações",
+    "general": "Geral"
+  },
+  "t212": {
+    "description": "Atualiza automaticamente o valor, o capital investido e as posições do teu ETF.",
+    "status": {
+      "connected": "Ligado",
+      "error": "Erro na sincronização",
+      "off": "Não ligado"
+    },
+    "lastSync": "Última sincronização",
+    "nextSync": "Próxima sincronização",
+    "key": "Chave",
+    "env": "Conta",
+    "envLive": "Real",
+    "envDemo": "Demo",
+    "apiKey": "API key",
+    "apiSecret": "API secret",
+    "apiSecretHint": "obrigatório em chaves novas",
+    "connect": "Ligar Trading 212",
+    "replace": "Substituir chave",
+    "replaceTitle": "Substituir a chave API",
+    "connected": "Ligação feita e primeira sincronização concluída.",
+    "synced": "Sincronizado.",
+    "syncNow": "Sincronizar agora",
+    "disconnect": "Desligar",
+    "disconnectConfirm": "Remover a chave API? O histórico já sincronizado mantém-se.",
+    "fallback": "A app continua a usar os últimos valores guardados.",
+    "positionsWarning": "O resumo da conta foi sincronizado, mas as posições não puderam ser lidas. Confirma que a chave tem permissão de leitura do portefólio.",
+    "step1": "Na app Trading 212: Definições › API (Beta) › Gerar chave API.",
+    "step2": "Ativa apenas permissões de leitura: Account data e Portfolio. Não atives Orders.",
+    "step3": "Cola aqui a API key e a API secret.",
+    "securityStorage": "A chave é validada e guardada encriptada (AES-256-GCM); nunca é mostrada nem guardada em texto simples.",
+    "securityReadOnly": "O NestFund só faz pedidos de leitura (resumo da conta e posições). Não consegue criar ordens, comprar nem vender.",
+    "securitySchedule": "Sincroniza automaticamente a cada 6 horas. Se falhar, a app continua a funcionar com os valores manuais.",
+    "errors": {
+      "auth": "Chave ou secret inválidos.",
+      "forbidden": "A chave não tem permissão de leitura para estes dados.",
+      "rate_limit": "Limite de pedidos da Trading 212 atingido. Tenta daqui a um minuto.",
+      "not_found": "Endpoint não encontrado na API da Trading 212.",
+      "network": "Não foi possível contactar a Trading 212.",
+      "server": "A Trading 212 respondeu com um erro.",
+      "invalid_response": "Resposta inesperada da Trading 212.",
+      "blocked": "Pedido bloqueado: apenas leituras são permitidas.",
+      "not_connected": "Liga primeiro a Trading 212.",
+      "too_soon": "Sincronizado há instantes — espera alguns segundos.",
+      "skipped": "Já está atualizado.",
+      "missing_key": "Indica a API key."
+    },
+    "portfolioSynced": "Trading 212 sincronizada automaticamente; as restantes contas são introduzidas manualmente.",
+    "lastSyncAt": "Sincronizado via API a {date}.",
+    "connectCta": "Ligar a Trading 212 para atualizar automaticamente",
+    "positions": "Posições Trading 212",
+    "instrument": "Instrumento",
+    "quantity": "Quantidade",
+    "averagePrice": "Preço médio",
+    "history": "Histórico diário Trading 212",
+    "totalValue": "Valor total",
+    "investedCapital": "Capital investido"
   }
 }

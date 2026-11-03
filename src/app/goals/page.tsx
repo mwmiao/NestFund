@@ -1,6 +1,6 @@
 import { deleteGoalAction, saveGoalAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
-import { Card, Field, PageHeader, ProgressBar } from '@/components/ui';
+import { Card, EmptyState, Field, PageHeader, ProgressBar } from '@/components/ui';
 import type { TFunction } from '@/i18n/config';
 import { getI18n } from '@/i18n/server';
 import { goalProgress } from '@/lib/calc';
@@ -70,7 +70,12 @@ export default async function GoalsPage() {
   return (
     <>
       <PageHeader title={t('goals.title')} />
-      <div className="grid gap-4 md:grid-cols-2">
+      {goals.length === 0 && (
+        <Card className="mb-4">
+          <EmptyState title={t('goals.emptyTitle')} hint={t('goals.emptyHint')} action={{ href: '/setup?step=goals', label: t('goals.emptyAction') }} />
+        </Card>
+      )}
+      <div className="grid gap-4 md:grid-cols-2 empty:hidden">
         {goals.map((g) => {
           const p = goalProgress(g, now);
           return (

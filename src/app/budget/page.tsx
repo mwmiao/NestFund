@@ -1,7 +1,7 @@
 import { deleteBudgetItemAction, saveBudgetItemAction, saveMonthBudgetAction, saveProfileAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { MonthPicker } from '@/components/MonthPicker';
-import { Alert, Card, Dot, Field, PageHeader, ProgressBar } from '@/components/ui';
+import { Alert, Card, Dot, Empty, Field, PageHeader, ProgressBar } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import type { TFunction } from '@/i18n/config';
 import { availableForIncome, computeMonthSummary } from '@/lib/calc';
@@ -94,6 +94,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
 
   const spentByCat = new Map(s.byCategory.map((r) => [r.categoryId, r.total]));
   const envelope = s.leisure + s.variablePlanned;
+  const planRows = categories.filter((c) => (c.monthlyBudget ?? 0) > 0 || spentByCat.has(c.id));
 
   return (
     <>
@@ -102,13 +103,13 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         actions={<MonthPicker month={month} basePath="/budget" locale={locale} labels={{ prev: t('common.previous'), next: t('common.next'), today: t('common.today') }} />}
       />
 
-      {s.negativePlanned && (
+      {s.income > 0 && s.negativePlanned && (
         <div className="mb-4">
           <Alert tone="danger">{t('dashboard.alertPlanned', { amount: money(Math.abs(s.plannedAvailable)) })}</Alert>
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className={`grid gap-4 ${profile.incomeMax > profile.incomeMin ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
         <Card title={t('budget.monthSettings')}>
           <form action={saveMonthBudgetAction} className="space-y-3">
             <input type="hidden" name="month" value={month} />
@@ -154,6 +155,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
           </p>
         </Card>
 
+        {profile.incomeMax > profile.incomeMin && (
         <Card title={t('budget.scenarios')}>
           <p className="muted mb-3 text-xs">{t('budget.scenariosHint')}</p>
           <div className="grid grid-cols-2 gap-3">
@@ -173,6 +175,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
             <span className="font-semibold tabular-nums text-emerald-500">{money(scenarioMax - scenarioMin)}</span>
           </div>
         </Card>
+        )}
       </div>
 
       <Card title={t('budget.template')} className="mt-4">
@@ -194,26 +197,43 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         ) : (
           <>
             <p className="muted mb-3 text-xs">{t('budget.templateHint')}</p>
-            <div className="space-y-4">
+            {/* Compact rows; the full editor opens per line so the page stays readable. */}
+            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
               {template.map((item) => {
                 const active = isActiveInMonth(item, month);
                 return (
-                  <div key={item.id} className={active ? '' : 'opacity-60'}>
-                    <ItemForm item={item} categories={categories} t={t} />
-                    {!active && item.startMonth && item.startMonth > month && (
-                      <p className="mt-1 text-xs text-amber-500">{t('budget.startsIn', { month: monthLabel(item.startMonth, locale) })}</p>
-                    )}
-                    {!active && item.endMonth && item.endMonth < month && (
-                      <p className="muted mt-1 text-xs">{t('budget.endsIn', { month: monthLabel(item.endMonth, locale) })}</p>
-                    )}
-                  </div>
+                  <li key={item.id} className={active ? '' : 'opacity-60'}>
+                    <details className="group">
+                      <summary className="flex cursor-pointer list-none items-center gap-3 py-3 text-sm">
+                        <span className="min-w-0 flex-1">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="muted mt-0.5 flex flex-wrap items-center gap-1.5 text-xs">
+                            {t(`budget.kinds.${item.kind}`)}
+                            {item.account && <AccountBadge id={item.account} label={accountName(item.account, t)} size="xs" />}
+                            {!active && item.startMonth && item.startMonth > month && (
+                              <span className="text-amber-500">{t('budget.startsIn', { month: monthLabel(item.startMonth, locale) })}</span>
+                            )}
+                            {!active && item.endMonth && item.endMonth < month && <span>{t('budget.endsIn', { month: monthLabel(item.endMonth, locale) })}</span>}
+                          </span>
+                        </span>
+                        <span className="font-semibold tabular-nums">{money(item.amount)}</span>
+                        <span className="muted text-xs group-open:rotate-90" aria-hidden>›</span>
+                      </summary>
+                      <div className="pb-4">
+                        <ItemForm item={item} categories={categories} t={t} />
+                      </div>
+                    </details>
+                  </li>
                 );
               })}
-              <div className="border-t border-dashed border-zinc-300 pt-4 dark:border-zinc-700">
-                <div className="mb-2 text-sm font-medium">{t('budget.addItem')}</div>
+            </ul>
+            {template.length === 0 && <Empty>{t('budget.emptyItems')}</Empty>}
+            <details className="mt-3 rounded-xl border border-dashed border-zinc-300 px-3 py-2 dark:border-zinc-700" open={template.length === 0}>
+              <summary className="cursor-pointer select-none py-1 text-sm font-medium text-brand-500">+ {t('budget.addItem')}</summary>
+              <div className="pt-3 pb-1">
                 <ItemForm categories={categories} t={t} />
               </div>
-            </div>
+            </details>
           </>
         )}
         <p className="muted mt-4 text-xs">{t('budget.fixedNote')}</p>
@@ -229,6 +249,9 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
           </div>
           <ProgressBar value={envelope > 0 ? s.variableSpent / envelope : 0} over={s.variableSpent > envelope} />
         </div>
+        {planRows.length === 0 ? (
+          <Empty>{t('common.noDataYet')}</Empty>
+        ) : (
         <table className="w-full text-sm">
           <thead>
             <tr className="muted text-left text-xs">
@@ -239,9 +262,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
             </tr>
           </thead>
           <tbody>
-            {categories
-              .filter((c) => (c.monthlyBudget ?? 0) > 0 || spentByCat.has(c.id))
-              .map((c) => {
+            {planRows.map((c) => {
                 const planned = c.monthlyBudget ?? 0;
                 const actual = spentByCat.get(c.id) ?? 0;
                 return (
@@ -260,6 +281,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
               })}
           </tbody>
         </table>
+        )}
       </Card>
 
       <Card title={t('budget.profile')} className="mt-4">

@@ -22,7 +22,7 @@ export interface AccountCardData {
 export function AccountCards({ accounts, month, locale, t }: { accounts: AccountCardData[]; month: string; locale: string; t: TFunction }) {
   const money = (v: number) => formatMoney(v, locale);
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {accounts.map((a) => {
         const meta = ACCOUNTS[a.id];
         return (
@@ -38,11 +38,17 @@ export function AccountCards({ accounts, month, locale, t }: { accounts: Account
               </span>
             </div>
             <div className="muted text-xs">{t(`accounts.purpose.${a.id}`)}</div>
-            <div className={`mt-2 text-xl font-semibold tabular-nums ${a.balance.balance < 0 ? 'text-red-500' : ''}`}>{money(a.balance.balance)}</div>
+            <div className={`mt-2 text-lg font-semibold tabular-nums sm:text-xl ${a.balance.balance < 0 ? 'text-red-500' : ''}`}>{money(a.balance.balance)}</div>
             <div className="muted mt-0.5 text-[11px]">
-              {a.balance.since ? t('accounts.since', { date: formatDate(a.balance.since) }) : t('accounts.noCheckIn')}
+              {a.balance.since ? t('accounts.since', { date: formatDate(a.balance.since) }) : a.month.count === 0 && a.balance.balance === 0 ? t('accounts.noCheckIn') : null}
             </div>
-            <div className="mt-2 text-xs tabular-nums">{t('accounts.thisMonth', { in: money(a.month.inflow), out: money(a.month.outflow) })}</div>
+            {a.month.count > 0 && (
+              <div className="mt-2 text-xs tabular-nums">
+                {t('accounts.thisMonth', {
+                  movements: [a.month.inflow > 0 && `+${money(a.month.inflow)}`, a.month.outflow > 0 && `−${money(a.month.outflow)}`].filter(Boolean).join(' / '),
+                })}
+              </div>
+            )}
             {a.plannedIn > 0 && (
               <div className={`mt-1 text-xs tabular-nums ${a.transferredIn >= a.plannedIn ? 'text-emerald-500' : 'text-amber-500'}`}>
                 {t('accounts.planned', { planned: money(a.plannedIn), done: money(a.transferredIn) })}

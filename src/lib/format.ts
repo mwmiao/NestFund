@@ -2,6 +2,8 @@ const moneyFormatters = new Map<string, Intl.NumberFormat>();
 
 export function formatMoney(value: number, locale: string, opts: { decimals?: number; sign?: boolean } = {}): string {
   const decimals = opts.decimals ?? 2;
+  // Never show "-0,00 €" (from -0 or float dust) or "NaN €".
+  if (!Number.isFinite(value) || Math.abs(value) < 0.5 / 10 ** decimals) value = 0;
   const cacheKey = `${locale}|${decimals}|${opts.sign ? 1 : 0}`;
   let fmt = moneyFormatters.get(cacheKey);
   if (!fmt) {

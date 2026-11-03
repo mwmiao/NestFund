@@ -200,7 +200,7 @@ export function allocateGoals<G extends Pick<Goal, 'target' | 'current' | 'accou
 // Accounts: balances and monthly movements
 // ---------------------------------------------------------------------------
 
-type TxLike = Pick<Transaction, 'amount' | 'type' | 'account' | 'toAccount' | 'date'>;
+type TxLike = Pick<Transaction, 'amount' | 'type' | 'account' | 'toAccount' | 'date' | 'createdAt'>;
 
 /** Signed effect of a transaction on one account (positive = money in). */
 export function accountDelta(tx: TxLike, account: AccountId): number {
@@ -224,15 +224,22 @@ export interface AccountBalance {
 }
 
 /**
- * Balance = last recorded balance (snapshot) + every movement dated after it.
+ * Balance = last recorded balance (snapshot) + every movement after it (same-day ones only if logged later).
  * Without a snapshot, the balance is the sum of all movements.
  */
-export function accountBalance(account: AccountId, snapshots: Pick<Snapshot, 'account' | 'date' | 'value' | 'invested'>[], txs: TxLike[]): AccountBalance {
+export function accountBalance(
+  account: AccountId,
+  snapshots: Pick<Snapshot, 'account' | 'date' | 'value' | 'invested' | 'createdAt'>[],
+  txs: TxLike[],
+): AccountBalance {
   const snap = snapshots
     .filter((s) => s.account === account)
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))
     .at(-1);
-  const after = snap ? txs.filter((t) => t.date > snap.date) : txs;
+  // Same-day movements count only if they were logged after the balance was recorded.
+  const isAfter = (t: TxLike) =>
+    !!snap && (t.date > snap.date || (t.date === snap.date && !!snap.createdAt && !!t.createdAt && t.createdAt > snap.createdAt));
+  const after = snap ? txs.filter(isAfter) : txs;
   let balance = snap?.value ?? 0;
   let invested = snap?.invested ?? 0;
   for (const t of after) {

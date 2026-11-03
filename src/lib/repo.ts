@@ -2,7 +2,7 @@ import 'server-only';
 import { dictionaries } from '@/i18n/config';
 import { fromCents as e, getDb, toCents as c } from './db';
 import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './dates';
-import { DEFAULT_PROFILE } from './seed';
+import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
 import { accountBalance, allocateGoals, type AccountBalance } from './calc';
 import { ACCOUNT_IDS } from './types';
 import type {
@@ -34,6 +34,47 @@ export function getProfile(): Profile {
 
 export function saveProfile(p: Profile) {
   getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('profile', ?)").run(JSON.stringify(p));
+}
+
+// ---------------------------------------------------------------- onboarding / fresh start
+
+export const ONBOARDING_STEPS = ['balances', 'income', 'fixed', 'goals'] as const;
+export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
+
+export interface OnboardingState {
+  done: OnboardingStep[];
+  dismissed: boolean;
+}
+
+export function getOnboarding(): OnboardingState {
+  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'onboarding'").get() as Row | undefined;
+  const parsed = row ? (JSON.parse(row.value) as Partial<OnboardingState>) : {};
+  return { done: (parsed.done ?? []).filter((s) => ONBOARDING_STEPS.includes(s)), dismissed: !!parsed.dismissed };
+}
+
+export function updateOnboarding(patch: { complete?: OnboardingStep; dismissed?: boolean }) {
+  const state = getOnboarding();
+  if (patch.complete && !state.done.includes(patch.complete)) state.done.push(patch.complete);
+  if (patch.dismissed !== undefined) state.dismissed = patch.dismissed;
+  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('onboarding', ?)").run(JSON.stringify(state));
+}
+
+/** Wipes every record and returns to the fresh-start state (schema and built-in categories are kept). */
+export function resetData() {
+  resetAllData(getDb());
+}
+
+export function hasSampleData(): boolean {
+  return hasLegacySampleData(getDb());
+}
+
+/** Applies a new salary / meal card to the current and future months that already exist. */
+export function applyIncomeToOpenMonths(income: number, mealCard: number) {
+  const months = getDb().prepare('SELECT month FROM month_budgets WHERE month >= ?').all(currentMonth()) as Row[];
+  for (const { month } of months) {
+    const b = ensureMonthBudget(month);
+    updateMonthBudget(month, { income, extraIncome: b.extraIncome, mealCard, notes: b.notes });
+  }
 }
 
 // ---------------------------------------------------------------- categories
@@ -216,6 +257,7 @@ const mapTx = (r: Row): Transaction => ({
   recurring: !!r.recurring,
   recurrence: r.recurrence as Recurrence | null,
   parentId: r.parent_id,
+  createdAt: r.created_at,
 });
 
 export interface TxFilters {
@@ -391,6 +433,7 @@ const mapSnap = (r: Row): Snapshot => ({
   value: e(r.value),
   invested: e(r.invested),
   notes: r.notes,
+  createdAt: r.created_at,
 });
 
 export function listSnapshots(account?: AccountId): Snapshot[] {
@@ -412,9 +455,9 @@ export function balanceMap(balances = accountBalances()): Partial<Record<Account
   return Object.fromEntries(Object.values(balances).map((b) => [b.account, b.balance]));
 }
 
-export function addSnapshot(s: Omit<Snapshot, 'id'>) {
+export function addSnapshot(s: Omit<Snapshot, 'id' | 'createdAt'>) {
   getDb()
-    .prepare('INSERT INTO snapshots (date, account, value, invested, notes) VALUES (?, ?, ?, ?, ?)')
+    .prepare("INSERT INTO snapshots (date, account, value, invested, notes, created_at) VALUES (?, ?, ?, ?, ?, datetime('now'))")
     .run(s.date, s.account, c(s.value), c(s.invested), s.notes);
 }
 

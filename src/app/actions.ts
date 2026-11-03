@@ -7,11 +7,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { LOCALE_COOKIE, isLocale } from '@/i18n/config';
+import { getI18n } from '@/i18n/server';
 import { UPLOADS_DIR } from '@/lib/db';
 import { isISODate, isMonth, todayISO } from '@/lib/dates';
 import { parseDecimal } from '@/lib/format';
 import * as repo from '@/lib/repo';
 import { importTransactionsCsv } from '@/lib/csv-import';
+import { connectT212, disconnectT212, syncT212 } from '@/lib/t212';
 import {
   ACCOUNT_IDS,
   BUDGET_ITEM_KINDS,
@@ -280,5 +282,130 @@ export async function saveSnapshotAction(fd: FormData) {
 export async function deleteSnapshotAction(fd: FormData) {
   const id = optId(fd, 'id');
   if (id) repo.deleteSnapshot(id);
+  refresh();
+}
+
+// ---------------------------------------------------------------- onboarding (fresh start)
+
+const nextStep = (step: repo.OnboardingStep) => {
+  const i = repo.ONBOARDING_STEPS.indexOf(step);
+  return i < repo.ONBOARDING_STEPS.length - 1 ? `/setup?step=${repo.ONBOARDING_STEPS[i + 1]}` : '/setup?step=done';
+};
+
+export async function setupBalancesAction(fd: FormData) {
+  const date = todayISO();
+  for (const account of ['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'] as const) {
+    const value = optNum(fd, account);
+    if (value == null) continue;
+    const invested = account === 'trading212' ? (optNum(fd, 'trading212_invested') ?? value) : value;
+    repo.addSnapshot({ date, account, value, invested, notes: null });
+  }
+  repo.updateOnboarding({ complete: 'balances' });
+  refresh();
+  redirect(nextStep('balances'));
+}
+
+export async function setupIncomeAction(fd: FormData) {
+  const salary = optNum(fd, 'salary');
+  const mealCard = optNum(fd, 'mealCard');
+  const profile = repo.getProfile();
+  const income = salary ?? profile.defaultIncome;
+  const meal = mealCard ?? profile.mealCard;
+  repo.saveProfile({ ...profile, defaultIncome: income, incomeMin: income, incomeMax: income, mealCard: meal });
+  repo.applyIncomeToOpenMonths(income, meal);
+  repo.updateOnboarding({ complete: 'income' });
+  refresh();
+  redirect(nextStep('income'));
+}
+
+export async function setupFixedAction(fd: FormData) {
+  const names = fd.getAll('name').map(String);
+  const amounts = fd.getAll('amount').map(String);
+  const accounts = fd.getAll('account').map(String);
+  const categoryIds = fd.getAll('categoryId').map((v) => Number(v));
+  names.forEach((raw, i) => {
+    const name = raw.trim();
+    const amount = parseDecimal(amounts[i] ?? '');
+    if (!name || amount == null || amount <= 0) return;
+    repo.upsertBudgetItem({
+      name,
+      kind: 'fixed',
+      amount,
+      categoryId: Number.isInteger(categoryIds[i]) && categoryIds[i] > 0 ? categoryIds[i] : null,
+      account: ACCOUNT_IDS.includes(accounts[i] as AccountId) ? (accounts[i] as AccountId) : 'ctt',
+      startMonth: null,
+      endMonth: null,
+    });
+  });
+  repo.updateOnboarding({ complete: 'fixed' });
+  refresh();
+  redirect(nextStep('fixed'));
+}
+
+export async function setupGoalsAction(fd: FormData) {
+  const existing = repo.listGoals();
+  const { t } = await getI18n();
+  const goals = [
+    { kind: 'emergency' as const, name: t('goals.kinds.emergency'), color: '#0ea5e9', prefix: 'emergency' },
+    { kind: 'house' as const, name: t('goals.kinds.house'), color: '#a855f7', prefix: 'house' },
+  ];
+  for (const g of goals) {
+    const target = optNum(fd, `${g.prefix}Target`);
+    if (target == null || target <= 0) continue;
+    const current = existing.find((x) => x.kind === g.kind);
+    repo.upsertGoal({
+      id: current?.id,
+      kind: g.kind,
+      name: current?.name ?? g.name,
+      target,
+      current: 0,
+      monthly: Math.abs(optNum(fd, `${g.prefix}Monthly`) ?? current?.monthly ?? 0),
+      targetDate: optMonth(fd, `${g.prefix}Date`) ?? current?.targetDate ?? null,
+      color: current?.color ?? g.color,
+      // Both goals are funded from Trade Republic; the emergency fund is filled first.
+      account: 'traderepublic',
+    });
+  }
+  repo.updateOnboarding({ complete: 'goals' });
+  refresh();
+  redirect(nextStep('goals'));
+}
+
+export async function dismissOnboardingAction() {
+  repo.updateOnboarding({ dismissed: true });
+  refresh();
+  redirect('/');
+}
+
+export async function resetDataAction(fd: FormData) {
+  if (str(fd, 'confirm') !== '1') redirect('/setup#reset');
+  repo.resetData();
+  await fs.rm(UPLOADS_DIR, { recursive: true, force: true });
+  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  refresh();
+  redirect('/setup?reset=1');
+}
+
+// ---------------------------------------------------------------- Trading 212 (read-only API)
+
+export type T212ActionState = { ok: boolean; code?: string } | null;
+
+export async function connectT212Action(_prev: T212ActionState, fd: FormData): Promise<T212ActionState> {
+  const apiKey = str(fd, 'apiKey');
+  const apiSecret = str(fd, 'apiSecret');
+  if (!apiKey) return { ok: false, code: 'missing_key' };
+  const result = await connectT212({ env: str(fd, 'env') === 'demo' ? 'demo' : 'live', apiKey, apiSecret: apiSecret || undefined });
+  refresh();
+  return result.ok ? { ok: true } : { ok: false, code: result.code };
+}
+
+export async function syncT212Action(_prev: T212ActionState): Promise<T212ActionState> {
+  const result = await syncT212({ force: true });
+  refresh();
+  return result.ok ? { ok: true } : { ok: false, code: result.code };
+}
+
+export async function disconnectT212Action() {
+  disconnectT212();
   refresh();
 }

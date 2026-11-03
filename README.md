@@ -1,142 +1,109 @@
+<div align="center">
+
+<img src="public/icon.svg" width="72" alt="NestFund" />
+
 # NestFund
 
-**🇵🇹 Português** · [🇺🇸 English](README.en-US.md)
+**As tuas finanças pessoais, num só lugar — orçamento, despesas, objetivos e investimento.**
 
-Aplicação web self-hosted para gestão de finanças pessoais: planeamento do salário, despesas fixas, lazer, reserva de emergência, entrada para habitação e investimento em ETF — com registo manual de despesas para não depender das apps do banco.
+[![Build](https://github.com/mwmiao/NestFund/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mwmiao/NestFund/actions/workflows/docker-publish.yml)
+[![Docker](https://img.shields.io/docker/v/eazyeight/nestfund?label=docker&sort=semver)](https://hub.docker.com/r/eazyeight/nestfund)
 
-> ⚠️ O NestFund mostra apenas simulações e registos. **Não constitui aconselhamento financeiro.**
+🇵🇹 Português · [🇺🇸 English](README.en-US.md)
+
+<img src="docs/screenshots/dashboard.png" alt="Painel do NestFund" width="900" />
+
+</div>
+
+O NestFund é um painel de finanças pessoais self-hosted. Planeia o salário, regista cada compra em segundos e acompanha a poupança, a entrada para casa e o investimento em ETF — sem depender das apps do banco. Os teus dados ficam no teu servidor.
 
 ## Funcionalidades
 
-- **Painel mensal** — "ainda podes gastar", poupança do mês, valor para a entrada de casa, valor do ETF, saldos por conta, gastos por categoria, orçamento vs. real e alertas de orçamento negativo.
-- **Contas com propósito** — cada transação pertence a uma conta, com saldos, movimentos e estatísticas separados:
+- **Painel claro** — património total, quanto ainda podes gastar este mês e ações rápidas.
+- **Contas com propósito** — Banco CTT, Revolut, Trading 212, Trade Republic e cartão de refeição, cada uma com saldo e movimentos.
+- **Registo rápido** — compra, despesa, receita ou transferência em poucos toques, com anexos e recorrências.
+- **Orçamento mensal** — despesas fixas, lazer, ETF e poupança, planeado vs. real.
+- **Objetivos** — reserva de emergência, entrada para casa e independência financeira, com progresso automático.
+- **Trading 212 automática** — valor, capital investido e posições sincronizados a cada 6 horas (só leitura).
+- **Simuladores** — entrada para casa com TANB escalonada e juros líquidos de IRS; projeção de ETF.
+- **Histórico e CSV** — evolução mês a mês, exportação e importação.
+- **PT / EN**, modo escuro e pensado para telemóvel.
 
-  | Conta | Propósito |
-  |---|---|
-  | **Banco CTT** | Ordenado, despesas correntes, transferências |
-  | **Revolut** | Lazer e compras pessoais (envelope de lazer) |
-  | **Trading 212** | Só ETF de longo prazo — nunca conta como dinheiro para gastar |
-  | **Trade Republic** | Poupança intocável: reserva de emergência + entrada de casa (TANB) |
-  | **Cartão de refeição** | Só alimentação — aparece nas estatísticas, nunca no dinheiro disponível |
-  | Dinheiro / Outro | Restantes casos |
+<div align="center">
+  <img src="docs/screenshots/mobile.png" alt="Painel no telemóvel" width="270" />
+  &nbsp;
+  <img src="docs/screenshots/quick-add.png" alt="Registar uma compra" width="270" />
+</div>
 
-- **Orçamento** editável por mês, com rubricas com data de início/fim (ex.: Muay Thai a partir de janeiro), comparação 1.750 € vs 1.800 €, planeado vs. real e perfil base.
-- **Transações** — compra, despesa, pagamento, receita e **transferência** entre contas; categoria/subcategoria, método (cartão, MB Way, débito direto…), loja, notas, anexo (imagem/PDF), recorrência mensal/trimestral/anual; filtros, pesquisa, exportação e importação CSV.
-- **Categorias** predefinidas (traduzidas) e personalizadas, com orçamento mensal.
-- **Objetivos** com valor-alvo, contribuição mensal, data-alvo e progresso. Objetivos ligados a uma conta usam o saldo real — a Trade Republic preenche primeiro a reserva de emergência e o restante conta para a casa.
-- **Simuladores** — entrada para casa (juros compostos mensais, TANB escalonada 3% até 50.000 € e 2,5% acima, **juros líquidos de 28% de IRS**, marcos a 3/5/7/10 anos) e ETF (projeção nominal, sem garantia de retorno).
-- **Carteira** — Trading 212 (saldo, investido, ganho/perda não realizado, %), Trade Republic (saldo e juros líquidos estimados) e registo de saldos de todas as contas.
-- **Histórico** — orçamentos mês a mês, poupança mensal e acumulada, evolução do ETF e da conta da casa, despesas por categoria.
-- **pt-PT / en-US** com seletor no cabeçalho (pt-PT por defeito), **dark mode por defeito**, design responsivo com botão rápido "+" no telemóvel.
+<p align="center"><img src="docs/screenshots/simulators.png" alt="Simulador de entrada para casa" width="900" /></p>
 
-### Como os números são calculados
+> O NestFund mostra simulações e registos — não é aconselhamento financeiro.
 
-- **Disponível para atribuir** = rendimento − todas as rubricas planeadas.
-- **Ainda podes gastar** (disponível real) = rendimento − fixas − ETF − poupança − despesas variáveis registadas.
-- O **cartão de refeição** nunca entra no dinheiro disponível; as **transferências** nunca são despesa.
-- Despesas fixas registadas como transações na categoria da rubrica fixa (ex.: ginásio) **não são contadas duas vezes**.
-- Uma receita na categoria **Ordenado** substitui o salário previsto do mês pelo valor real recebido.
-- **Saldo de uma conta** = último saldo registado (Carteira → Registar saldo) + movimentos posteriores.
-- **Taxa de poupança** = (ETF + poupança planeados) ÷ rendimento.
+## Instalar com Docker Compose
 
-## Correr localmente
+```yaml
+services:
+  nestfund:
+    image: eazyeight/nestfund:latest
+    container_name: nestfund
+    restart: unless-stopped
+    ports:
+      - "777:777"
+    environment:
+      TZ: Europe/Lisbon
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+    volumes:
+      - nestfund-data:/data
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
 
-Requisitos: Node.js 20+ (recomendado 22).
-
-```bash
-npm install
-npm run dev        # http://localhost:777
+volumes:
+  nestfund-data:
 ```
-
-Outros comandos:
-
-```bash
-npm test           # testes (juros compostos, taxa de poupança, objetivos, categorias, contas…)
-npm run typecheck
-npm run build && npm start
-```
-
-Os dados ficam em `./data/nestfund.db` (SQLite) e os anexos em `./data/uploads`. Na primeira execução são carregados dados de exemplo realistas (desativa com `SEED_SAMPLE_DATA=false`). Para recomeçar do zero, apaga a pasta `data/`.
-
-## Deploy com Docker Compose (NAS)
-
-1. Copia `docker-compose.yml` e `.env.example` (como `.env`) para uma pasta no NAS.
-2. Ajusta `NESTFUND_IMAGE` para `<o-teu-utilizador-docker-hub>/nestfund:latest`.
-3. Arranca:
 
 ```bash
 docker compose up -d
 ```
 
-A app fica em `http://<ip-do-nas>:777`. Os dados persistem no volume `nestfund-data` (montado em `/data`).
+Abre `http://<ip-do-servidor>:777` e segue a **Configuração** para introduzir os teus saldos, salário, despesas fixas e objetivos. Podes saltar e voltar mais tarde.
 
-| Variável | Predefinição | Descrição |
-|---|---|---|
-| `NESTFUND_IMAGE` | `mwmiao/nestfund:latest` | Imagem Docker |
-| `NESTFUND_PORT` | `777` | Porto no anfitrião |
-| `TZ` | `Europe/Lisbon` | Fuso horário ("hoje", recorrências) |
-| `SEED_SAMPLE_DATA` | `true` | Dados de exemplo na primeira execução |
-| `BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD` | vazio | Autenticação HTTP Basic opcional |
+Os dados (SQLite e anexos) ficam no volume `/data`. Para um backup, copia `nestfund.db` com o contentor parado.
 
-**Bind mount em vez de volume:** se preferires uma pasta do NAS (ex.: `/volume1/docker/nestfund:/data`), dá permissões ao utilizador do contentor (UID 1000): `sudo chown -R 1000:1000 /volume1/docker/nestfund`.
+## Porto 777 e Cloudflare Tunnel
 
-**Backup:** copia `nestfund.db` (e `uploads/`) com o contentor parado, ou usa `sqlite3 nestfund.db ".backup backup.db"`.
+A app escuta no porto **777**. Para mudar o porto no anfitrião, altera só o lado esquerdo: `"8080:777"`.
 
-### Atualização automática com Watchtower
+Para expor com o Cloudflare Tunnel, adiciona um *Public Hostname* (Zero Trust → Networks → Tunnels):
 
-O serviço tem a label `com.centurylinklabs.watchtower.enable=true`. Com o Watchtower já a correr no NAS, cada nova imagem `:latest` publicada é descarregada e o contentor é recriado automaticamente — os dados ficam no volume. As alterações ao esquema da base de dados são aplicadas no arranque (`PRAGMA user_version`), sem passos manuais.
-
-Se o teu Watchtower só atualiza contentores com label, arranca-o com `--label-enable`; caso contrário, a label é ignorada e todos os contentores são vigiados.
-
-## Publicar via GitHub Actions
-
-O workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) corre os testes e faz build **multi-arch (linux/amd64 + linux/arm64)** e push para o Docker Hub com os secrets `DOCKERHUB_USERNAME` e `DOCKERHUB_TOKEN`.
-
-| Evento | Tags publicadas |
+| Campo | Valor |
 |---|---|
-| Push para `main` | `latest`, `sha-<commit>` |
-| Tag `v1.0.0` | `1.0.0`, `1.0`, `sha-<commit>` |
-| Pull request | Só build, sem push |
+| Hostname | `nestfund.o-teu-dominio.pt` |
+| Serviço | `HTTP` → `<ip-do-servidor>:777` |
 
-Para lançar uma versão:
+A app não tem contas de utilizador — protege-a com **Cloudflare Access** (política só para o teu e-mail). Em alternativa, define `BASIC_AUTH_USER` e `BASIC_AUTH_PASSWORD`.
+
+## Ligar a Trading 212
+
+1. Na app Trading 212: **Definições › API (Beta)** › gerar chave com permissões só de leitura (*Account data* e *Portfolio*).
+2. No NestFund: **Definições › Ligações** › cola a API key e a secret.
+
+O NestFund só lê o resumo da conta e as posições — nunca cria ordens. A chave fica encriptada (AES-256-GCM); define `NESTFUND_SECRET` para usares a tua própria chave de encriptação. Se a ligação falhar, a app continua com os últimos valores.
+
+## Atualização automática com Watchtower
+
+A label `com.centurylinklabs.watchtower.enable=true` permite ao Watchtower atualizar o contentor sempre que sai uma nova imagem `latest`. Os dados mantêm-se e a base de dados é migrada automaticamente no arranque.
+
+## Desenvolvimento
 
 ```bash
-git tag v1.0.0
+npm install
+npm run dev     # http://localhost:777
+npm test
 ```
 
-```bash
-git push origin v1.0.0
-```
-
-## Expor com Cloudflare Tunnel
-
-Com o `cloudflared` já configurado, adiciona uma entrada de ingress a apontar para o NestFund:
-
-```yaml
-# config.yml do cloudflared
-ingress:
-  - hostname: nestfund.o-teu-dominio.pt
-    service: http://<ip-do-nas>:777   # ou http://nestfund:777 se o cloudflared estiver na mesma rede Docker
-  - service: http_status:404
-```
-
-Ou, no painel Zero Trust → Networks → Tunnels → *Public Hostname*: hostname `nestfund.o-teu-dominio.pt`, serviço `HTTP`, URL `<ip-do-nas>:777`.
-
-**Protege o acesso.** A app não tem contas de utilizador. Recomendado: **Cloudflare Access** (Zero Trust → Access → Applications → Self-hosted) com uma política que só permite o teu e-mail. Em alternativa (ou em complemento), define `BASIC_AUTH_USER` e `BASIC_AUTH_PASSWORD`. O endpoint `/api/health` fica sempre aberto para o healthcheck.
-
-Notas: mantém o cabeçalho `Host` original (não definas `httpHostHeader`), para as server actions do Next.js validarem a origem corretamente.
-
-## Estrutura
-
-```
-src/
-  app/            páginas (painel, orçamento, transações, objetivos, simuladores, carteira, histórico), API e server actions
-  components/     componentes reutilizáveis (UI, gráficos, formulários, contas, layout)
-  i18n/           sistema de tradução + locales/pt-PT.json e locales/en-US.json
-  lib/            cálculos puros (calc.ts), base de dados, repositório, CSV, datas, formatação, seed
-tests/            testes Vitest
-```
+Cada push para `main` publica `eazyeight/nestfund:latest` (amd64 + arm64). Uma tag `v1.2.0` publica também `1.2.0`.
 
 ## Licença
 
-Uso pessoal.
+Projeto pessoal de [@mwmiao](https://github.com/mwmiao). Feito com Next.js, Tailwind CSS e SQLite.

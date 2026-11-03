@@ -13,7 +13,9 @@
     "portfolio": "Portfolio",
     "history": "History",
     "categories": "Categories",
-    "more": "More"
+    "more": "More",
+    "setup": "Setup",
+    "settings": "Settings"
   },
   "common": {
     "save": "Save",
@@ -53,7 +55,8 @@
     "color": "Color",
     "kind": "Type",
     "actions": "Actions",
-    "quickAdd": "Log purchase"
+    "quickAdd": "Log purchase",
+    "noDataYet": "No data yet"
   },
   "dashboard": {
     "title": "Monthly dashboard",
@@ -81,7 +84,7 @@
     "seeAll": "See all",
     "goals": "Goals",
     "netWorth": "Tracked net worth",
-    "netWorthHint": "ETF + savings account (latest records)",
+    "netWorthHint": "Banco CTT, Revolut, Trading 212, Trade Republic and cash",
     "budget": "Budget",
     "spent": "Spent",
     "salaryReceived": "Salary received",
@@ -91,7 +94,21 @@
     "canSpend": "You can still spend",
     "canSpendHint": "This month's actual available amount, after fixed costs, ETF and savings",
     "houseFundHint": "{pct} of {target} · the emergency fund is filled first",
-    "transferred": "Transferred this month: {amount}"
+    "transferred": "Transferred this month: {amount}",
+    "actions": {
+      "expense": "Expense",
+      "transfer": "Transfer",
+      "balance": "Balance",
+      "budget": "Budget"
+    },
+    "quickActions": "Quick actions",
+    "thisMonth": "This month",
+    "income": "Income",
+    "spentOf": "{spent} spent of {total}",
+    "leisureRevolut": "Leisure (Revolut)",
+    "emptyBudgetTitle": "No budget yet",
+    "emptyBudgetHint": "Add your salary and fixed costs to see how much you can spend.",
+    "emptyBudgetAction": "Set up budget"
   },
   "budget": {
     "title": "Monthly budget",
@@ -132,7 +149,8 @@
     "transportAllowance": "Transport allowance (included in salary)",
     "annualBonus": "Possible annual bonus",
     "fixedNote": "Fixed expenses are counted automatically. If you also log them as transactions in the same category, they are not counted twice.",
-    "account": "Account"
+    "account": "Account",
+    "emptyItems": "No budget lines yet. Add fixed costs, ETF, savings and leisure here."
   },
   "tx": {
     "title": "Transactions",
@@ -196,7 +214,9 @@
     "anyAccount": "All accounts",
     "transferError": "For a transfer, pick a destination account different from the source.",
     "moreDetails": "More details",
-    "transferNote": "Transfers between accounts are not counted as spending."
+    "transferNote": "Transfers between accounts are not counted as spending.",
+    "emptyTitle": "No transactions yet",
+    "emptyHint": "Log your first purchase or expense — it takes a few seconds."
   },
   "categories": {
     "title": "Categories",
@@ -256,7 +276,10 @@
     },
     "account": "Linked account",
     "manual": "Manual amount",
-    "fromAccount": "Calculated from the {account} balance"
+    "fromAccount": "Calculated from the {account} balance",
+    "emptyTitle": "No goals yet",
+    "emptyHint": "Set your emergency fund and house down payment to track progress.",
+    "emptyAction": "Set goals"
   },
   "sim": {
     "title": "Simulators",
@@ -292,7 +315,9 @@
     "contributed": "Invested capital",
     "projectedValue": "Projected value",
     "gain": "Projected gain",
-    "etfWarning": "Warning: returns are not guaranteed. Markets can fall and you may lose money. This is an illustrative simulation without inflation, fees or taxes, and it is not financial advice."
+    "etfWarning": "Warning: returns are not guaranteed. Markets can fall and you may lose money. This is an illustrative simulation without inflation, fees or taxes, and it is not financial advice.",
+    "ratesAndTax": "Interest rates and tax",
+    "enterPrice": "Enter the house price to see the down payment and costs you need."
   },
   "portfolio": {
     "title": "Portfolio",
@@ -307,7 +332,7 @@
     "account": "Account",
     "history": "Records",
     "evolution": "Evolution",
-    "noBroker": "Values are entered manually — no broker integration in this version.",
+    "noBroker": "Values are entered manually. You can connect Trading 212 in Settings › Connections.",
     "investedHint": "For the savings account, invested means deposited capital."
   },
   "history": {
@@ -345,13 +370,111 @@
       "other": "Other accounts"
     },
     "balance": "Balance",
-    "thisMonth": "This month: +{in} / −{out}",
+    "thisMonth": "This month: {movements}",
     "planned": "Planned {planned} · transferred {done}",
     "leisureLeft": "Leisure spent {spent} of {budget}",
     "since": "Since the check-in on {date}",
-    "noCheckIn": "No balance recorded — record the current balance on the Portfolio page",
+    "noCheckIn": "No balance yet",
     "checkIn": "Record balance",
     "checkInHint": "Record an account's real balance on a date. Later movements are added automatically.",
     "estimatedInterest": "Estimated net interest/month"
+  },
+  "setup": {
+    "title": "Setup",
+    "subtitle": "Enter your real numbers. You can skip any step and come back whenever you like.",
+    "steps": {
+      "balances": "Balances",
+      "income": "Income",
+      "fixed": "Fixed costs",
+      "goals": "Goals"
+    },
+    "balancesHint": "How much is in each account today? Leave blank any you don’t want to fill in now.",
+    "investedHint": "Trading 212 — total invested (€, optional)",
+    "incomeHint": "Your monthly net salary and the meal card top-up.",
+    "salary": "Monthly net salary",
+    "fixedHint": "Costs that repeat every month: gym, phone, subscriptions…",
+    "fixedNamePlaceholder": "e.g. Gym",
+    "addRow": "Add row",
+    "goalsHint": "How much do you want to save for the emergency fund and the house down payment?",
+    "goalsAccountNote": "Both goals use the Trade Republic balance — the emergency fund is filled first.",
+    "skip": "Skip",
+    "saveContinue": "Save and continue",
+    "later": "Do this later",
+    "doneTitle": "You’re all set",
+    "doneHint": "Log purchases as they happen. You can set your monthly ETF investment and savings on the Budget page.",
+    "adjustBudget": "Adjust budget",
+    "cardTitle": "Set up NestFund",
+    "cardHint": "{n} quick steps left: balances, income, fixed costs and goals.",
+    "start": "Start",
+    "resume": "Continue",
+    "notNow": "Not now",
+    "sampleDetected": "This database still contains the sample data from the first version.",
+    "resetTitle": "Delete all data",
+    "resetHint": "Removes transactions, balances, budgets, goals, custom categories, attachments and the Trading 212 connection. Built-in categories and preferences are kept. This cannot be undone.",
+    "resetConfirm": "I understand all data will be deleted",
+    "resetButton": "Start from scratch",
+    "resetDone": "Data deleted. The app is ready for your real numbers."
+  },
+  "settings": {
+    "title": "Settings",
+    "connections": "Connections",
+    "general": "General"
+  },
+  "t212": {
+    "description": "Automatically updates your ETF value, invested capital and positions.",
+    "status": {
+      "connected": "Connected",
+      "error": "Sync error",
+      "off": "Not connected"
+    },
+    "lastSync": "Last sync",
+    "nextSync": "Next sync",
+    "key": "Key",
+    "env": "Account",
+    "envLive": "Live",
+    "envDemo": "Demo",
+    "apiKey": "API key",
+    "apiSecret": "API secret",
+    "apiSecretHint": "required for new keys",
+    "connect": "Connect Trading 212",
+    "replace": "Replace key",
+    "replaceTitle": "Replace the API key",
+    "connected": "Connected and first sync completed.",
+    "synced": "Synced.",
+    "syncNow": "Sync now",
+    "disconnect": "Disconnect",
+    "disconnectConfirm": "Remove the API key? Already synced history is kept.",
+    "fallback": "The app keeps using the last saved values.",
+    "positionsWarning": "The account summary synced, but positions could not be read. Check that the key has portfolio read permission.",
+    "step1": "In the Trading 212 app: Settings › API (Beta) › Generate API key.",
+    "step2": "Enable read permissions only: Account data and Portfolio. Do not enable Orders.",
+    "step3": "Paste the API key and API secret here.",
+    "securityStorage": "The key is validated and stored encrypted (AES-256-GCM); it is never shown or stored in plain text.",
+    "securityReadOnly": "NestFund only makes read requests (account summary and positions). It cannot place orders, buy or sell.",
+    "securitySchedule": "Syncs automatically every 6 hours. If it fails, the app keeps working with manual values.",
+    "errors": {
+      "auth": "Invalid key or secret.",
+      "forbidden": "The key has no read permission for this data.",
+      "rate_limit": "Trading 212 rate limit reached. Try again in a minute.",
+      "not_found": "Endpoint not found in the Trading 212 API.",
+      "network": "Could not reach Trading 212.",
+      "server": "Trading 212 responded with an error.",
+      "invalid_response": "Unexpected response from Trading 212.",
+      "blocked": "Request blocked: only reads are allowed.",
+      "not_connected": "Connect Trading 212 first.",
+      "too_soon": "Synced moments ago — wait a few seconds.",
+      "skipped": "Already up to date.",
+      "missing_key": "Enter the API key."
+    },
+    "portfolioSynced": "Trading 212 syncs automatically; the other accounts are entered manually.",
+    "lastSyncAt": "Synced via API on {date}.",
+    "connectCta": "Connect Trading 212 to update automatically",
+    "positions": "Trading 212 positions",
+    "instrument": "Instrument",
+    "quantity": "Quantity",
+    "averagePrice": "Average price",
+    "history": "Trading 212 daily history",
+    "totalValue": "Total value",
+    "investedCapital": "Invested capital"
   }
 }

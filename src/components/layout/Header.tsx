@@ -6,6 +6,9 @@ import { useI18n } from '@/i18n/client';
 import { NAV_ITEMS, isActive } from './nav';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { ThemeToggle } from './ThemeToggle';
+import { Icon } from './Icon';
+
+const GEAR = 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-2-1.2L14.5 3h-4l-.4 2.6a7.6 7.6 0 00-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2.4l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 002 1.2l.4 2.6h4l.4-2.6a7.6 7.6 0 002-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z';
 
 export function Header({ theme }: { theme: 'dark' | 'light' }) {
   const { t } = useI18n();
@@ -35,6 +38,9 @@ export function Header({ theme }: { theme: 'dark' | 'light' }) {
         <div className="ml-auto flex items-center gap-1.5">
           <LanguageSwitcher />
           <ThemeToggle theme={theme} />
+          <Link href="/settings" className="btn-ghost !p-2" title={t('nav.settings')} aria-label={t('nav.settings')}>
+            <Icon d={GEAR} className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </header>

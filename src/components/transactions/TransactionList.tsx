@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Dot, Empty } from '@/components/ui';
+import { Dot, EmptyState } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { formatDate } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';
@@ -19,7 +19,7 @@ export async function TransactionList({
   compact?: boolean;
 }) {
   const { t } = await getI18n();
-  if (!transactions.length) return <Empty>{t('tx.empty')}</Empty>;
+  if (!transactions.length) return <EmptyState title={t('tx.emptyTitle')} hint={t('tx.emptyHint')} action={{ href: '/transactions/new', label: t('common.quickAdd') }} />;
   const catById = new Map(categories.map((c) => [c.id, c]));
 
   // Group by date so the list reads like a bank statement.

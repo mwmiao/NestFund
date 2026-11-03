@@ -71,6 +71,7 @@ export function TransactionForm({
   merchants = [],
   subcategories = [],
   defaultAccount = 'ctt',
+  initialType,
   error,
 }: {
   categories: CategoryOption[];
@@ -80,10 +81,11 @@ export function TransactionForm({
   merchants?: string[];
   subcategories?: string[];
   defaultAccount?: AccountId;
+  initialType?: string;
   error?: string | null;
 }) {
   const { t } = useI18n();
-  const [type, setType] = useState<string>(transaction?.type ?? 'purchase');
+  const [type, setType] = useState<string>(transaction?.type ?? (TX_TYPES.includes(initialType as never) ? (initialType as string) : 'purchase'));
   const [account, setAccount] = useState<AccountId>(transaction?.account ?? defaultAccount);
   const [toAccount, setToAccount] = useState<AccountId | ''>(transaction?.toAccount ?? '');
   const [accountTouched, setAccountTouched] = useState(!!transaction);

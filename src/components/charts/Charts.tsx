@@ -39,9 +39,10 @@ function useMoney() {
 }
 
 const tooltipStyle = {
-  contentStyle: { background: '#18181b', border: '1px solid #3f3f46', borderRadius: 12, fontSize: 12, color: '#f4f4f5' },
-  itemStyle: { color: '#f4f4f5' },
-  labelStyle: { color: '#a1a1aa', marginBottom: 4 },
+  // Theme-aware: follows the light/dark design tokens.
+  contentStyle: { background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12, color: 'rgb(var(--ink))', boxShadow: '0 10px 30px -10px rgb(16 24 40 / 0.25)' },
+  itemStyle: { color: 'rgb(var(--ink))' },
+  labelStyle: { color: 'rgb(var(--subtle))', marginBottom: 4 },
 };
 
 
@@ -55,7 +56,7 @@ function hasValues(data: Record<string, string | number>[], keys: string[]) {
 function ChartEmpty({ height }: { height: number }) {
   const { t } = useI18n();
   return (
-    <div className="flex items-center justify-center rounded-xl border border-dashed border-zinc-300 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400" style={{ height }}>
+    <div className="flex items-center justify-center rounded-xl border border-dashed border-line text-sm text-subtle" style={{ height }}>
       {t('common.noDataYet')}
     </div>
   );
@@ -126,7 +127,8 @@ export function LinesChart({ data, xKey, series, height = 260 }: { data: Record<
       <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         {GRID}
         <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" minTickGap={24} />
-        <YAxis {...AXIS} width={56} tickFormatter={m.compact} />
+        {/* Balances: scale to the data range so movement is visible (not anchored at 0 €). */}
+        <YAxis {...AXIS} width={60} tickFormatter={m.compact} domain={['auto', 'auto']} />
         <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
         <Legend wrapperStyle={{ fontSize: 12 }} />
         {series.map((s) => (

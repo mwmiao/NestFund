@@ -14,7 +14,7 @@ export function ImportCsvForm() {
         name="file"
         accept=".csv,text/csv"
         required
-        className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm dark:file:bg-zinc-800 dark:file:text-zinc-200"
+        className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-raised file:px-3 file:py-2 file:text-sm file:text-ink"
       />
       <p className="muted text-xs">{t('tx.importHint')}</p>
       <button className="btn-secondary w-full" disabled={pending}>

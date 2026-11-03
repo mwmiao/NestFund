@@ -17,5 +17,15 @@ export function transactionFormOptions(t: TFunction) {
     .prepare("SELECT account FROM transactions WHERE type IN ('purchase','expense','payment') AND date >= date('now', '-30 days') GROUP BY account ORDER BY COUNT(*) DESC LIMIT 1")
     .get() as { account: string } | undefined;
   const defaultAccount: AccountId = recent && ACCOUNT_IDS.includes(recent.account as AccountId) ? (recent.account as AccountId) : 'ctt';
-  return { categories, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount };
+  // One-tap chips: the six categories used most for spending in the last 90 days.
+  const topCategoryIds = (
+    db
+      .prepare(
+        `SELECT t.category_id AS id FROM transactions t JOIN categories c ON c.id = t.category_id
+         WHERE t.type IN ('purchase','expense','payment') AND c.kind = 'expense' AND t.date >= date('now', '-90 days')
+         GROUP BY t.category_id ORDER BY COUNT(*) DESC LIMIT 6`,
+      )
+      .all() as { id: number }[]
+  ).map((r) => r.id);
+  return { categories, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds };
 }

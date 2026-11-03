@@ -19,7 +19,7 @@ function Message({ state, okKey }: { state: { ok: boolean; code?: string } | nul
   const { t } = useI18n();
   if (!state) return null;
   return (
-    <p role="status" className={`text-sm ${state.ok ? 'text-emerald-500' : 'text-red-500'}`}>
+    <p role="status" className={`text-sm ${state.ok ? 'text-positive' : 'text-negative'}`}>
       {state.ok ? t(okKey) : t(`t212.errors.${state.code ?? 'network'}`)}
     </p>
   );

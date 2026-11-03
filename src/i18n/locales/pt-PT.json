@@ -15,7 +15,8 @@
     "categories": "Categorias",
     "more": "Mais",
     "setup": "Configuração",
-    "settings": "Definições"
+    "settings": "Definições",
+    "tools": "Ferramentas"
   },
   "common": {
     "save": "Guardar",
@@ -56,10 +57,11 @@
     "kind": "Tipo",
     "actions": "Ações",
     "quickAdd": "Registar compra",
-    "noDataYet": "Ainda sem dados"
+    "noDataYet": "Ainda sem dados",
+    "yesterday": "Ontem"
   },
   "dashboard": {
-    "title": "Painel mensal",
+    "title": "Painel",
     "netIncome": "Rendimento líquido",
     "netIncomeHint": "Salário em duodécimos, inclui subsídio de transporte",
     "mealCard": "Cartão de refeição",
@@ -104,11 +106,21 @@
     "quickActions": "Ações rápidas",
     "thisMonth": "Este mês",
     "income": "Rendimento",
-    "spentOf": "{spent} gastos de {total}",
+    "spentOf": "{spent} em despesas variáveis, de {total} disponíveis",
     "leisureRevolut": "Lazer (Revolut)",
     "emptyBudgetTitle": "Orçamento por definir",
     "emptyBudgetHint": "Indica o teu salário e as despesas fixas para saberes quanto podes gastar.",
-    "emptyBudgetAction": "Definir orçamento"
+    "emptyBudgetAction": "Definir orçamento",
+    "spentMonth": "Gasto este mês",
+    "savedMonth": "Poupado este mês",
+    "ofWhichMeal": "inclui {amount} no cartão de refeição",
+    "ofPlanned": "de {amount} planeados",
+    "setIncome": "Indicar salário",
+    "leftThisMonth": "{amount} disponíveis este mês",
+    "investments": "Investimentos",
+    "noInvestments": "Sem dados de investimento",
+    "noInvestmentsHint": "Liga a Trading 212 ou regista o saldo manualmente na Carteira.",
+    "noSpendingYet": "Ainda não há despesas registadas este mês."
   },
   "budget": {
     "title": "Orçamento mensal",
@@ -150,7 +162,17 @@
     "annualBonus": "Bónus anual possível",
     "fixedNote": "As despesas fixas são contadas automaticamente. Se também as registares como transações na mesma categoria, não são contadas duas vezes.",
     "account": "Conta",
-    "emptyItems": "Ainda sem rubricas. Adiciona o salário em Configuração e as despesas fixas, ETF, poupança e lazer aqui."
+    "emptyItems": "Ainda sem rubricas. Adiciona o salário em Configuração e as despesas fixas, ETF, poupança e lazer aqui.",
+    "breakdown": "Ver distribuição",
+    "byCategory": "Por categoria",
+    "byCategoryHint": "Gasto real comparado com o limite mensal de cada categoria.",
+    "left": "Faltam {amount}",
+    "over": "{amount} acima do limite",
+    "noLimit": "Sem limite definido",
+    "noCategoryData": "Ainda sem despesas nem limites por categoria.",
+    "rangeHint": "Disponível com salário entre {min} e {max}",
+    "setLimits": "Definir limites",
+    "spentVsAvailable": "Gasto variável vs. disponível"
   },
   "tx": {
     "title": "Transações",
@@ -216,7 +238,15 @@
     "moreDetails": "Mais detalhes",
     "transferNote": "Transferências entre contas não contam como despesa.",
     "emptyTitle": "Ainda não há transações",
-    "emptyHint": "Regista a tua primeira compra ou despesa — demora poucos segundos."
+    "emptyHint": "Regista a tua primeira compra ou despesa — demora poucos segundos.",
+    "kinds": {
+      "spending": "Despesa",
+      "income": "Receita",
+      "transfer": "Transferência"
+    },
+    "spendType": "Tipo de despesa",
+    "importExport": "Importar e exportar",
+    "exportHint": "Descarrega as transações filtradas em CSV (abre no Excel ou Numbers)."
   },
   "categories": {
     "title": "Categorias",
@@ -279,7 +309,11 @@
     "fromAccount": "Calculado a partir do saldo de {account}",
     "emptyTitle": "Sem objetivos definidos",
     "emptyHint": "Define a reserva de emergência e a entrada para casa para acompanhares o progresso.",
-    "emptyAction": "Definir objetivos"
+    "emptyAction": "Definir objetivos",
+    "etaLabel": "Previsão",
+    "left": "Falta",
+    "perMonth": "Por mês",
+    "summary": "{saved} poupados de {target} no total"
   },
   "sim": {
     "title": "Simuladores",
@@ -333,7 +367,9 @@
     "history": "Registos",
     "evolution": "Evolução",
     "noBroker": "Valores introduzidos manualmente. Podes ligar a Trading 212 em Definições › Ligações.",
-    "investedHint": "Na conta remunerada, o investido é o capital depositado."
+    "investedHint": "Na conta remunerada, o investido é o capital depositado.",
+    "netOfTax": "líquido de IRS ({tax})",
+    "otherAccounts": "Contas do dia a dia"
   },
   "history": {
     "title": "Histórico",
@@ -464,7 +500,10 @@
       "not_connected": "Liga primeiro a Trading 212.",
       "too_soon": "Sincronizado há instantes — espera alguns segundos.",
       "skipped": "Já está atualizado.",
-      "missing_key": "Indica a API key."
+      "missing_key": "Indica a API key.",
+      "key_unreadable": "A chave guardada já não pode ser lida (a NESTFUND_SECRET mudou?). Cola a chave outra vez.",
+      "internal": "Ocorreu um erro interno ao guardar a sincronização.",
+      "in_progress": "Já está a decorrer uma sincronização."
     },
     "portfolioSynced": "Trading 212 sincronizada automaticamente; as restantes contas são introduzidas manualmente.",
     "lastSyncAt": "Sincronizado via API a {date}.",
@@ -475,6 +514,15 @@
     "averagePrice": "Preço médio",
     "history": "Histórico diário Trading 212",
     "totalValue": "Valor total",
-    "investedCapital": "Capital investido"
+    "investedCapital": "Capital investido",
+    "currencyNote": "A conta está em {currency}; os valores são mostrados sem conversão para euros.",
+    "freeCash": "Dinheiro por investir",
+    "manage": "Gerir ligação",
+    "manual": "Manual",
+    "stale": "Desatualizado",
+    "updatedRelative": "Atualizado {when}",
+    "waitingForYou": "A aguardar nova chave",
+    "needsAction": "As sincronizações automáticas estão em pausa até atualizares a chave.",
+    "willRetry": "Nova tentativa automática dentro de 30 minutos."
   }
 }

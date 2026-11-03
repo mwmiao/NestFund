@@ -13,7 +13,7 @@ export function LanguageSwitcher() {
   const router = useRouter();
   const [pending, start] = useTransition();
   return (
-    <div className="flex rounded-lg border border-zinc-200 p-0.5 text-xs dark:border-zinc-800" role="group" aria-label={t('common.language')}>
+    <div className="flex rounded-lg border border-line p-0.5 text-xs" role="group" aria-label={t('common.language')}>
       {LOCALES.map((l) => (
         <button
           key={l}
@@ -27,7 +27,7 @@ export function LanguageSwitcher() {
             })
           }
           className={`rounded-md px-2 py-1 font-medium transition ${
-            l === locale ? 'bg-brand-600 text-white' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+            l === locale ? 'bg-brand-600 text-white' : 'text-subtle hover:text-ink'
           }`}
         >
           {LABELS[l]}

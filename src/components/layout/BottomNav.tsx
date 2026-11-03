@@ -2,72 +2,79 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/i18n/client';
 import { Icon } from './Icon';
-import { NAV_ITEMS, isActive } from './nav';
+import { MOBILE_MORE, MOBILE_TABS, NAV_ICONS, isActive, type NavItem } from './nav';
 
-const PRIMARY = ['/', '/transactions', '/budget', '/goals'];
-const PLUS = 'M12 5v14M5 12h14';
-const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
-
-/** Mobile navigation with a central quick-add button for logging purchases fast. */
+/** Mobile/tablet navigation (below lg): 3 tabs, a central add button and a "More" sheet. */
 export function BottomNav() {
   const { t } = useI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const primary = NAV_ITEMS.filter((i) => PRIMARY.includes(i.href));
-  const secondary = NAV_ITEMS.filter((i) => !PRIMARY.includes(i.href));
+  useEffect(() => setOpen(false), [pathname]);
+  const moreActive = MOBILE_MORE.some((i) => isActive(pathname, i.href));
 
-  const item = (i: (typeof NAV_ITEMS)[number]) => (
-    <Link
-      key={i.href}
-      href={i.href}
-      onClick={() => setOpen(false)}
-      className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] ${
-        isActive(pathname, i.href) ? 'text-brand-500' : 'text-zinc-500 dark:text-zinc-400'
-      }`}
-    >
-      <Icon d={i.icon} />
-      {t(i.key)}
-    </Link>
-  );
+  const tab = (i: NavItem) => {
+    const active = isActive(pathname, i.href);
+    return (
+      <Link
+        key={i.href}
+        href={i.href}
+        aria-current={active ? 'page' : undefined}
+        className={`flex flex-1 flex-col items-center gap-1 pb-1.5 pt-2 text-[11px] font-medium ${active ? 'text-brand-500' : 'text-subtle'}`}
+      >
+        <Icon d={i.icon} className="h-[22px] w-[22px]" />
+        {t(i.key)}
+      </Link>
+    );
+  };
 
   return (
     <>
       {open && (
-        <div className="fixed inset-x-3 bottom-20 z-40 rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 md:hidden">
-          {secondary.map((i) => (
-            <Link key={i.href} href={i.href} onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              <Icon d={i.icon} /> {t(i.key)}
-            </Link>
-          ))}
-          <Link href="/transactions/categories" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <Icon d="M4 6h6v6H4zM14 6h6v6h-6zM4 16h6v4H4zM14 16h6v4h-6z" /> {t('nav.categories')}
-          </Link>
-          <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800">
-            <Icon d="M12 15a3 3 0 100-6 3 3 0 000 6zM4 12h2m12 0h2M12 4v2m0 12v2" /> {t('nav.settings')}
-          </Link>
-        </div>
+        <>
+          <button type="button" aria-label={t('common.close')} className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />
+          <div className="fixed inset-x-3 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-50 rounded-card border border-line bg-surface p-2 shadow-pop lg:hidden" role="menu">
+            <div className="grid grid-cols-3 gap-1">
+              {MOBILE_MORE.map((i) => (
+                <Link
+                  key={i.href}
+                  href={i.href}
+                  role="menuitem"
+                  className={`flex flex-col items-center gap-1.5 rounded-control px-2 py-3 text-center text-xs font-medium transition hover:bg-raised ${
+                    isActive(pathname, i.href) ? 'bg-raised text-ink' : 'text-subtle'
+                  }`}
+                >
+                  <Icon d={i.icon} className="h-[22px] w-[22px]" />
+                  {t(i.key)}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </>
       )}
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/95 md:hidden">
-        <div className="flex items-stretch">
-          {primary.slice(0, 2).map(item)}
-          <Link
-            href="/transactions/new"
-            onClick={() => setOpen(false)}
-            aria-label={t('common.quickAdd')}
-            className="mx-2 -mt-5 flex h-14 w-14 shrink-0 items-center justify-center self-start rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30"
-          >
-            <Icon d={PLUS} className="h-7 w-7" />
-          </Link>
-          {primary.slice(2).map(item)}
+      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-xl items-end">
+          {tab(MOBILE_TABS[0])}
+          {tab(MOBILE_TABS[1])}
+          <div className="flex flex-1 justify-center">
+            <Link
+              href="/transactions/new"
+              aria-label={t('common.quickAdd')}
+              className="-mt-6 mb-1.5 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop ring-4 ring-canvas transition active:scale-95"
+            >
+              <Icon d={NAV_ICONS.plus} className="h-7 w-7" />
+            </Link>
+          </div>
+          {tab(MOBILE_TABS[2])}
           <button
             type="button"
+            aria-expanded={open}
             onClick={() => setOpen((o) => !o)}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] ${open ? 'text-brand-500' : 'text-zinc-500 dark:text-zinc-400'}`}
+            className={`flex flex-1 flex-col items-center gap-1 pb-1.5 pt-2 text-[11px] font-medium ${open || moreActive ? 'text-brand-500' : 'text-subtle'}`}
           >
-            <Icon d={MORE} />
+            <Icon d={NAV_ICONS.more} className="h-[22px] w-[22px]" />
             {t('nav.more')}
           </button>
         </div>

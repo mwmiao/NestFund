@@ -3,15 +3,18 @@ import { deleteSnapshotAction, saveSnapshotAction } from '@/app/actions';
 import { AccountBadge } from '@/components/AccountBadge';
 import { LinesChart } from '@/components/charts/Charts';
 import { ConfirmButton } from '@/components/ConfirmButton';
-import { Card, Empty, Field, PageHeader, Stat } from '@/components/ui';
+import { Alert, Badge, Card, Empty, Field, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
-import { grossMonthlyInterest, INTEREST_TAX_RATE } from '@/lib/calc';
-import { formatDate, formatDateTime, todayISO } from '@/lib/dates';
+import { INTEREST_TAX_RATE, grossMonthlyInterest } from '@/lib/calc';
+import { formatDate, formatDateTime, formatRelative, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
+import { etfSummary } from '@/lib/portfolio';
 import { accountBalances, listSnapshots, materializeRecurring } from '@/lib/repo';
 import { getT212Status, listT212History } from '@/lib/t212';
 import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
+
+const dayMonth = (iso: string) => formatDate(iso).slice(0, 5);
 
 export default async function PortfolioPage() {
   const { t, locale } = await getI18n();
@@ -19,88 +22,195 @@ export default async function PortfolioPage() {
   materializeRecurring();
   const balances = accountBalances();
   const snapshots = listSnapshots();
-  const etf = balances.trading212;
-  const tr = balances.traderepublic;
-  const gain = etf.balance - etf.invested;
-  const growth = etf.invested > 0 ? gain / etf.invested : 0;
-  const netInterest = grossMonthlyInterest(tr.balance) * (1 - INTEREST_TAX_RATE);
   const t212 = getT212Status();
-  const t212History = t212.connected || t212.lastSyncAt ? listT212History(30) : [];
+  const etf = etfSummary(balances.trading212, t212);
+  const tr = balances.traderepublic;
+  const netInterest = grossMonthlyInterest(tr.balance) * (1 - INTEREST_TAX_RATE);
 
-  const series = (account: 'trading212' | 'traderepublic') =>
-    snapshots.filter((s) => s.account === account).map((s) => ({ label: formatDate(s.date).slice(3), value: s.value, invested: s.invested }));
-  const sectionTitle = (id: 'trading212' | 'traderepublic') => (
-    <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide" style={{ color: ACCOUNTS[id].color }}>
-      {accountName(id, t)} <span className="muted font-normal normal-case tracking-normal">· {t(`accounts.purpose.${id}`)}</span>
-    </h2>
+  // Daily API history when there is enough of it; manual check-ins otherwise.
+  const apiHistory = listT212History(365);
+  const etfChart =
+    apiHistory.length >= 2
+      ? apiHistory.map((h) => ({ label: dayMonth(h.date), value: h.totalValue, invested: h.invested }))
+      : snapshots.filter((s) => s.account === 'trading212').map((s) => ({ label: dayMonth(s.date), value: s.value, invested: s.invested }));
+  const trChart = snapshots.filter((s) => s.account === 'traderepublic').map((s) => ({ label: dayMonth(s.date), value: s.value }));
+
+  const syncBadge = !t212.connected ? null : t212.lastError ? (
+    <Badge tone="negative">{t('t212.status.error')}</Badge>
+  ) : t212.stale ? (
+    <Badge tone="caution">{t('t212.stale')}</Badge>
+  ) : (
+    <Badge tone="positive">{t('t212.status.connected')}</Badge>
   );
 
   return (
     <>
       <PageHeader title={t('portfolio.title')} subtitle={t212.connected ? t('t212.portfolioSynced') : t('portfolio.noBroker')} />
 
-      {sectionTitle('trading212')}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label={t('portfolio.value')} value={money(etf.balance)} hint={etf.since ? t('portfolio.lastUpdate', { date: formatDate(etf.since) }) : undefined} />
-        <Stat label={t('portfolio.invested')} value={money(etf.invested)} />
-        <Stat label={t('portfolio.unrealized')} value={formatMoney(gain, locale, { sign: true })} tone={gain >= 0 ? 'positive' : 'negative'} />
-        <Stat label={t('portfolio.growth')} value={formatPercent(growth, locale, 2)} tone={growth >= 0 ? 'positive' : 'negative'} />
-      </div>
-      <p className="muted mt-2 text-xs">
-        {t212.connected ? (
-          <>
-            {t212.lastError ? <span className="text-red-500">{t(`t212.errors.${t212.lastError.code}`)} · </span> : null}
-            {t212.lastSyncAt ? t('t212.lastSyncAt', { date: formatDateTime(t212.lastSyncAt, locale) }) : null}{' '}
-            <Link href="/settings" className="text-brand-500 hover:underline">
-              {t('settings.connections')}
+      {/* Trading 212 */}
+      <section className="card mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="eyebrow flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full" style={{ background: ACCOUNTS.trading212.color }} aria-hidden />
+              Trading 212 · {t('accounts.purpose.trading212')}
+            </div>
+            <div className="mt-2 text-[2.25rem] font-semibold leading-tight tracking-tight tabular-nums">{money(etf.value)}</div>
+            {etf.invested > 0 && (
+              <div className={`mt-1 text-sm font-medium tabular-nums ${etf.gain >= 0 ? 'text-positive' : 'text-negative'}`}>
+                {formatMoney(etf.gain, locale, { sign: true })} · {formatPercent(etf.growthPct, locale, 2)}
+              </div>
+            )}
+          </div>
+          <div className="text-right text-xs">
+            {syncBadge}
+            <div className="muted mt-1.5">
+              {etf.source === 'api' && etf.asOf
+                ? t('t212.updatedRelative', { when: formatRelative(etf.asOf, locale) })
+                : etf.asOf
+                  ? t('portfolio.lastUpdate', { date: formatDate(etf.asOf) })
+                  : t('accounts.noCheckIn')}
+            </div>
+            <Link href="/settings" className="link mt-1 inline-block !text-xs">
+              {t212.connected ? t('t212.manage') : t('t212.connectCta')}
             </Link>
-          </>
-        ) : (
-          <Link href="/settings" className="text-brand-500 hover:underline">
-            {t('t212.connectCta')}
-          </Link>
+          </div>
+        </div>
+
+        {t212.connected && t212.lastError && (
+          <div className="mt-4">
+            <Alert tone={t212.needsAction ? 'warning' : 'info'}>
+              <span className="font-medium">{t(`t212.errors.${t212.lastError.code}`)}</span> {t('t212.fallback')}
+            </Alert>
+          </div>
         )}
-      </p>
+        {etf.source === 'api' && etf.currency !== 'EUR' && <p className="mt-3 text-xs text-caution">{t('t212.currencyNote', { currency: etf.currency })}</p>}
+
+        <dl className="mt-5 grid grid-cols-2 gap-4 border-t border-line pt-4 text-sm sm:grid-cols-4">
+          <div>
+            <dt className="eyebrow">{t('t212.investedCapital')}</dt>
+            <dd className="mt-0.5 font-medium tabular-nums">{money(etf.invested)}</dd>
+          </div>
+          <div>
+            <dt className="eyebrow">{t('portfolio.unrealized')}</dt>
+            <dd className={`mt-0.5 font-medium tabular-nums ${etf.gain >= 0 ? 'text-positive' : 'text-negative'}`}>{formatMoney(etf.gain, locale, { sign: true })}</dd>
+          </div>
+          <div>
+            <dt className="eyebrow">{t('portfolio.growth')}</dt>
+            <dd className="mt-0.5 font-medium tabular-nums">{formatPercent(etf.growthPct, locale, 2)}</dd>
+          </div>
+          <div>
+            <dt className="eyebrow">{t('t212.freeCash')}</dt>
+            <dd className="mt-0.5 font-medium tabular-nums">{etf.source === 'api' ? money(etf.cash) : '—'}</dd>
+          </div>
+        </dl>
+
+        <div className="mt-5">
+          <div className="eyebrow mb-2">{t('portfolio.evolution')}</div>
+          <LinesChart
+            data={etfChart}
+            xKey="label"
+            height={220}
+            series={[
+              { key: 'value', name: t('t212.totalValue'), color: ACCOUNTS.trading212.color },
+              { key: 'invested', name: t('t212.investedCapital'), color: '#8b8b96' },
+            ]}
+          />
+        </div>
+      </section>
 
       {t212.positions.length > 0 && (
-        <Card title={t('t212.positions')} className="mt-4">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] text-sm">
-              <thead>
-                <tr className="muted text-left text-xs">
-                  <th className="pb-2 font-medium">{t('t212.instrument')}</th>
-                  <th className="pb-2 text-right font-medium">{t('t212.quantity')}</th>
-                  <th className="pb-2 text-right font-medium">{t('t212.averagePrice')}</th>
-                  <th className="pb-2 text-right font-medium">{t('portfolio.value')}</th>
-                  <th className="pb-2 text-right font-medium">{t('portfolio.unrealized')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {t212.positions.map((p) => (
-                  <tr key={p.ticker} className="table-row">
-                    <td className="py-2">
-                      <div className="font-medium">{p.name}</div>
-                      <div className="muted text-xs">{p.ticker}</div>
-                    </td>
-                    <td className="py-2 text-right tabular-nums">{p.quantity.toLocaleString(locale, { maximumFractionDigits: 4 })}</td>
-                    <td className="py-2 text-right tabular-nums">{Number.isFinite(p.averagePrice) ? p.averagePrice.toLocaleString(locale, { maximumFractionDigits: 2 }) : '—'}</td>
-                    <td className="py-2 text-right tabular-nums">{money(p.value)}</td>
-                    <td className={`py-2 text-right tabular-nums ${p.unrealized >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {formatMoney(p.unrealized, locale, { sign: true })}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <Card title={t('t212.positions')} subtitle={t212.lastSyncAt ? t('t212.lastSyncAt', { date: formatDateTime(t212.lastSyncAt, locale) }) : undefined} className="mb-4">
+          <ul className="divide-y divide-line/70">
+            {t212.positions.map((p) => (
+              <li key={p.ticker} className="flex items-center gap-3 py-3">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium">{p.name}</div>
+                  <div className="muted text-xs tabular-nums">
+                    {p.ticker} · {p.quantity.toLocaleString(locale, { maximumFractionDigits: 4 })} × {Number.isFinite(p.averagePrice) ? p.averagePrice.toLocaleString(locale, { maximumFractionDigits: 2 }) : '—'}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold tabular-nums">{money(p.value)}</div>
+                  <div className={`text-xs tabular-nums ${p.unrealized >= 0 ? 'text-positive' : 'text-negative'}`}>{formatMoney(p.unrealized, locale, { sign: true })}</div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
-      {t212History.length > 0 && (
-        <Card title={t('t212.history')} className="mt-4">
-          <div className="max-h-72 overflow-auto">
+      <div className="mb-4 grid gap-4 lg:grid-cols-2">
+        {/* Trade Republic */}
+        <Card title="Trade Republic" subtitle={t('accounts.purpose.traderepublic')}>
+          <div className="text-2xl font-semibold tabular-nums tracking-tight">{money(tr.balance)}</div>
+          <div className="muted mt-1 text-xs">{tr.since ? t('portfolio.lastUpdate', { date: formatDate(tr.since) }) : t('accounts.noCheckIn')}</div>
+          {tr.balance > 0 && (
+            <p className="mt-3 text-sm">
+              <span className="muted">{t('accounts.estimatedInterest')}: </span>
+              <span className="font-medium tabular-nums text-positive">{money(netInterest)}</span>
+              <span className="muted"> · {t('portfolio.netOfTax', { tax: formatPercent(INTEREST_TAX_RATE, locale, 0) })}</span>
+            </p>
+          )}
+          <div className="mt-4">
+            <LinesChart data={trChart} xKey="label" height={160} series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />
+          </div>
+        </Card>
+
+        {/* Day-to-day accounts */}
+        <Card title={t('portfolio.otherAccounts')}>
+          <ul className="divide-y divide-line/70">
+            {(['ctt', 'revolut', 'meal_card', 'cash'] as const).map((id) => (
+              <li key={id} className="flex items-center justify-between gap-3 py-3">
+                <span className="min-w-0">
+                  <AccountBadge id={id} label={accountName(id, t)} />
+                  <span className="muted mt-1 block truncate text-xs">{t(`accounts.purpose.${id}`)}</span>
+                </span>
+                <span className="text-sm font-semibold tabular-nums">{money(balances[id].balance)}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+
+      <details className="card mb-4 scroll-mt-20" id="check-in">
+        <summary className="section-title cursor-pointer select-none">{t('accounts.checkIn')}</summary>
+        <p className="muted mt-2 text-xs">{t('accounts.checkInHint')}</p>
+        <form action={saveSnapshotAction} className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Field label={t('portfolio.account')}>
+            <select name="account" className="input">
+              {ACCOUNT_IDS.map((a) => (
+                <option key={a} value={a}>
+                  {accountName(a, t)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t('common.date')}>
+            <input type="date" name="date" defaultValue={todayISO()} className="input" />
+          </Field>
+          <Field label={`${t('portfolio.value')} (€)`}>
+            <input name="value" required inputMode="decimal" className="input tabular-nums" />
+          </Field>
+          <Field label={`${t('portfolio.invested')} (€) · Trading 212`}>
+            <input name="invested" inputMode="decimal" className="input tabular-nums" />
+          </Field>
+          <Field label={t('common.notes')} className="sm:col-span-2">
+            <input name="notes" className="input" />
+          </Field>
+          <p className="muted text-xs sm:col-span-2">{t('portfolio.investedHint')}</p>
+          <div className="sm:col-span-2">
+            <button className="btn-primary">{t('common.save')}</button>
+          </div>
+        </form>
+      </details>
+
+      {apiHistory.length > 0 && (
+        <details className="card mb-4">
+          <summary className="section-title cursor-pointer select-none">{t('t212.history')}</summary>
+          <div className="mt-4 max-h-80 overflow-auto">
             <table className="w-full min-w-[34rem] text-sm">
-              <thead className="sticky top-0 bg-white dark:bg-zinc-900">
+              <thead className="sticky top-0 bg-surface">
                 <tr className="muted text-left text-xs">
                   <th className="pb-2 font-medium">{t('common.date')}</th>
                   <th className="pb-2 text-right font-medium">{t('t212.totalValue')}</th>
@@ -110,92 +220,32 @@ export default async function PortfolioPage() {
                 </tr>
               </thead>
               <tbody>
-                {[...t212History].reverse().map((h) => (
+                {[...apiHistory].reverse().map((h) => (
                   <tr key={h.date} className="table-row">
                     <td className="py-2">{formatDate(h.date)}</td>
                     <td className="py-2 text-right tabular-nums">{money(h.totalValue)}</td>
                     <td className="py-2 text-right tabular-nums">{money(h.invested)}</td>
-                    <td className={`py-2 text-right tabular-nums ${h.unrealized >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>{formatMoney(h.unrealized, locale, { sign: true })}</td>
+                    <td className={`py-2 text-right tabular-nums ${h.unrealized >= 0 ? 'text-positive' : 'text-negative'}`}>{formatMoney(h.unrealized, locale, { sign: true })}</td>
                     <td className="py-2 text-right tabular-nums">{formatPercent(h.growthPct, locale, 2)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </Card>
+        </details>
       )}
 
-      <div className="mt-5">{sectionTitle('traderepublic')}</div>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label={t('portfolio.value')} value={money(tr.balance)} hint={tr.since ? t('portfolio.lastUpdate', { date: formatDate(tr.since) }) : undefined} />
-        <Stat label={t('accounts.estimatedInterest')} value={money(netInterest)} hint={t('sim.netNote', { tax: formatPercent(INTEREST_TAX_RATE, locale, 0) }).split('.')[0] + '.'} tone="positive" />
-      </div>
-
-      <h2 className="mb-2 mt-5 text-sm font-semibold uppercase tracking-wide text-zinc-500">{t('accounts.title')}</h2>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {(['ctt', 'revolut', 'meal_card', 'cash'] as const).map((id) => (
-          <Stat key={id} label={accountName(id, t)} value={money(balances[id].balance)} hint={t(`accounts.purpose.${id}`)} />
-        ))}
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <div className="space-y-4 lg:col-span-2">
-          <Card title={`${t('portfolio.evolution')} · ${accountName('trading212', t)}`}>
-            <LinesChart
-              data={series('trading212')}
-              xKey="label"
-              series={[
-                { key: 'value', name: t('portfolio.value'), color: ACCOUNTS.trading212.color },
-                { key: 'invested', name: t('portfolio.invested'), color: '#6366f1' },
-              ]}
-            />
-          </Card>
-          <Card title={`${t('portfolio.evolution')} · ${accountName('traderepublic', t)}`}>
-            <LinesChart data={series('traderepublic')} xKey="label" series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />
-          </Card>
-        </div>
-        <Card title={t('accounts.checkIn')} id="check-in">
-          <p className="muted mb-3 text-xs">{t('accounts.checkInHint')}</p>
-          <form action={saveSnapshotAction} className="space-y-3">
-            <Field label={t('portfolio.account')}>
-              <select name="account" className="input">
-                {ACCOUNT_IDS.map((a) => (
-                  <option key={a} value={a}>
-                    {accountName(a, t)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t('common.date')}>
-              <input type="date" name="date" defaultValue={todayISO()} className="input" />
-            </Field>
-            <Field label={`${t('portfolio.value')} (€)`}>
-              <input name="value" required inputMode="decimal" className="input tabular-nums" />
-            </Field>
-            <Field label={`${t('portfolio.invested')} (€) · ${accountName('trading212', t)}`}>
-              <input name="invested" inputMode="decimal" className="input tabular-nums" />
-            </Field>
-            <p className="muted text-xs">{t('portfolio.investedHint')}</p>
-            <Field label={t('common.notes')}>
-              <input name="notes" className="input" />
-            </Field>
-            <button className="btn-primary w-full">{t('common.save')}</button>
-          </form>
-        </Card>
-      </div>
-
-      <Card title={t('portfolio.history')} className="mt-4">
+      <details className="card">
+        <summary className="section-title cursor-pointer select-none">{t('portfolio.history')}</summary>
         {snapshots.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[32rem] text-sm">
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[30rem] text-sm">
               <thead>
                 <tr className="muted text-left text-xs">
                   <th className="pb-2 font-medium">{t('common.date')}</th>
                   <th className="pb-2 font-medium">{t('portfolio.account')}</th>
                   <th className="pb-2 text-right font-medium">{t('portfolio.value')}</th>
-                  <th className="pb-2 text-right font-medium">{t('portfolio.invested')}</th>
-                  <th className="pb-2 text-right font-medium">{t('portfolio.unrealized')}</th>
-                  <th>
+                  <th className="pb-2 font-medium">
                     <span className="sr-only">{t('common.actions')}</span>
                   </th>
                 </tr>
@@ -206,12 +256,9 @@ export default async function PortfolioPage() {
                     <td className="py-2">{formatDate(s.date)}</td>
                     <td className="py-2">
                       <AccountBadge id={s.account} label={accountName(s.account, t)} size="xs" />
+                      {s.notes === 'auto:trading212' && <span className="muted ml-1.5 text-[11px]">API</span>}
                     </td>
                     <td className="py-2 text-right tabular-nums">{money(s.value)}</td>
-                    <td className="py-2 text-right tabular-nums">{s.account === 'trading212' ? money(s.invested) : '—'}</td>
-                    <td className={`py-2 text-right tabular-nums ${s.value - s.invested >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                      {s.account === 'trading212' ? formatMoney(s.value - s.invested, locale, { sign: true }) : '—'}
-                    </td>
                     <td className="py-2 text-right">
                       <form action={deleteSnapshotAction}>
                         <input type="hidden" name="id" value={s.id} />
@@ -226,7 +273,7 @@ export default async function PortfolioPage() {
         ) : (
           <Empty>{t('common.noData')}</Empty>
         )}
-      </Card>
+      </details>
     </>
   );
 }

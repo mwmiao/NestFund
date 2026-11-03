@@ -51,7 +51,7 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
         <NumberField label={t('sim.initialBalance')} value={v.initialBalance} onChange={set('initialBalance')} suffix="€" />
         <NumberField label={t('sim.horizon')} value={v.years} onChange={set('years')} />
       </div>
-      <details className="rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+      <details className="rounded-xl border border-line px-3 py-2">
         <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('sim.ratesAndTax')}</summary>
         <div className="mt-3 grid grid-cols-2 gap-3 pb-2 md:grid-cols-4">
           <NumberField label={t('sim.tier1Rate')} value={v.tier1Rate} onChange={set('tier1Rate')} suffix="%" />
@@ -62,7 +62,7 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
       </details>
 
       {v.housePrice <= 0 ? (
-        <p className="rounded-xl bg-zinc-100 px-4 py-6 text-center text-sm text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">{t('sim.enterPrice')}</p>
+        <p className="rounded-xl bg-raised px-4 py-6 text-center text-sm text-subtle">{t('sim.enterPrice')}</p>
       ) : (
         <>
 
@@ -72,13 +72,13 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
           [t('sim.purchaseCosts'), result.purchaseCosts],
           [t('sim.target'), result.target],
         ].map(([label, value]) => (
-          <div key={label as string} className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800/60">
+          <div key={label as string} className="rounded-xl bg-raised p-3">
             <div className="muted text-xs">{label}</div>
             <div className="mt-1 font-semibold tabular-nums">{money(value as number)}</div>
           </div>
         ))}
       </div>
-      <p className={`text-sm font-medium ${monthsToTarget != null ? 'text-emerald-500' : 'text-amber-500'}`}>
+      <p className={`text-sm font-medium ${monthsToTarget != null ? 'text-positive' : 'text-caution'}`}>
         {monthsToTarget != null
           ? t('sim.reachedIn', { n: monthsToTarget, month: monthLabel(addMonths(start, monthsToTarget), locale) })
           : t('sim.notReached')}
@@ -101,7 +101,7 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
               <tr key={p.years} className="table-row">
                 <td className="py-2">{t('sim.after', { n: p.years })}</td>
                 <td className="py-2 text-right tabular-nums">{money(p.deposited)}</td>
-                <td className="py-2 text-right tabular-nums text-emerald-500">{money(p.interest)}</td>
+                <td className="py-2 text-right tabular-nums text-positive">{money(p.interest)}</td>
                 <td className="py-2 text-right font-semibold tabular-nums">{money(p.balance)}</td>
               </tr>
             ))}

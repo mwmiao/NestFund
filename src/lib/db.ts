@@ -17,7 +17,7 @@ export function getDb(): Database.Database {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);
-  migrate(db);
+  migrate(db, { backupDir: path.join(DATA_DIR, 'backups') });
   const seeded = db.prepare("SELECT value FROM settings WHERE key = 'seeded'").get();
   // First run: only the zeroed profile and the built-in categories; everything else is entered by the user.
   if (!seeded) db.transaction(() => seedDatabase(db))();

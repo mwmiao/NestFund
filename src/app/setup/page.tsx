@@ -62,10 +62,10 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                 href={`/setup?step=${s}`}
                 aria-current={current ? 'step' : undefined}
                 className={`flex flex-col gap-1 rounded-xl border px-2 py-2 text-xs transition sm:px-3 ${
-                  current ? 'border-brand-500 bg-brand-500/10' : 'border-zinc-200 dark:border-zinc-800'
+                  current ? 'border-brand-500 bg-brand-500/10' : 'border-line '
                 }`}
               >
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-600 text-white' : 'bg-zinc-200 dark:bg-zinc-800'}`}>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-600 text-white' : 'bg-raised '}`}>
                   {done ? '✓' : i + 1}
                 </span>
                 <span className="truncate font-medium">{t(`setup.steps.${s}`)}</span>
@@ -110,7 +110,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Card title={t('setup.steps.fixed')}>
           <p className="muted mb-4 text-sm">{t('setup.fixedHint')}</p>
           {fixed.length > 0 && (
-            <ul className="mb-4 divide-y divide-zinc-100 rounded-xl border border-zinc-200 text-sm dark:divide-zinc-800 dark:border-zinc-800">
+            <ul className="mb-4 divide-y divide-line/70 rounded-xl border border-line text-sm">
               {fixed.map((i) => (
                 <li key={i.id} className="flex items-center justify-between px-3 py-2">
                   <span>{i.name}</span>
@@ -175,15 +175,15 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         </form>
       )}
 
-      <section id="reset" className="mt-10 rounded-2xl border border-red-300 p-4 dark:border-red-900/60 sm:p-5">
-        <h2 className="text-sm font-semibold text-red-600 dark:text-red-400">{t('setup.resetTitle')}</h2>
+      <section id="reset" className="mt-10 rounded-card border border-negative/30 p-4 sm:p-5">
+        <h2 className="text-sm font-semibold text-negative">{t('setup.resetTitle')}</h2>
         <p className="muted mt-1 text-sm">{t('setup.resetHint')}</p>
         <form action={resetDataAction} className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="confirm" value="1" required className="h-4 w-4 accent-red-600" />
+            <input type="checkbox" name="confirm" value="1" required className="h-4 w-4 accent-rose-600" />
             {t('setup.resetConfirm')}
           </label>
-          <ConfirmButton className="btn border border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40">
+          <ConfirmButton className="btn border border-negative/40 text-negative hover:bg-negative/10">
             {t('setup.resetButton')}
           </ConfirmButton>
         </form>

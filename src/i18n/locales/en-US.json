@@ -15,7 +15,8 @@
     "categories": "Categories",
     "more": "More",
     "setup": "Setup",
-    "settings": "Settings"
+    "settings": "Settings",
+    "tools": "Tools"
   },
   "common": {
     "save": "Save",
@@ -56,10 +57,11 @@
     "kind": "Type",
     "actions": "Actions",
     "quickAdd": "Log purchase",
-    "noDataYet": "No data yet"
+    "noDataYet": "No data yet",
+    "yesterday": "Yesterday"
   },
   "dashboard": {
-    "title": "Monthly dashboard",
+    "title": "Overview",
     "netIncome": "Net income",
     "netIncomeHint": "Salary paid in twelfths, transport allowance included",
     "mealCard": "Meal card",
@@ -104,11 +106,21 @@
     "quickActions": "Quick actions",
     "thisMonth": "This month",
     "income": "Income",
-    "spentOf": "{spent} spent of {total}",
+    "spentOf": "{spent} variable spending, of {total} available",
     "leisureRevolut": "Leisure (Revolut)",
     "emptyBudgetTitle": "No budget yet",
     "emptyBudgetHint": "Add your salary and fixed costs to see how much you can spend.",
-    "emptyBudgetAction": "Set up budget"
+    "emptyBudgetAction": "Set up budget",
+    "spentMonth": "Spent this month",
+    "savedMonth": "Saved this month",
+    "ofWhichMeal": "incl. {amount} on the meal card",
+    "ofPlanned": "of {amount} planned",
+    "setIncome": "Add your salary",
+    "leftThisMonth": "{amount} left this month",
+    "investments": "Investments",
+    "noInvestments": "No investment data yet",
+    "noInvestmentsHint": "Connect Trading 212 or record the balance manually on the Portfolio page.",
+    "noSpendingYet": "No spending logged this month yet."
   },
   "budget": {
     "title": "Monthly budget",
@@ -150,7 +162,17 @@
     "annualBonus": "Possible annual bonus",
     "fixedNote": "Fixed expenses are counted automatically. If you also log them as transactions in the same category, they are not counted twice.",
     "account": "Account",
-    "emptyItems": "No budget lines yet. Add fixed costs, ETF, savings and leisure here."
+    "emptyItems": "No budget lines yet. Add fixed costs, ETF, savings and leisure here.",
+    "breakdown": "Show breakdown",
+    "byCategory": "By category",
+    "byCategoryHint": "Actual spending compared with each category's monthly limit.",
+    "left": "{amount} left",
+    "over": "{amount} over the limit",
+    "noLimit": "No limit set",
+    "noCategoryData": "No category spending or limits yet.",
+    "rangeHint": "Available with a salary between {min} and {max}",
+    "setLimits": "Set limits",
+    "spentVsAvailable": "Variable spending vs. available"
   },
   "tx": {
     "title": "Transactions",
@@ -216,7 +238,15 @@
     "moreDetails": "More details",
     "transferNote": "Transfers between accounts are not counted as spending.",
     "emptyTitle": "No transactions yet",
-    "emptyHint": "Log your first purchase or expense — it takes a few seconds."
+    "emptyHint": "Log your first purchase or expense — it takes a few seconds.",
+    "kinds": {
+      "spending": "Expense",
+      "income": "Income",
+      "transfer": "Transfer"
+    },
+    "spendType": "Expense type",
+    "importExport": "Import and export",
+    "exportHint": "Download the filtered transactions as CSV (opens in Excel or Numbers)."
   },
   "categories": {
     "title": "Categories",
@@ -279,7 +309,11 @@
     "fromAccount": "Calculated from the {account} balance",
     "emptyTitle": "No goals yet",
     "emptyHint": "Set your emergency fund and house down payment to track progress.",
-    "emptyAction": "Set goals"
+    "emptyAction": "Set goals",
+    "etaLabel": "Projected",
+    "left": "Left",
+    "perMonth": "Per month",
+    "summary": "{saved} saved of {target} in total"
   },
   "sim": {
     "title": "Simulators",
@@ -333,7 +367,9 @@
     "history": "Records",
     "evolution": "Evolution",
     "noBroker": "Values are entered manually. You can connect Trading 212 in Settings › Connections.",
-    "investedHint": "For the savings account, invested means deposited capital."
+    "investedHint": "For the savings account, invested means deposited capital.",
+    "netOfTax": "net of tax ({tax})",
+    "otherAccounts": "Everyday accounts"
   },
   "history": {
     "title": "History",
@@ -464,7 +500,10 @@
       "not_connected": "Connect Trading 212 first.",
       "too_soon": "Synced moments ago — wait a few seconds.",
       "skipped": "Already up to date.",
-      "missing_key": "Enter the API key."
+      "missing_key": "Enter the API key.",
+      "key_unreadable": "The stored key can no longer be read (did NESTFUND_SECRET change?). Paste the key again.",
+      "internal": "An internal error occurred while saving the sync.",
+      "in_progress": "A sync is already running."
     },
     "portfolioSynced": "Trading 212 syncs automatically; the other accounts are entered manually.",
     "lastSyncAt": "Synced via API on {date}.",
@@ -475,6 +514,15 @@
     "averagePrice": "Average price",
     "history": "Trading 212 daily history",
     "totalValue": "Total value",
-    "investedCapital": "Invested capital"
+    "investedCapital": "Invested capital",
+    "currencyNote": "The account is in {currency}; values are shown without converting to euros.",
+    "freeCash": "Uninvested cash",
+    "manage": "Manage connection",
+    "manual": "Manual",
+    "stale": "Out of date",
+    "updatedRelative": "Updated {when}",
+    "waitingForYou": "Waiting for a new key",
+    "needsAction": "Automatic syncs are paused until you update the key.",
+    "willRetry": "Retrying automatically in 30 minutes."
   }
 }

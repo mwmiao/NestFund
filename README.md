@@ -35,7 +35,7 @@ O NestFund é um painel de finanças pessoais self-hosted. Planeia o salário, r
   <img src="docs/screenshots/quick-add.png" alt="Registar uma compra" width="270" />
 </div>
 
-<p align="center"><img src="docs/screenshots/simulators.png" alt="Simulador de entrada para casa" width="900" /></p>
+<p align="center"><img src="docs/screenshots/portfolio.png" alt="Carteira com Trading 212" width="900" /></p>
 
 > O NestFund mostra simulações e registos — não é aconselhamento financeiro.
 
@@ -48,11 +48,9 @@ services:
     container_name: nestfund
     restart: unless-stopped
     ports:
-      - "777:777"
+      - "7777:7777"
     environment:
       TZ: Europe/Lisbon
-    sysctls:
-      - net.ipv4.ip_unprivileged_port_start=0
     volumes:
       - nestfund-data:/data
     labels:
@@ -66,20 +64,22 @@ volumes:
 docker compose up -d
 ```
 
-Abre `http://<ip-do-servidor>:777` e segue a **Configuração** para introduzir os teus saldos, salário, despesas fixas e objetivos. Podes saltar e voltar mais tarde.
+Abre `http://<ip-do-servidor>:7777` e segue a **Configuração** para introduzir os teus saldos, salário, despesas fixas e objetivos. Podes saltar e voltar mais tarde.
 
 Os dados (SQLite e anexos) ficam no volume `/data`. Para um backup, copia `nestfund.db` com o contentor parado.
 
-## Porto 777 e Cloudflare Tunnel
+## Porto 7777 e Cloudflare Tunnel
 
-A app escuta no porto **777**. Para mudar o porto no anfitrião, altera só o lado esquerdo: `"8080:777"`.
+A app escuta no porto **7777**. Para mudar o porto no anfitrião, altera só o lado esquerdo: `"8080:7777"`.
+
+> **A atualizar de uma versão com o porto 777?** Usa `"7777:7777"` e `PORT: 7777` no compose e aponta o Cloudflare Tunnel para `:7777`. Se o teu compose define `PORT: 777`, a app continua nesse porto até o alterares.
 
 Para expor com o Cloudflare Tunnel, adiciona um *Public Hostname* (Zero Trust → Networks → Tunnels):
 
 | Campo | Valor |
 |---|---|
 | Hostname | `nestfund.o-teu-dominio.pt` |
-| Serviço | `HTTP` → `<ip-do-servidor>:777` |
+| Serviço | `HTTP` → `<ip-do-servidor>:7777` |
 
 A app não tem contas de utilizador — protege-a com **Cloudflare Access** (política só para o teu e-mail). Em alternativa, define `BASIC_AUTH_USER` e `BASIC_AUTH_PASSWORD`.
 
@@ -98,7 +98,7 @@ A label `com.centurylinklabs.watchtower.enable=true` permite ao Watchtower atual
 
 ```bash
 npm install
-npm run dev     # http://localhost:777
+npm run dev     # http://localhost:7777
 npm test
 ```
 

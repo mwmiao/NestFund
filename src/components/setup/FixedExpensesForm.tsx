@@ -13,7 +13,7 @@ export function FixedExpensesForm({ categories, skipHref }: { categories: { id: 
   return (
     <form action={setupFixedAction} className="space-y-3">
       {rows.map((key, i) => (
-        <div key={key} className="grid grid-cols-[1fr_6.5rem] gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800 sm:grid-cols-[1.5fr_7rem_1fr_1fr]">
+        <div key={key} className="grid grid-cols-[1fr_6.5rem] gap-2 rounded-xl border border-line p-3 sm:grid-cols-[1.5fr_7rem_1fr_1fr]">
           <input name="name" placeholder={t('setup.fixedNamePlaceholder')} aria-label={`${t('common.name')} ${i + 1}`} className="input" />
           <input name="amount" inputMode="decimal" placeholder="0,00 €" aria-label={`${t('common.amount')} ${i + 1}`} className="input tabular-nums" />
           <select name="categoryId" defaultValue="" aria-label={t('tx.category')} className="input">

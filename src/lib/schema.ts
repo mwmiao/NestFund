@@ -1,4 +1,6 @@
 import type Database from 'better-sqlite3';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // SQLite schema in its latest shape. Changes to existing databases go through MIGRATIONS below.
 export const SCHEMA = `
@@ -111,10 +113,18 @@ export const MIGRATIONS: string[] = [
   'ALTER TABLE snapshots ADD COLUMN created_at TEXT',
 ];
 
-export function migrate(db: Database.Database) {
+export function migrate(db: Database.Database, opts: { backupDir?: string } = {}) {
   const version = db.pragma('user_version', { simple: true }) as number;
   // version 0 = database just created from SCHEMA, which is already the latest shape.
-  if (version > 0) {
+  const pending = version > 0 && version <= MIGRATIONS.length;
+  if (pending) {
+    // Safety net: a full copy of the database is taken before any schema change is applied.
+    if (opts.backupDir) {
+      fs.mkdirSync(opts.backupDir, { recursive: true });
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const file = path.join(opts.backupDir, `nestfund-v${version}-before-migration-${stamp}.db`);
+      db.prepare('VACUUM INTO ?').run(file);
+    }
     db.transaction(() => {
       for (let v = version; v <= MIGRATIONS.length; v++) db.exec(MIGRATIONS[v - 1]);
     })();

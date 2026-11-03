@@ -20,11 +20,20 @@ interface StoredState {
   keyHint?: string; // last 4 characters, to recognise the key
   lastSyncAt?: string; // ISO, last successful sync
   lastAttemptAt?: string; // ISO, last attempt (success or failure)
-  lastError?: { code: T212ErrorCode; status?: number; at: string } | null;
+  lastError?: { code: T212SyncErrorCode; status?: number; at: string } | null;
   positionsError?: T212ErrorCode | null;
   metrics?: T212Metrics;
   positions?: T212Position[];
+  syncStartedAt?: string | null; // cross-process lock (scheduler and "Sync now" may run in different module instances)
 }
+
+/** API errors plus local ones: the stored key cannot be decrypted, or NestFund itself failed. */
+export type T212SyncErrorCode = T212ErrorCode | 'key_unreadable' | 'internal';
+
+/** Errors only the user can fix (new key / permissions): no automatic retries until they act. */
+const NEEDS_USER_ACTION: ReadonlySet<T212SyncErrorCode> = new Set(['auth', 'forbidden', 'key_unreadable']);
+const LOCK_TTL_MS = 2 * 60 * 1000;
+const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
 
 /** What the UI may see: never the key or secret. */
 export interface T212Status {
@@ -33,8 +42,12 @@ export interface T212Status {
   keyHint: string | null;
   hasSecret: boolean;
   lastSyncAt: string | null;
+  /** When the next automatic attempt is due; null when it waits for the user (e.g. invalid key). */
   nextSyncAt: string | null;
   lastError: StoredState['lastError'];
+  needsAction: boolean;
+  /** Last successful sync is older than 24 hours. */
+  stale: boolean;
   positionsError: T212ErrorCode | null;
   metrics: T212Metrics | null;
   positions: T212Position[];
@@ -83,17 +96,30 @@ function credentials(state: StoredState): T212Credentials | null {
   }
 }
 
+function nextAttemptAt(s: StoredState): number | null {
+  if (!s.apiKey) return null;
+  if (s.lastError && NEEDS_USER_ACTION.has(s.lastError.code)) return null;
+  const lastSync = s.lastSyncAt ? Date.parse(s.lastSyncAt) : 0;
+  const lastAttempt = s.lastAttemptAt ? Date.parse(s.lastAttemptAt) : 0;
+  return s.lastError ? Math.max(lastSync + T212_SYNC_INTERVAL_MS, lastAttempt + RETRY_AFTER_ERROR_MS) : lastSync + T212_SYNC_INTERVAL_MS;
+}
+
 export function getT212Status(): T212Status {
   const s = readState();
   const connected = !!s.apiKey;
+  // A stored key that can no longer be decrypted is surfaced instead of failing silently.
+  const lastError = connected && !credentials(s) ? { code: 'key_unreadable' as const, at: s.lastAttemptAt ?? new Date().toISOString() } : (s.lastError ?? null);
+  const next = nextAttemptAt({ ...s, lastError });
   return {
     connected,
     env: s.env,
     keyHint: s.keyHint ?? null,
     hasSecret: !!s.apiSecret,
     lastSyncAt: s.lastSyncAt ?? null,
-    nextSyncAt: connected && s.lastSyncAt ? new Date(Date.parse(s.lastSyncAt) + T212_SYNC_INTERVAL_MS).toISOString() : null,
-    lastError: s.lastError ?? null,
+    nextSyncAt: next ? new Date(next).toISOString() : null,
+    lastError,
+    needsAction: !!lastError && NEEDS_USER_ACTION.has(lastError.code),
+    stale: connected && !!s.lastSyncAt && Date.now() - Date.parse(s.lastSyncAt) > STALE_AFTER_MS,
     positionsError: s.positionsError ?? null,
     metrics: s.metrics ?? null,
     positions: s.positions ?? [],
@@ -148,47 +174,68 @@ function recordSync(m: T212Metrics, at: string) {
 
 let syncing: Promise<T212SyncResult> | null = null;
 
-export type T212SyncResult = { ok: true } | { ok: false; code: T212ErrorCode | 'not_connected' | 'too_soon' | 'skipped' };
+export type T212SyncResult = { ok: true } | { ok: false; code: T212SyncErrorCode | 'not_connected' | 'too_soon' | 'skipped' | 'in_progress' };
+
+/** Takes the cross-process sync lock atomically; false if another sync holds a fresh lock. */
+function acquireLock(): boolean {
+  const db = getDb();
+  return db.transaction(() => {
+    const s = readState();
+    if (s.syncStartedAt && Date.now() - Date.parse(s.syncStartedAt) < LOCK_TTL_MS) return false;
+    writeState({ ...s, syncStartedAt: new Date().toISOString() });
+    return true;
+  }).immediate();
+}
 
 /**
- * Runs a read-only sync. `force` is the "Sync now" button; otherwise it only runs when the
- * last success is older than 6 hours. Failures are recorded and never touch manual data.
+ * Runs a read-only sync. `force` is the "Sync now" button; otherwise it runs when the last
+ * success is 6 hours old (30 minutes after a temporary error; never on its own after an invalid
+ * key). Failures only update the connection status: manual data and last values are untouched.
  */
 export async function syncT212({ force = false } = {}): Promise<T212SyncResult> {
   if (syncing) return syncing;
   const state = readState();
+  if (!state.apiKey) return { ok: false, code: 'not_connected' };
   const creds = credentials(state);
-  if (!creds) return { ok: false, code: 'not_connected' };
+  if (!creds) {
+    writeState({ ...state, lastError: { code: 'key_unreadable', at: new Date().toISOString() } });
+    return { ok: false, code: 'key_unreadable' };
+  }
   const now = Date.now();
   const lastAttempt = state.lastAttemptAt ? Date.parse(state.lastAttemptAt) : 0;
-  const lastSync = state.lastSyncAt ? Date.parse(state.lastSyncAt) : 0;
   if (now - lastAttempt < MIN_MANUAL_INTERVAL_MS) return { ok: false, code: 'too_soon' };
-  if (!force && (now - lastSync < T212_SYNC_INTERVAL_MS || (state.lastError && now - lastAttempt < RETRY_AFTER_ERROR_MS))) {
-    return { ok: false, code: 'skipped' };
-  }
+  const due = nextAttemptAt(state);
+  if (!force && (due === null || now < due)) return { ok: false, code: 'skipped' };
+  if (!acquireLock()) return { ok: false, code: 'in_progress' };
 
   syncing = (async (): Promise<T212SyncResult> => {
     const at = new Date().toISOString();
+    let result: T212SyncResult;
     try {
       const snap = await fetchT212(creds);
       recordSync(snap.metrics, at);
+      const current = readState();
       writeState({
-        ...readState(),
+        ...current,
         lastAttemptAt: at,
         lastSyncAt: at,
         lastError: null,
         metrics: snap.metrics,
-        positions: snap.positions ?? readState().positions ?? [],
+        positions: snap.positions ?? current.positions ?? [],
         positionsError: snap.positionsError,
       });
-      return { ok: true };
+      result = { ok: true };
     } catch (err) {
-      const code: T212ErrorCode = err instanceof T212Error ? err.code : 'network';
+      // T212Error = the API said no; anything else is a problem inside NestFund (e.g. disk), not the network.
+      const code: T212SyncErrorCode = err instanceof T212Error ? err.code : 'internal';
+      if (!(err instanceof T212Error)) console.error('[trading212] sync failed:', err);
       writeState({ ...readState(), lastAttemptAt: at, lastError: { code, status: err instanceof T212Error ? err.status : undefined, at } });
-      return { ok: false, code };
+      result = { ok: false, code };
     } finally {
+      writeState({ ...readState(), syncStartedAt: null });
       syncing = null;
     }
+    return result;
   })();
   return syncing;
 }
@@ -199,7 +246,7 @@ export async function connectT212(input: T212Credentials): Promise<T212SyncResul
   try {
     snap = await fetchT212(input);
   } catch (err) {
-    return { ok: false, code: err instanceof T212Error ? err.code : 'network' };
+    return { ok: false, code: err instanceof T212Error ? err.code : 'internal' };
   }
   const key = encryptionKey();
   const at = new Date().toISOString();

@@ -4,18 +4,15 @@ services:
     container_name: nestfund
     restart: unless-stopped
     ports:
-      - "${NESTFUND_PORT:-777}:777"
+      - "${NESTFUND_PORT:-7777}:7777"
     # Optional values come from a .env file next to this file (see .env.example).
     environment:
-      PORT: 777
+      PORT: 7777
       DATA_DIR: /data
       TZ: ${TZ:-Europe/Lisbon}
       NESTFUND_SECRET: ${NESTFUND_SECRET:-}
       BASIC_AUTH_USER: ${BASIC_AUTH_USER:-}
       BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-}
-    # Lets the non-root container user listen on port 777 (< 1024) on older Docker engines.
-    sysctls:
-      - net.ipv4.ip_unprivileged_port_start=0
     volumes:
       # SQLite database and uploaded attachments.
       - nestfund-data:/data

@@ -113,3 +113,54 @@ describe('Trading 212 connection and sync', () => {
     expect(await t212.syncT212({ force: true })).toEqual({ ok: false, code: 'not_connected' });
   });
 });
+
+describe('Trading 212 error handling', () => {
+  const ageAttempt = () => {
+    const state = JSON.parse(rawSettings());
+    state.lastAttemptAt = new Date(Date.now() - 60 * 60_000).toISOString();
+    state.lastSyncAt = new Date(Date.now() - 7 * 60 * 60_000).toISOString(); // due for a scheduled sync
+    db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
+  };
+
+  it('stops automatic retries after an invalid key until the user acts', async () => {
+    respond = (url) => json(url.endsWith('/summary') ? SUMMARY : POSITIONS);
+    expect(await t212.connectT212({ env: 'live', apiKey: 'KEY2-wxyz', apiSecret: 'S' })).toEqual({ ok: true });
+    ageAttempt();
+    respond = () => json({}, 401);
+    expect(await t212.syncT212()).toEqual({ ok: false, code: 'auth' });
+    const s = t212.getT212Status();
+    expect(s.needsAction).toBe(true);
+    expect(s.nextSyncAt).toBeNull();
+    ageAttempt();
+    const state = JSON.parse(rawSettings());
+    state.lastError = { code: 'auth', at: new Date().toISOString() };
+    db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
+    fetchMock.mockClear();
+    expect(await t212.syncT212()).toEqual({ ok: false, code: 'skipped' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('does not run two syncs at once (cross-process lock)', async () => {
+    ageAttempt();
+    const state = JSON.parse(rawSettings());
+    state.lastError = null;
+    state.syncStartedAt = new Date().toISOString();
+    db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
+    expect(await t212.syncT212({ force: true })).toEqual({ ok: false, code: 'in_progress' });
+  });
+
+  it('reports a key that can no longer be decrypted instead of failing silently', async () => {
+    ageAttempt();
+    const state = JSON.parse(rawSettings());
+    state.syncStartedAt = null;
+    state.apiKey = 'v1:' + Buffer.from('garbage-garbage-garbage-garbage!').toString('base64');
+    db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
+    expect(t212.getT212Status()).toMatchObject({ connected: true, needsAction: true, lastError: { code: 'key_unreadable' } });
+    expect(await t212.syncT212({ force: true })).toEqual({ ok: false, code: 'key_unreadable' });
+  });
+
+  it('never touches manual balances or other accounts', () => {
+    const before = db.getDb().prepare("SELECT COUNT(*) n FROM snapshots WHERE account != 'trading212' OR notes IS NOT ?").get(t212.T212_SNAPSHOT_NOTE);
+    expect(before).toEqual({ n: 0 });
+  });
+});

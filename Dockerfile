@@ -20,7 +20,7 @@ WORKDIR /app
 ARG APP_VERSION=dev
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
-    PORT=777 \
+    PORT=7777 \
     HOSTNAME=0.0.0.0 \
     DATA_DIR=/data \
     APP_VERSION=${APP_VERSION}
@@ -41,9 +41,9 @@ COPY --from=builder --chown=node:node /app/node_modules/file-uri-to-path ./node_
 RUN mkdir -p /data/uploads && chown -R node:node /data
 VOLUME ["/data"]
 USER node
-EXPOSE 777
+EXPOSE 7777
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||777)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||7777)+'/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["node", "server.js"]

@@ -52,9 +52,12 @@ export function formatDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+/** "Novembro de 2026" (long) or "nov. 2026" (short — pt-PT would otherwise print "11/2026"). */
 export function monthLabel(month: string, locale: string, style: 'long' | 'short' = 'long'): string {
   const [y, m] = month.split('-').map(Number);
-  const label = new Intl.DateTimeFormat(locale, { month: style, year: 'numeric' }).format(new Date(y, m - 1, 1));
+  const date = new Date(y, m - 1, 1);
+  if (style === 'short') return `${new Intl.DateTimeFormat(locale, { month: 'short' }).format(date)} ${y}`;
+  const label = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(date);
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
@@ -78,4 +81,15 @@ export function formatDateTime(iso: string, locale: string): string {
     minute: '2-digit',
     timeZone: process.env.TZ || 'Europe/Lisbon',
   }).format(new Date(iso));
+}
+
+/** "há 2 h" / "2 hr. ago" — for sync times and other recent events. */
+export function formatRelative(iso: string, locale: string, now = Date.now()): string {
+  const diff = (Date.parse(iso) - now) / 1000;
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+  const abs = Math.abs(diff);
+  if (abs < 60) return rtf.format(0, 'minute');
+  if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
+  if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
+  return rtf.format(Math.round(diff / 86400), 'day');
 }

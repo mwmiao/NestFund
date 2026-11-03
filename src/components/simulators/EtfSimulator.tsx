@@ -34,10 +34,10 @@ export function EtfSimulator({ defaults }: { defaults: { monthlyContribution: nu
       <div className="grid grid-cols-3 gap-3">
         {[
           [t('sim.contributed'), last.contributed, ''],
-          [t('sim.projectedValue'), last.value, 'text-emerald-500'],
+          [t('sim.projectedValue'), last.value, 'text-positive'],
           [t('sim.gain'), last.value - last.contributed, ''],
         ].map(([label, value, cls]) => (
-          <div key={label as string} className="rounded-xl bg-zinc-100 p-3 dark:bg-zinc-800/60">
+          <div key={label as string} className="rounded-xl bg-raised p-3">
             <div className="muted text-xs">{label}</div>
             <div className={`mt-1 font-semibold tabular-nums ${cls}`}>{money(value as number)}</div>
           </div>

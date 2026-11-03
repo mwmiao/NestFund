@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
+import '@fontsource-variable/inter';
 import './globals.css';
-import { Header } from '@/components/layout/Header';
 import { BottomNav } from '@/components/layout/BottomNav';
+import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n } from '@/i18n/server';
 
@@ -10,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'NestFund',
-  description: 'Personal finance planner and expense tracker',
+  description: 'Personal finance dashboard for budgeting, expense tracking, savings goals and long-term investing.',
   icons: { icon: '/icon.svg' },
   manifest: '/manifest.webmanifest',
 };
@@ -18,7 +20,11 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#09090b',
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: dark)', color: '#0b0b0d' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f6f7' },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,9 +34,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={theme === 'dark' ? 'dark' : ''}>
       <body className="min-h-screen">
         <I18nProvider locale={locale}>
+          <Sidebar theme={theme} />
           <Header theme={theme} />
-          <main className="mx-auto max-w-6xl px-4 pb-28 pt-5 sm:px-6 md:pb-12">{children}</main>
-          <footer className="muted mx-auto hidden max-w-6xl px-6 pb-8 text-xs md:block">{t('app.disclaimer')}</footer>
+          <div className="lg:pl-60">
+            <main className="mx-auto max-w-5xl px-4 pb-32 pt-5 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">{children}</main>
+            <footer className="muted mx-auto hidden max-w-5xl px-10 pb-8 text-xs lg:block">{t('app.disclaimer')}</footer>
+          </div>
           <BottomNav />
         </I18nProvider>
       </body>

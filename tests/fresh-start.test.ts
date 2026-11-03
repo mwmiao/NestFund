@@ -110,3 +110,32 @@ describe('migration of a v1.0.0 database', () => {
     expect(db.pragma('user_version', { simple: true })).toBe(MIGRATIONS.length + 1);
   });
 });
+
+describe('backup before migration', () => {
+  it('copies the whole database before applying pending migrations, and keeps all data', async () => {
+    const fsMod = await import('node:fs');
+    const os = await import('node:os');
+    const pathMod = await import('node:path');
+    const dir = fsMod.mkdtempSync(pathMod.join(os.tmpdir(), 'nf-mig-'));
+    const file = pathMod.join(dir, 'nestfund.db');
+    const db = new Database(file);
+    db.exec(SCHEMA.replace(/notes TEXT,\n  created_at TEXT\n\);/, 'notes TEXT\n);'));
+    db.pragma('user_version = 1');
+    db.prepare("INSERT INTO transactions (date, amount, type, description, account, payment_method) VALUES ('2026-11-01', 1234, 'purchase', 'real data', 'ctt', 'card')").run();
+
+    migrate(db, { backupDir: pathMod.join(dir, 'backups') });
+
+    const backups = fsMod.readdirSync(pathMod.join(dir, 'backups'));
+    expect(backups).toHaveLength(1);
+    const copy = new Database(pathMod.join(dir, 'backups', backups[0]), { readonly: true });
+    expect(copy.prepare('SELECT description FROM transactions').get()).toEqual({ description: 'real data' });
+    expect(copy.pragma('user_version', { simple: true })).toBe(1);
+    copy.close();
+    expect(db.prepare('SELECT COUNT(*) n FROM transactions').get()).toEqual({ n: 1 });
+
+    migrate(db, { backupDir: pathMod.join(dir, 'backups') }); // nothing pending: no new backup
+    expect(fsMod.readdirSync(pathMod.join(dir, 'backups'))).toHaveLength(1);
+    db.close();
+    fsMod.rmSync(dir, { recursive: true, force: true });
+  });
+});

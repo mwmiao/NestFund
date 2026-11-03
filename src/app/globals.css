@@ -2,12 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------- design tokens */
 @layer base {
+  :root {
+    --canvas: 246 246 247;
+    --surface: 255 255 255;
+    --raised: 241 241 243;
+    --line: 228 228 231;
+    --ink: 24 24 27;
+    --subtle: 101 101 110;
+    /* semantic: calm, not alarmist */
+    /* AA contrast on white (≥ 4.5:1) */
+    --positive: 4 120 87;
+    --caution: 180 83 9;
+    --negative: 190 18 60;
+    --info: 3 105 161;
+    /* progress-bar fills: lighter than text colours so bars stay calm */
+    --bar-positive: 16 185 129;
+    --bar-caution: 245 158 11;
+    --bar-negative: 244 114 133;
+    color-scheme: light;
+  }
+  .dark {
+    --canvas: 11 11 13;
+    --surface: 21 21 24;
+    --raised: 31 31 35;
+    --line: 42 42 48;
+    --ink: 240 240 242;
+    --subtle: 157 157 168;
+    --positive: 52 211 153;
+    --caution: 251 191 36;
+    --negative: 251 113 133;
+    --info: 56 189 248;
+    --bar-positive: 52 211 153;
+    --bar-caution: 251 191 36;
+    --bar-negative: 251 113 133;
+    color-scheme: dark;
+  }
+
   html {
     -webkit-tap-highlight-color: transparent;
+    font-feature-settings: 'cv11', 'ss01';
   }
   body {
-    @apply bg-zinc-50 text-zinc-900 antialiased dark:bg-zinc-950 dark:text-zinc-100;
+    @apply bg-canvas text-ink antialiased;
   }
   input,
   select,
@@ -18,37 +56,65 @@
   input[type='date']::-webkit-calendar-picker-indicator {
     @apply dark:invert;
   }
+  /* One visible, consistent focus style for keyboard users. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-500/70 ring-offset-2 ring-offset-canvas;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
 }
 
+/* ---------------------------------------------------------------- components */
 @layer components {
   .card {
-    @apply rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-5;
+    /* min-w-0: cards never force a grid/flex column wider than the screen (long text truncates instead). */
+    @apply min-w-0 rounded-card border border-line bg-surface p-4 shadow-card dark:shadow-none sm:p-5;
   }
   .input {
-    @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100;
+    @apply w-full rounded-control border border-line bg-surface px-3 py-2.5 text-ink outline-none transition placeholder:text-subtle/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 disabled:opacity-60 dark:bg-canvas;
   }
   .label {
-    @apply mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400;
+    @apply mb-1.5 block text-xs font-medium text-subtle;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-1.5 rounded-control px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white hover:bg-brand-500;
+    @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-500;
   }
   .btn-secondary {
-    @apply btn border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800;
+    @apply btn border border-line bg-surface text-ink hover:bg-raised;
   }
   .btn-danger {
-    @apply btn text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40;
+    @apply btn text-negative hover:bg-negative/10;
   }
   .btn-ghost {
-    @apply btn text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800;
+    @apply btn text-subtle hover:bg-raised hover:text-ink;
   }
   .muted {
-    @apply text-zinc-500 dark:text-zinc-400;
+    @apply text-subtle;
   }
   .table-row {
-    @apply border-b border-zinc-100 last:border-0 dark:border-zinc-800;
+    @apply border-b border-line/70 last:border-0;
+  }
+  /* Section heading inside cards and pages: sentence case, calm. */
+  .section-title {
+    @apply text-[0.95rem] font-semibold text-ink;
+  }
+  .eyebrow {
+    @apply text-xs font-medium text-subtle;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-medium text-subtle transition hover:text-ink;
+  }
+  .chip-active {
+    @apply border-transparent bg-ink text-canvas hover:text-canvas;
+  }
+  .link {
+    @apply text-sm font-medium text-brand-600 hover:underline dark:text-brand-400;
+  }
+  .skeleton {
+    @apply animate-pulse rounded-control bg-raised;
   }
 }

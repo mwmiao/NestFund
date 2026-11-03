@@ -110,9 +110,9 @@ export default async function HistoryPage() {
                   <td className="py-2 text-right tabular-nums">{money(s.income)}</td>
                   <td className="py-2 text-right tabular-nums">{money(s.fixed)}</td>
                   <td className="py-2 text-right tabular-nums">{money(s.manualSpent)}</td>
-                  <td className="py-2 text-right tabular-nums text-emerald-500">{money(s.savingsTotal)}</td>
+                  <td className="py-2 text-right tabular-nums text-positive">{money(s.savingsTotal)}</td>
                   <td className="py-2 text-right tabular-nums">{formatPercent(s.savingsRate, locale)}</td>
-                  <td className={`py-2 text-right tabular-nums ${s.realAvailable < 0 ? 'text-red-500' : ''}`}>{money(s.realAvailable)}</td>
+                  <td className={`py-2 text-right tabular-nums ${s.realAvailable < 0 ? 'text-negative' : ''}`}>{money(s.realAvailable)}</td>
                 </tr>
               ))}
             </tbody>

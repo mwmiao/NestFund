@@ -3,10 +3,15 @@
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { saveTransactionAction } from '@/app/actions';
-import { Field } from '@/components/ui';
+import { Field, Spinner } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { accountName } from '@/lib/labels';
-import { ACCOUNTS, ACCOUNT_IDS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, type AccountId, type Transaction } from '@/lib/types';
+import { ACCOUNTS, ACCOUNT_IDS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
+
+type Kind = 'spending' | 'income' | 'transfer';
+const KINDS: Kind[] = ['spending', 'income', 'transfer'];
+const SPEND_TYPES: TxType[] = ['purchase', 'expense', 'payment'];
+const kindOf = (type: TxType): Kind => (type === 'income' || type === 'transfer' ? type : 'spending');
 
 export interface CategoryOption {
   id: number;
@@ -31,8 +36,8 @@ const SUGGESTED_ACCOUNT: Record<string, AccountId> = {
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn-primary w-full py-3 sm:w-auto sm:py-2" disabled={pending}>
-      {pending ? '…' : label}
+    <button type="submit" className="btn-primary flex-1 sm:flex-none" disabled={pending}>
+      {pending ? <Spinner /> : label}
     </button>
   );
 }
@@ -52,7 +57,7 @@ function AccountChips({ name, value, onChange, exclude }: { name: string; value:
             role="radio"
             aria-checked={active}
             onClick={() => onChange(a)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? 'text-white' : 'border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300'}`}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? 'text-white' : 'border-line text-subtle hover:text-ink'}`}
             style={active ? { background: color, borderColor: color } : undefined}
           >
             {accountName(a, t)}
@@ -72,6 +77,7 @@ export function TransactionForm({
   subcategories = [],
   defaultAccount = 'ctt',
   initialType,
+  topCategoryIds = [],
   error,
 }: {
   categories: CategoryOption[];
@@ -82,15 +88,27 @@ export function TransactionForm({
   subcategories?: string[];
   defaultAccount?: AccountId;
   initialType?: string;
+  topCategoryIds?: number[];
   error?: string | null;
 }) {
   const { t } = useI18n();
-  const [type, setType] = useState<string>(transaction?.type ?? (TX_TYPES.includes(initialType as never) ? (initialType as string) : 'purchase'));
+  const initial = transaction?.type ?? (TX_TYPES.includes(initialType as never) ? (initialType as TxType) : 'purchase');
+  // Purchase / expense / payment behave the same; the main toggle is spending · income · transfer.
+  const [kind, setKind] = useState<Kind>(kindOf(initial));
+  const [spendType, setSpendType] = useState<TxType>(isSpending(initial) ? initial : 'purchase');
+  const type: TxType = kind === 'spending' ? spendType : kind;
+  const [categoryId, setCategoryId] = useState<string>(transaction?.categoryId ? String(transaction.categoryId) : '');
   const [account, setAccount] = useState<AccountId>(transaction?.account ?? defaultAccount);
   const [toAccount, setToAccount] = useState<AccountId | ''>(transaction?.toAccount ?? '');
   const [accountTouched, setAccountTouched] = useState(!!transaction);
   const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
   const isTransfer = type === 'transfer';
+  const topCategories = topCategoryIds.map((id) => categories.find((c) => c.id === id)).filter((c): c is CategoryOption => !!c);
+  const pickCategory = (value: string) => {
+    setCategoryId(value);
+    const key = categories.find((c) => String(c.id) === value)?.key;
+    if (!accountTouched && !isTransfer && key && SUGGESTED_ACCOUNT[key]) setAccount(SUGGESTED_ACCOUNT[key]);
+  };
   const hasDetails = !!(transaction && (transaction.subcategory || transaction.notes || transaction.attachment || transaction.recurring));
 
   return (
@@ -99,25 +117,28 @@ export function TransactionForm({
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="type" value={type} />
 
-      {error === 'transfer' && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">{t('tx.transferError')}</p>}
+      {error === 'transfer' && (
+        <p role="alert" className="rounded-control border border-negative/30 bg-negative/10 px-3 py-2 text-sm">
+          {t('tx.transferError')}
+        </p>
+      )}
 
-      <div className="-mx-1 flex gap-1 overflow-x-auto rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800/60">
-        {TX_TYPES.map((tp) => (
+      <div className="grid grid-cols-3 gap-1 rounded-control bg-raised p-1" role="radiogroup" aria-label={t('tx.type')}>
+        {KINDS.map((k) => (
           <button
-            key={tp}
+            key={k}
             type="button"
-            aria-pressed={type === tp}
-            onClick={() => setType(tp)}
-            className={`flex-1 whitespace-nowrap rounded-lg px-2.5 py-2 text-xs font-medium transition sm:text-sm ${
-              type === tp ? 'bg-white shadow-sm dark:bg-zinc-900' : 'text-zinc-500 dark:text-zinc-400'
-            }`}
+            role="radio"
+            aria-checked={kind === k}
+            onClick={() => setKind(k)}
+            className={`truncate rounded-[0.6rem] px-1 py-2 text-[13px] font-medium transition sm:text-sm ${kind === k ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
           >
-            {t(`tx.types.${tp}`)}
+            {t(`tx.kinds.${k}`)}
           </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-[1fr_auto] gap-3">
+      <div>
         <Field label={`${t('common.amount')} (€)`}>
           <input
             name="amount"
@@ -127,12 +148,9 @@ export function TransactionForm({
             placeholder="0,00"
             pattern="[0-9.,\s]*[0-9][0-9.,\s]*"
             defaultValue={transaction ? String(transaction.amount).replace('.', ',') : ''}
-            className="input text-2xl font-semibold tabular-nums sm:text-xl"
+            className="input !py-3 text-3xl font-semibold tabular-nums tracking-tight sm:text-2xl"
             autoFocus={!transaction}
           />
-        </Field>
-        <Field label={t('common.date')}>
-          <input type="date" name="date" required defaultValue={transaction?.date ?? today} className="input" />
         </Field>
       </div>
 
@@ -140,16 +158,25 @@ export function TransactionForm({
         <input name="description" required defaultValue={transaction?.description ?? ''} className="input" />
       </Field>
 
-      <Field label={t('tx.category')}>
-        <select
-          name="categoryId"
-          defaultValue={transaction?.categoryId ?? ''}
-          className="input"
-          onChange={(e) => {
-            const key = categories.find((c) => String(c.id) === e.target.value)?.key;
-            if (!accountTouched && !isTransfer && key && SUGGESTED_ACCOUNT[key]) setAccount(SUGGESTED_ACCOUNT[key]);
-          }}
-        >
+      <div>
+        <span className="label">{t('tx.category')}</span>
+        {topCategories.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {topCategories.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={categoryId === String(c.id)}
+                onClick={() => pickCategory(String(c.id))}
+                className={`chip ${categoryId === String(c.id) ? 'chip-active' : ''}`}
+              >
+                <span className="h-2 w-2 rounded-full" style={{ background: c.color }} aria-hidden />
+                {c.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <select name="categoryId" value={categoryId} aria-label={t('tx.category')} className="input" onChange={(e) => pickCategory(e.target.value)}>
           <option value="">{t('tx.noCategory')}</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>
@@ -157,7 +184,7 @@ export function TransactionForm({
             </option>
           ))}
         </select>
-      </Field>
+      </div>
 
       <div>
         <span className="label">{isTransfer ? t('tx.fromAccount') : t('tx.account')}</span>
@@ -179,18 +206,34 @@ export function TransactionForm({
         </div>
       )}
 
-      <Field label={t('tx.merchant')}>
-        <input name="merchant" list="merchants" defaultValue={transaction?.merchant ?? ''} className="input" />
-        <datalist id="merchants">
-          {merchants.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={t('common.date')}>
+          <input type="date" name="date" required defaultValue={transaction?.date ?? today} className="input" />
+        </Field>
+        <Field label={t('tx.merchant')}>
+          <input name="merchant" list="merchants" defaultValue={transaction?.merchant ?? ''} className="input" />
+          <datalist id="merchants">
+            {merchants.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+        </Field>
+      </div>
 
-      <details open={hasDetails} className="rounded-xl border border-zinc-200 px-3 py-2 dark:border-zinc-800">
+      <details open={hasDetails} className="rounded-control border border-line px-3 py-2">
         <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('tx.moreDetails')}</summary>
         <div className="mt-3 space-y-4 pb-2">
+          {kind === 'spending' && (
+            <Field label={t('tx.spendType')}>
+              <select value={spendType} onChange={(e) => setSpendType(e.target.value as TxType)} className="input">
+                {SPEND_TYPES.map((tp) => (
+                  <option key={tp} value={tp}>
+                    {t(`tx.types.${tp}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t('tx.paymentMethod')}>
               <select name="paymentMethod" defaultValue={transaction?.paymentMethod ?? (isTransfer ? 'transfer' : 'card')} key={isTransfer ? 'tr' : 'x'} className="input">
@@ -224,11 +267,11 @@ export function TransactionForm({
                 type="file"
                 name="attachment"
                 accept="image/*,application/pdf"
-                className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-100 file:px-3 file:py-2 file:text-sm dark:file:bg-zinc-800 dark:file:text-zinc-200"
+                className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-raised file:px-3 file:py-2 file:text-sm file:text-ink"
               />
               {transaction?.attachment && (
                 <div className="mt-2 flex items-center gap-3 text-xs">
-                  <a href={`/api/attachments/${encodeURIComponent(transaction.attachment)}`} target="_blank" rel="noreferrer" className="text-brand-500 hover:underline">
+                  <a href={`/api/attachments/${encodeURIComponent(transaction.attachment)}`} target="_blank" rel="noreferrer" className="link">
                     {t('tx.attachmentCurrent')}
                   </a>
                   <label className="flex items-center gap-1">
@@ -259,8 +302,8 @@ export function TransactionForm({
         </div>
       </details>
 
-      <div className="sticky bottom-[4.5rem] -mx-4 flex flex-col-reverse gap-2 border-t border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 sm:static sm:mx-0 sm:flex-row sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
-        <a href={back} className="btn-secondary">
+      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] -mx-4 flex gap-2 border-t border-line bg-surface/95 px-4 py-2.5 backdrop-blur sm:static sm:mx-0 sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
+        <a href={back} className="btn-ghost">
           {t('common.cancel')}
         </a>
         <SubmitButton label={t('common.save')} />

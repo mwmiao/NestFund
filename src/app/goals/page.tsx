@@ -1,6 +1,6 @@
 import { deleteGoalAction, saveGoalAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
-import { Card, EmptyState, Field, PageHeader, ProgressBar } from '@/components/ui';
+import { Badge, Card, EmptyState, Field, PageHeader, ProgressBar } from '@/components/ui';
 import type { TFunction } from '@/i18n/config';
 import { getI18n } from '@/i18n/server';
 import { goalProgress } from '@/lib/calc';
@@ -51,7 +51,7 @@ function GoalForm({ goal, t }: { goal?: Goal; t: TFunction }) {
         <input type="month" name="targetDate" defaultValue={goal?.targetDate ?? ''} className="input" />
       </Field>
       <Field label={t('common.color')}>
-        <input type="color" name="color" defaultValue={goal?.color ?? '#10b981'} className="h-10 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-transparent dark:border-zinc-700" />
+        <input type="color" name="color" defaultValue={goal?.color ?? '#10b981'} className="h-10 w-14 cursor-pointer rounded-lg border border-line bg-transparent" />
       </Field>
       <div className="col-span-2 flex justify-end gap-2 sm:col-span-1">
         {goal && <ConfirmButton formAction={deleteGoalAction}>{t('common.delete')}</ConfirmButton>}
@@ -67,9 +67,15 @@ export default async function GoalsPage() {
   const goals = listGoals();
   const now = currentMonth();
 
+  const total = goals.reduce((sum, g) => sum + g.current, 0);
+  const totalTarget = goals.reduce((sum, g) => sum + g.target, 0);
+
   return (
     <>
-      <PageHeader title={t('goals.title')} />
+      <PageHeader
+        title={t('goals.title')}
+        subtitle={goals.length > 0 ? t('goals.summary', { saved: money(total), target: money(totalTarget) }) : undefined}
+      />
       {goals.length === 0 && (
         <Card className="mb-4">
           <EmptyState title={t('goals.emptyTitle')} hint={t('goals.emptyHint')} action={{ href: '/setup?step=goals', label: t('goals.emptyAction') }} />
@@ -78,59 +84,81 @@ export default async function GoalsPage() {
       <div className="grid gap-4 md:grid-cols-2 empty:hidden">
         {goals.map((g) => {
           const p = goalProgress(g, now);
+          const reached = p.remaining === 0;
           return (
-            <Card key={g.id}>
-              <div className="mb-1 flex items-start justify-between gap-2">
+            <section key={g.id} className="card flex flex-col">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  {/* The type label is shown only when it adds information beyond the name. */}
+                  {t(`goals.kinds.${g.kind}`) !== g.name && (
+                    <div className="eyebrow mb-1 flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full" style={{ background: g.color }} aria-hidden />
+                      {t(`goals.kinds.${g.kind}`)}
+                    </div>
+                  )}
+                  <h2 className="flex items-center gap-2 truncate text-lg font-semibold">
+                    {t(`goals.kinds.${g.kind}`) === g.name && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: g.color }} aria-hidden />}
+                    {g.name}
+                  </h2>
+                </div>
+                {reached ? (
+                  <Badge tone="positive">{t('goals.reached')}</Badge>
+                ) : g.targetDate && p.onTrack != null ? (
+                  <Badge tone={p.onTrack ? 'positive' : 'caution'}>{p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</Badge>
+                ) : null}
+              </div>
+
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-2xl font-semibold tabular-nums tracking-tight">{money(g.current)}</span>
+                <span className="muted text-sm tabular-nums">/ {money(g.target)}</span>
+                <span className="ml-auto text-sm font-medium tabular-nums">{formatPercent(p.pct, locale, 0)}</span>
+              </div>
+              <div className="mt-2">
+                <ProgressBar value={p.pct} color={g.color} label={g.name} />
+              </div>
+
+              <dl className="mt-4 grid grid-cols-3 gap-3 text-sm">
                 <div>
-                  <div className="text-xs font-medium uppercase tracking-wide" style={{ color: g.color }}>
-                    {t(`goals.kinds.${g.kind}`)}
-                  </div>
-                  <h2 className="text-lg font-semibold">{g.name}</h2>
+                  <dt className="eyebrow">{t('goals.left')}</dt>
+                  <dd className="mt-0.5 tabular-nums">{money(p.remaining)}</dd>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-semibold tabular-nums">{formatPercent(p.pct, locale, 0)}</div>
+                <div>
+                  <dt className="eyebrow">{t('goals.perMonth')}</dt>
+                  <dd className="mt-0.5 tabular-nums">{g.monthly > 0 ? money(g.monthly) : '—'}</dd>
                 </div>
-              </div>
-              <div className="mb-2 flex justify-between text-sm tabular-nums">
-                <span>{money(g.current)}</span>
-                <span className="muted">{money(g.target)}</span>
-              </div>
-              <ProgressBar value={p.pct} color={g.color} />
+                <div>
+                  <dt className="eyebrow">{t('goals.etaLabel')}</dt>
+                  <dd className="mt-0.5">{reached ? '✓' : p.projectedMonth ? monthLabel(p.projectedMonth, locale, 'short') : '—'}</dd>
+                </div>
+              </dl>
+
+              {!reached && g.targetDate && p.requiredMonthly != null && !p.onTrack && (
+                <p className="muted mt-3 text-xs">{t('goals.requiredMonthly', { amount: money(p.requiredMonthly), month: monthLabel(g.targetDate, locale) })}</p>
+              )}
+              {!reached && g.monthly <= 0 && <p className="muted mt-3 text-xs">{t('goals.noEta')}</p>}
               {g.account && (
-                <p className="muted mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                <p className="muted mt-3 flex flex-wrap items-center gap-1.5 text-xs">
                   <AccountBadge id={g.account} label={accountName(g.account, t)} size="xs" />
                   {t('goals.fromAccount', { account: accountName(g.account, t) })}
                 </p>
               )}
-              <div className="mt-3 space-y-1 text-sm">
-                <p>{p.remaining === 0 ? t('goals.reached') : t('goals.remaining', { amount: money(p.remaining) })}</p>
-                {p.remaining > 0 && (
-                  <p className="muted">
-                    {p.monthsLeft != null && p.projectedMonth
-                      ? t('goals.eta', { month: monthLabel(p.projectedMonth, locale), n: p.monthsLeft })
-                      : t('goals.noEta')}
-                  </p>
-                )}
-                {g.targetDate && p.remaining > 0 && p.requiredMonthly != null && (
-                  <p className="muted">
-                    {t('goals.requiredMonthly', { amount: money(p.requiredMonthly), month: monthLabel(g.targetDate, locale) })}{' '}
-                    <span className={p.onTrack ? 'text-emerald-500' : 'text-amber-500'}>· {p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</span>
-                  </p>
-                )}
-              </div>
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-brand-500">{t('common.edit')}</summary>
+
+              <details className="mt-auto pt-4">
+                <summary className="link inline-flex cursor-pointer select-none">{t('common.edit')}</summary>
                 <div className="mt-3">
                   <GoalForm goal={g} t={t} />
                 </div>
               </details>
-            </Card>
+            </section>
           );
         })}
       </div>
-      <Card title={t('goals.new')} className="mt-4">
-        <GoalForm t={t} />
-      </Card>
+      <details className="card mt-4" open={goals.length === 0}>
+        <summary className="section-title cursor-pointer select-none">+ {t('goals.new')}</summary>
+        <div className="mt-4">
+          <GoalForm t={t} />
+        </div>
+      </details>
     </>
   );
 }

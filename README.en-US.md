@@ -35,7 +35,7 @@ NestFund is a self-hosted personal finance dashboard. Plan your salary, log ever
   <img src="docs/screenshots/quick-add.png" alt="Logging a purchase" width="270" />
 </div>
 
-<p align="center"><img src="docs/screenshots/simulators.png" alt="House down payment simulator" width="900" /></p>
+<p align="center"><img src="docs/screenshots/portfolio.png" alt="Portfolio with Trading 212" width="900" /></p>
 
 > NestFund shows simulations and records — it is not financial advice.
 
@@ -48,11 +48,9 @@ services:
     container_name: nestfund
     restart: unless-stopped
     ports:
-      - "777:777"
+      - "7777:7777"
     environment:
       TZ: Europe/Lisbon
-    sysctls:
-      - net.ipv4.ip_unprivileged_port_start=0
     volumes:
       - nestfund-data:/data
     labels:
@@ -66,20 +64,22 @@ volumes:
 docker compose up -d
 ```
 
-Open `http://<server-ip>:777` and follow **Setup** to enter your balances, salary, fixed costs and goals. You can skip it and come back later.
+Open `http://<server-ip>:7777` and follow **Setup** to enter your balances, salary, fixed costs and goals. You can skip it and come back later.
 
 Data (SQLite and attachments) lives in the `/data` volume. To back up, copy `nestfund.db` while the container is stopped.
 
-## Port 777 and Cloudflare Tunnel
+## Port 7777 and Cloudflare Tunnel
 
-The app listens on port **777**. To change the host port, edit only the left side: `"8080:777"`.
+The app listens on port **7777**. To change the host port, edit only the left side: `"8080:7777"`.
+
+> **Upgrading from a version on port 777?** Use `"7777:7777"` and `PORT: 7777` in compose and point the Cloudflare Tunnel at `:7777`. If your compose sets `PORT: 777`, the app keeps using that port until you change it.
 
 To expose it through Cloudflare Tunnel, add a *Public Hostname* (Zero Trust → Networks → Tunnels):
 
 | Field | Value |
 |---|---|
 | Hostname | `nestfund.your-domain.com` |
-| Service | `HTTP` → `<server-ip>:777` |
+| Service | `HTTP` → `<server-ip>:7777` |
 
 The app has no user accounts — protect it with **Cloudflare Access** (a policy that only allows your e-mail). Alternatively, set `BASIC_AUTH_USER` and `BASIC_AUTH_PASSWORD`.
 
@@ -98,7 +98,7 @@ The `com.centurylinklabs.watchtower.enable=true` label lets Watchtower update th
 
 ```bash
 npm install
-npm run dev     # http://localhost:777
+npm run dev     # http://localhost:7777
 npm test
 ```
 

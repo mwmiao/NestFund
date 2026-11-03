@@ -30,7 +30,7 @@ export default async function CategoriesPage() {
             <input name="name" required className="input" />
           </Field>
           <Field label={t('common.color')}>
-            <input type="color" name="color" defaultValue="#6366f1" className="h-10 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-transparent dark:border-zinc-700" />
+            <input type="color" name="color" defaultValue="#6366f1" className="h-10 w-14 cursor-pointer rounded-lg border border-line bg-transparent" />
           </Field>
           <Field label={t('common.kind')}>{kindSelect('expense')}</Field>
           <Field label={`${t('categories.monthlyBudget')} (€)`}>
@@ -41,7 +41,7 @@ export default async function CategoriesPage() {
       </Card>
 
       <Card>
-        <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+        <ul className="divide-y divide-line/70">
           {categories.map((c) => (
             <li key={c.id} className="py-3">
               <form action={saveCategoryAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-[1fr_auto_10rem_10rem_auto_auto]">
@@ -51,7 +51,7 @@ export default async function CategoriesPage() {
                   <input name="name" defaultValue={categoryName(c, t)} className="input" />
                 </Field>
                 <Field label={t('common.color')}>
-                  <input type="color" name="color" defaultValue={c.color} className="h-10 w-14 cursor-pointer rounded-lg border border-zinc-300 bg-transparent dark:border-zinc-700" />
+                  <input type="color" name="color" defaultValue={c.color} className="h-10 w-14 cursor-pointer rounded-lg border border-line bg-transparent" />
                 </Field>
                 <Field label={t('common.kind')}>{kindSelect(c.kind)}</Field>
                 <Field label={`${t('categories.monthlyBudget')} (€)`}>

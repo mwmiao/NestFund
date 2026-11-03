@@ -1,0 +1,28 @@
+services:
+  nestfund:
+    # Replace "mwmiao" with your Docker Hub username (the DOCKERHUB_USERNAME secret).
+    image: ${NESTFUND_IMAGE:-mwmiao/nestfund:latest}
+    container_name: nestfund
+    restart: unless-stopped
+    ports:
+      - "${NESTFUND_PORT:-777}:777"
+    # Values come from a .env file next to this compose file (see .env.example); all are optional.
+    environment:
+      PORT: 777
+      DATA_DIR: /data
+      TZ: ${TZ:-Europe/Lisbon}
+      SEED_SAMPLE_DATA: ${SEED_SAMPLE_DATA:-true}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-}
+      BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-}
+    # Allows the non-root container user to listen on port 777 (< 1024) on older Docker engines.
+    sysctls:
+      - net.ipv4.ip_unprivileged_port_start=0
+    volumes:
+      # SQLite database (nestfund.db) and uploaded attachments live here.
+      - nestfund-data:/data
+    labels:
+      # Watchtower pulls new :latest images and recreates the container automatically.
+      - com.centurylinklabs.watchtower.enable=true
+
+volumes:
+  nestfund-data:

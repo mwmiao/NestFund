@@ -1,0 +1,21 @@
+import 'server-only';
+import type { TFunction } from '@/i18n/config';
+import { getDb } from './db';
+import { categoryName } from './labels';
+import { listCategories } from './repo';
+import { ACCOUNT_IDS, type AccountId } from './types';
+
+/** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
+export function transactionFormOptions(t: TFunction) {
+  const db = getDb();
+  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color }));
+  const column = (col: 'merchant' | 'subcategory') =>
+    (db.prepare(`SELECT ${col} AS v FROM transactions WHERE ${col} IS NOT NULL AND ${col} != '' GROUP BY ${col} ORDER BY COUNT(*) DESC LIMIT 50`).all() as { v: string }[]).map(
+      (r) => r.v,
+    );
+  const recent = db
+    .prepare("SELECT account FROM transactions WHERE type IN ('purchase','expense','payment') AND date >= date('now', '-30 days') GROUP BY account ORDER BY COUNT(*) DESC LIMIT 1")
+    .get() as { account: string } | undefined;
+  const defaultAccount: AccountId = recent && ACCOUNT_IDS.includes(recent.account as AccountId) ? (recent.account as AccountId) : 'ctt';
+  return { categories, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount };
+}

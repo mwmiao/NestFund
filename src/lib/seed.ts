@@ -73,5 +73,14 @@ export function resetAllData(db: Database.Database) {
  * (identified by its exact Trading 212 sample balance of 9.242,30 € / 8.255,97 € invested).
  */
 export function hasLegacySampleData(db: Database.Database): boolean {
-  return !!db.prepare("SELECT 1 FROM snapshots WHERE account = 'trading212' AND value = 924230 AND invested = 825597 LIMIT 1").get();
+  // The sample used the owner's real starting ETF values, so a balance alone proves nothing (it matched
+  // real data). Only transactions that existed solely in the v1.0.0 sample identify it — all of them must be present.
+  const markers: [string, string][] = [
+    ['Venda no Vinted', 'Vinted'],
+    ['Tecido e espuma EVA', 'Retrosaria'],
+    ['Almoço', 'Tasca do Zé'],
+    ['Café e bolos', 'Pastelaria'],
+  ];
+  const has = db.prepare('SELECT 1 FROM transactions WHERE description = ? AND merchant = ? LIMIT 1');
+  return markers.every(([description, merchant]) => !!has.get(description, merchant));
 }

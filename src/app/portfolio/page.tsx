@@ -238,38 +238,25 @@ export default async function PortfolioPage() {
       <details className="card">
         <summary className="section-title cursor-pointer select-none">{t('portfolio.history')}</summary>
         {snapshots.length ? (
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[30rem] text-sm">
-              <thead>
-                <tr className="muted text-left text-xs">
-                  <th className="pb-2 font-medium">{t('common.date')}</th>
-                  <th className="pb-2 font-medium">{t('portfolio.account')}</th>
-                  <th className="pb-2 text-right font-medium">{t('portfolio.value')}</th>
-                  <th className="pb-2 font-medium">
-                    <span className="sr-only">{t('common.actions')}</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...snapshots].reverse().map((s) => (
-                  <tr key={s.id} className="table-row">
-                    <td className="py-2">{formatDate(s.date)}</td>
-                    <td className="py-2">
-                      <AccountBadge id={s.account} label={accountName(s.account, t)} size="xs" />
-                      {s.notes === 'auto:trading212' && <span className="muted ml-1.5 text-[11px]">API</span>}
-                    </td>
-                    <td className="py-2 text-right tabular-nums">{money(s.value)}</td>
-                    <td className="py-2 text-right">
-                      <form action={deleteSnapshotAction}>
-                        <input type="hidden" name="id" value={s.id} />
-                        <ConfirmButton className="btn-danger !px-2 !py-1 text-xs">{t('common.delete')}</ConfirmButton>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          // A list (not a wide table) so the delete action is always visible on a phone.
+          <ul className="mt-3 divide-y divide-line/70">
+            {[...snapshots].reverse().map((s) => (
+              <li key={s.id} className="flex items-center gap-3 py-2.5 text-sm">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <AccountBadge id={s.account} label={accountName(s.account, t)} size="xs" />
+                    {s.notes === 'auto:trading212' && <span className="muted text-[11px]">API</span>}
+                  </div>
+                  <div className="muted mt-0.5 text-xs">{formatDate(s.date)}</div>
+                </div>
+                <span className="shrink-0 font-medium tabular-nums">{money(s.value)}</span>
+                <form action={deleteSnapshotAction} className="shrink-0">
+                  <input type="hidden" name="id" value={s.id} />
+                  <ConfirmButton className="btn-danger !px-2.5 !py-1.5 text-xs">{t('common.delete')}</ConfirmButton>
+                </form>
+              </li>
+            ))}
+          </ul>
         ) : (
           <Empty>{t('common.noData')}</Empty>
         )}

@@ -1,70 +1,18 @@
-import { deleteGoalAction, saveGoalAction } from '@/app/actions';
-import { ConfirmButton } from '@/components/ConfirmButton';
-import { Badge, Card, EmptyState, Field, PageHeader, ProgressBar } from '@/components/ui';
-import type { TFunction } from '@/i18n/config';
+import { GoalForm } from '@/components/goals/GoalForm';
+import { Badge, Card, EmptyState, PageHeader, ProgressBar } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { goalProgress } from '@/lib/calc';
 import { currentMonth, monthLabel } from '@/lib/dates';
-import { formatMoney, formatPercent, toInputDecimal } from '@/lib/format';
+import { formatMoney, formatPercent } from '@/lib/format';
 import { AccountBadge } from '@/components/AccountBadge';
 import { accountName } from '@/lib/labels';
-import { listGoals } from '@/lib/repo';
-import { ACCOUNT_IDS, GOAL_KINDS, type Goal } from '@/lib/types';
-
-
-function GoalForm({ goal, t }: { goal?: Goal; t: TFunction }) {
-  return (
-    <form action={saveGoalAction} className="grid grid-cols-2 items-end gap-2 sm:grid-cols-3">
-      {goal && <input type="hidden" name="id" value={goal.id} />}
-      <Field label={t('common.name')} className="col-span-2">
-        <input name="name" required defaultValue={goal?.name ?? ''} className="input" />
-      </Field>
-      <Field label={t('common.kind')}>
-        <select name="kind" defaultValue={goal?.kind ?? 'custom'} className="input">
-          {GOAL_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {t(`goals.kinds.${k}`)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field label={`${t('goals.target')} (€)`}>
-        <input name="target" required inputMode="decimal" defaultValue={goal ? toInputDecimal(goal.target) : ''} className="input tabular-nums" />
-      </Field>
-      <Field label={t('goals.account')}>
-        <select name="account" defaultValue={goal?.account ?? ''} className="input">
-          <option value="">{t('goals.manual')}</option>
-          {ACCOUNT_IDS.map((a) => (
-            <option key={a} value={a}>
-              {accountName(a, t)}
-            </option>
-          ))}
-        </select>
-      </Field>
-      <Field label={`${t('goals.current')} (€) · ${t('goals.manual')}`}>
-        <input name="current" inputMode="decimal" defaultValue={goal ? toInputDecimal(goal.current) : '0'} className="input tabular-nums" />
-      </Field>
-      <Field label={`${t('goals.monthly')} (€)`}>
-        <input name="monthly" inputMode="decimal" defaultValue={goal ? toInputDecimal(goal.monthly) : ''} className="input tabular-nums" />
-      </Field>
-      <Field label={`${t('goals.targetDate')} (${t('common.optional')})`}>
-        <input type="month" name="targetDate" defaultValue={goal?.targetDate ?? ''} className="input" />
-      </Field>
-      <Field label={t('common.color')}>
-        <input type="color" name="color" defaultValue={goal?.color ?? '#10b981'} className="h-10 w-14 cursor-pointer rounded-lg border border-line bg-transparent" />
-      </Field>
-      <div className="col-span-2 flex justify-end gap-2 sm:col-span-1">
-        {goal && <ConfirmButton formAction={deleteGoalAction}>{t('common.delete')}</ConfirmButton>}
-        <button className="btn-primary">{goal ? t('common.save') : t('common.add')}</button>
-      </div>
-    </form>
-  );
-}
+import { listGoals, listGoalsStored } from '@/lib/repo';
 
 export default async function GoalsPage() {
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
   const goals = listGoals();
+  const manualById = new Map(listGoalsStored().map((g) => [g.id, g.current]));
   const now = currentMonth();
 
   const total = goals.reduce((sum, g) => sum + g.current, 0);
@@ -87,7 +35,7 @@ export default async function GoalsPage() {
           const reached = p.remaining === 0;
           return (
             <section key={g.id} className="card flex flex-col">
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
                 <div className="min-w-0">
                   {/* The type label is shown only when it adds information beyond the name. */}
                   {t(`goals.kinds.${g.kind}`) !== g.name && (
@@ -96,7 +44,7 @@ export default async function GoalsPage() {
                       {t(`goals.kinds.${g.kind}`)}
                     </div>
                   )}
-                  <h2 className="flex items-center gap-2 truncate text-lg font-semibold">
+                  <h2 className="flex items-center gap-2 break-words text-lg font-semibold leading-snug">
                     {t(`goals.kinds.${g.kind}`) === g.name && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: g.color }} aria-hidden />}
                     {g.name}
                   </h2>
@@ -146,7 +94,7 @@ export default async function GoalsPage() {
               <details className="mt-auto pt-4">
                 <summary className="link inline-flex cursor-pointer select-none">{t('common.edit')}</summary>
                 <div className="mt-3">
-                  <GoalForm goal={g} t={t} />
+                  <GoalForm goal={g} manualCurrent={manualById.get(g.id)} />
                 </div>
               </details>
             </section>
@@ -156,7 +104,7 @@ export default async function GoalsPage() {
       <details className="card mt-4" open={goals.length === 0}>
         <summary className="section-title cursor-pointer select-none">+ {t('goals.new')}</summary>
         <div className="mt-4">
-          <GoalForm t={t} />
+          <GoalForm />
         </div>
       </details>
     </>

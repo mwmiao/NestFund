@@ -1,14 +1,15 @@
 import Link from 'next/link';
 import { dismissOnboardingAction } from '@/app/actions';
 import { Sparkline } from '@/components/charts/Sparkline';
+import { AccountsPanel, type AccountRow, type RecentTransfer } from '@/components/dashboard/AccountsPanel';
 import { MonthPicker } from '@/components/MonthPicker';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Alert, Badge, Card, Dot, EmptyState, ProgressBar } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { computeMonthSummary, goalProgress } from '@/lib/calc';
-import { currentMonth, formatRelative, isMonth, monthLabel } from '@/lib/dates';
+import { currentMonth, formatDate, formatRelative, isMonth, monthLabel, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
-import { accountName, categoryName } from '@/lib/labels';
+import { categoryName } from '@/lib/labels';
 import {
   ONBOARDING_STEPS,
   accountBalances,
@@ -23,13 +24,13 @@ import {
 } from '@/lib/repo';
 import { etfSummary } from '@/lib/portfolio';
 import { getT212Status, listT212History } from '@/lib/t212';
-import { ACCOUNTS, type AccountId } from '@/lib/types';
+import type { AccountId } from '@/lib/types';
 
 const ACCOUNT_ROWS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'];
 const NET_WORTH_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepublic', 'cash', 'other'];
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
-  const { m } = await searchParams;
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ m?: string; saved?: string }> }) {
+  const { m, saved: justSaved } = await searchParams;
   const month = isMonth(m) ? m : currentMonth();
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
@@ -54,17 +55,23 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const hasIncome = s.income > 0;
   const etf = etfSummary(balances.trading212, t212);
 
-  const accountExtra = (id: AccountId): React.ReactNode => {
-    if (id === 'trading212' && etf.invested > 0) {
-      return (
-        <span className={etf.gain >= 0 ? 'text-positive' : 'text-negative'}>
-          {formatMoney(etf.gain, locale, { sign: true })} · {formatPercent(etf.growthPct, locale, 1)}
-        </span>
-      );
+  const accountRows: AccountRow[] = ACCOUNT_ROWS.map((id) => {
+    const b = balances[id];
+    const row: AccountRow = { id, balance: b.balance, invested: b.invested, balanceText: !b.since && b.balance === 0 ? '' : money(b.balance) };
+    if (id === 'trading212') {
+      row.apiSynced = t212.connected && etf.source === 'api';
+      if (etf.invested > 0) {
+        row.extraText = `${formatMoney(etf.gain, locale, { sign: true })} · ${formatPercent(etf.growthPct, locale, 1)}`;
+        row.extraTone = etf.gain >= 0 ? 'positive' : 'negative';
+      }
     }
-    if (id === 'meal_card' && s.mealCard > 0) return t('dashboard.leftThisMonth', { amount: money(s.mealCardLeft) });
-    return null;
-  };
+    if (id === 'meal_card' && s.mealCard > 0) row.extraText = t('dashboard.leftThisMonth', { amount: money(s.mealCardLeft) });
+    return row;
+  });
+  const recentTransfers: RecentTransfer[] = listTransactions({ type: 'transfer', limit: 4 })
+    .filter((x) => x.toAccount)
+    .map((x) => ({ id: x.id, from: x.account, to: x.toAccount as AccountId, amountText: money(x.amount), dateText: formatDate(x.date) }));
+
 
   return (
     <>
@@ -74,6 +81,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mb-4 space-y-2 empty:hidden">
+        {justSaved && <Alert tone="success">{t('common.saved')}</Alert>}
         {hasSampleData() && (
           <Alert tone="warning">
             {t('setup.sampleDetected')}{' '}
@@ -137,34 +145,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </section>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        {/* 2 — balances per account */}
-        <Card title={t('accounts.title')} className="lg:col-span-3" actions={<Link href="/portfolio" className="link">{t('dashboard.seeAll')}</Link>}>
-          <ul className="-my-1 divide-y divide-line/70">
-            {ACCOUNT_ROWS.map((id) => {
-              const b = balances[id];
-              const extra = accountExtra(id);
-              return (
-                <li key={id}>
-                  <Link href={`/transactions?account=${id}`} className="-mx-2 flex items-center gap-3 rounded-control px-2 py-3 transition hover:bg-raised/60">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold" style={{ background: `${ACCOUNTS[id].color}1f`, color: ACCOUNTS[id].color }} aria-hidden>
-                      {accountName(id, t).charAt(0)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-medium leading-snug">{accountName(id, t)}</span>
-                      <span className="muted block truncate text-xs">{t(`accounts.purpose.${id}`)}</span>
-                    </span>
-                    <span className="text-right">
-                      <span className={`block text-sm font-semibold tabular-nums ${b.balance < 0 ? 'text-negative' : ''}`}>
-                        {!b.since && b.balance === 0 ? <span className="muted font-normal">{t('accounts.noCheckIn')}</span> : money(b.balance)}
-                      </span>
-                      {extra && <span className="muted block text-[11px] tabular-nums">{extra}</span>}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
+        {/* 2 — balances per account, with inline balance updates and quick transfers */}
+        <AccountsPanel rows={accountRows} recentTransfers={recentTransfers} today={todayISO()} />
 
         {/* 3 — goals */}
         <Card title={t('dashboard.goals')} className="lg:col-span-2" actions={goals.length > 0 && <Link href="/goals" className="link">{t('dashboard.seeAll')}</Link>}>

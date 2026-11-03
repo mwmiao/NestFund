@@ -38,7 +38,15 @@ describe('fresh start seed', () => {
     db.prepare("INSERT INTO goals (kind, name, target, color) VALUES ('house', 'Casa', 100, '#000')").run();
     db.prepare("INSERT INTO budget_items (name, kind, amount) VALUES ('Gym', 'fixed', 3990)").run();
     db.prepare("INSERT INTO settings (key, value) VALUES ('onboarding', '{\"done\":[\"balances\"]}')").run();
-    expect(hasLegacySampleData(db)).toBe(true);
+    // Real data with the same ETF balance as the old sample (it used the owner's real numbers) is NOT sample data.
+    expect(hasLegacySampleData(db)).toBe(false);
+    const tx = db.prepare("INSERT INTO transactions (date, amount, type, description, account, payment_method, merchant) VALUES ('2026-10-15', 100, 'purchase', ?, 'ctt', 'card', ?)");
+    tx.run('Venda no Vinted', 'Vinted');
+    tx.run('Tecido e espuma EVA', 'Retrosaria');
+    tx.run('Almoço', 'Tasca do Zé');
+    expect(hasLegacySampleData(db)).toBe(false); // partial match: still real data
+    tx.run('Café e bolos', 'Pastelaria');
+    expect(hasLegacySampleData(db)).toBe(true); // every sample-only transaction present
 
     resetAllData(db);
 

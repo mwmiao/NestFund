@@ -1,6 +1,8 @@
 import 'server-only';
 import { dictionaries } from '@/i18n/config';
-import { fromCents as e, getDb, toCents as c } from './db';
+import fs from 'node:fs';
+import path from 'node:path';
+import { BACKUP_DIR, fromCents as e, getDb, toCents as c } from './db';
 import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './dates';
 import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
 import { accountBalance, allocateGoals, type AccountBalance } from './calc';
@@ -60,8 +62,13 @@ export function updateOnboarding(patch: { complete?: OnboardingStep; dismissed?:
 }
 
 /** Wipes every record and returns to the fresh-start state (schema and built-in categories are kept). */
-export function resetData() {
+export function resetData(): string {
+  // Full copy first, so even a mistaken reset can be undone (restore = replace nestfund.db with this file).
+  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  const backup = path.join(BACKUP_DIR, `nestfund-before-reset-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
+  getDb().prepare('VACUUM INTO ?').run(backup);
   resetAllData(getDb());
+  return backup;
 }
 
 export function hasSampleData(): boolean {
@@ -404,10 +411,14 @@ const mapGoal = (r: Row): Goal => ({
   account: r.account as AccountId | null,
 });
 
+/** Goals as stored: `current` is the manually entered amount (used when no account is linked). */
+export function listGoalsStored(): Goal[] {
+  return (getDb().prepare('SELECT * FROM goals ORDER BY sort, id').all() as Row[]).map(mapGoal);
+}
+
 /** Goals with `current` resolved: linked goals share their account balance in goal order. */
 export function listGoals(balances: Partial<Record<AccountId, number>> = balanceMap()): Goal[] {
-  const goals = (getDb().prepare('SELECT * FROM goals ORDER BY sort, id').all() as Row[]).map(mapGoal);
-  return allocateGoals(goals, balances);
+  return allocateGoals(listGoalsStored(), balances);
 }
 
 export function upsertGoal(g: Omit<Goal, 'id'> & { id?: number }) {

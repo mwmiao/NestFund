@@ -120,7 +120,16 @@
     "investments": "Investments",
     "noInvestments": "No investment data yet",
     "noInvestmentsHint": "Connect Trading 212 or record the balance manually on the Portfolio page.",
-    "noSpendingYet": "No spending logged this month yet."
+    "noSpendingYet": "No spending logged this month yet.",
+    "saveTransfer": "Save transfer",
+    "recentTransfers": "Recent transfers",
+    "updateBalance": "Update balance",
+    "updateBalanceOf": "Update {account} balance",
+    "apiSyncedHint": "This balance is updated automatically by Trading 212.",
+    "currentBalance": "Current balance",
+    "updateBalanceHint": "Saves today's real balance. Movements you log afterwards are added from this value.",
+    "transferFromHere": "Transfer from this account",
+    "seeMovements": "See activity"
   },
   "budget": {
     "title": "Monthly budget",
@@ -313,7 +322,10 @@
     "etaLabel": "Projected",
     "left": "Left",
     "perMonth": "Per month",
-    "summary": "{saved} saved of {target} in total"
+    "summary": "{saved} saved of {target} in total",
+    "progressSource": "Current amount comes from",
+    "fromAccountOption": "{account} balance (automatic)",
+    "linkedHint": "The current amount is the {account} balance and updates by itself. When several goals share an account, the balance is split in list order: the first goal fills up before the next one gets anything. To type the amount yourself, choose \"Manual amount\"."
   },
   "sim": {
     "title": "Simulators",
@@ -446,7 +458,7 @@
     "notNow": "Not now",
     "sampleDetected": "This database still contains the sample data from the first version.",
     "resetTitle": "Delete all data",
-    "resetHint": "Removes transactions, balances, budgets, goals, custom categories, attachments and the Trading 212 connection. Built-in categories and preferences are kept. This cannot be undone.",
+    "resetHint": "Removes transactions, balances, budgets, goals, custom categories, attachments and the Trading 212 connection. A full copy is saved to /data/backups automatically before anything is deleted. Built-in categories and preferences are kept.",
     "resetConfirm": "I understand all data will be deleted",
     "resetButton": "Start from scratch",
     "resetDone": "Data deleted. The app is ready for your real numbers."

@@ -239,12 +239,15 @@ export async function saveProfileAction(fd: FormData) {
 export async function saveGoalAction(fd: FormData) {
   const name = str(fd, 'name');
   if (!name) return;
+  const id = optId(fd, 'id');
+  // Linked goals don't send a manual amount: keep the stored one instead of overwriting it with 0.
+  const stored = id ? repo.listGoalsStored().find((g) => g.id === id) : undefined;
   repo.upsertGoal({
-    id: optId(fd, 'id') ?? undefined,
+    id: id ?? undefined,
     kind: oneOf<GoalKind>(GOAL_KINDS, str(fd, 'kind'), 'custom'),
     name,
     target: Math.abs(num(fd, 'target')),
-    current: num(fd, 'current'),
+    current: fd.has('current') ? num(fd, 'current') : (stored?.current ?? 0),
     monthly: Math.abs(num(fd, 'monthly')),
     targetDate: optMonth(fd, 'targetDate'),
     color: color(fd),

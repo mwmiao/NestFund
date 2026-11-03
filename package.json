@@ -1,6 +1,6 @@
 {
   "name": "nestfund",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "Personal finance dashboard for budgeting, expense tracking, savings goals and long-term investing.",
   "scripts": {

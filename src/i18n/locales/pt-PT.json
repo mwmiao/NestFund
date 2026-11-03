@@ -120,7 +120,16 @@
     "investments": "Investimentos",
     "noInvestments": "Sem dados de investimento",
     "noInvestmentsHint": "Liga a Trading 212 ou regista o saldo manualmente na Carteira.",
-    "noSpendingYet": "Ainda não há despesas registadas este mês."
+    "noSpendingYet": "Ainda não há despesas registadas este mês.",
+    "saveTransfer": "Registar transferência",
+    "recentTransfers": "Transferências recentes",
+    "updateBalance": "Atualizar saldo",
+    "updateBalanceOf": "Atualizar saldo de {account}",
+    "apiSyncedHint": "Este saldo é atualizado automaticamente pela Trading 212.",
+    "currentBalance": "Saldo atual",
+    "updateBalanceHint": "Guarda o saldo real de hoje. Os movimentos que registares a seguir são somados a partir deste valor.",
+    "transferFromHere": "Transferir a partir desta conta",
+    "seeMovements": "Ver movimentos"
   },
   "budget": {
     "title": "Orçamento mensal",
@@ -313,7 +322,10 @@
     "etaLabel": "Previsão",
     "left": "Falta",
     "perMonth": "Por mês",
-    "summary": "{saved} poupados de {target} no total"
+    "summary": "{saved} poupados de {target} no total",
+    "progressSource": "Origem do valor atual",
+    "fromAccountOption": "Saldo de {account} (automático)",
+    "linkedHint": "O valor atual vem do saldo de {account} e atualiza sozinho. Se vários objetivos usam a mesma conta, o saldo é repartido pela ordem da lista: o primeiro fica completo antes de o seguinte receber. Para escreveres o valor à mão, escolhe «Valor manual»."
   },
   "sim": {
     "title": "Simuladores",
@@ -446,7 +458,7 @@
     "notNow": "Agora não",
     "sampleDetected": "Esta base de dados ainda tem os dados de exemplo da primeira versão.",
     "resetTitle": "Apagar todos os dados",
-    "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas, anexos e a ligação à Trading 212. As categorias predefinidas e as preferências mantêm-se. Não pode ser desfeito.",
+    "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas, anexos e a ligação à Trading 212. Antes de apagar é guardada automaticamente uma cópia completa em /data/backups. As categorias predefinidas e as preferências mantêm-se.",
     "resetConfirm": "Compreendo que todos os dados serão apagados",
     "resetButton": "Começar do zero",
     "resetDone": "Dados apagados. A app está pronta para os teus valores reais."

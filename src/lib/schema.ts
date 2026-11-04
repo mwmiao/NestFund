@@ -108,6 +108,26 @@ CREATE TABLE IF NOT EXISTS category_rules (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Monthly interest credited on the Trade Republic account (computed daily, booked once per month; amounts in cents).
+-- The balance the app shows includes these credits that are newer than the last balance check-in.
+CREATE TABLE IF NOT EXISTS interest_credits (
+  id INTEGER PRIMARY KEY,
+  account TEXT NOT NULL,
+  month TEXT NOT NULL,
+  credit_date TEXT NOT NULL,
+  opening INTEGER NOT NULL,
+  deposits INTEGER NOT NULL,
+  withdrawals INTEGER NOT NULL,
+  gross INTEGER NOT NULL,
+  tax INTEGER NOT NULL,
+  net INTEGER NOT NULL,
+  closing INTEGER NOT NULL,
+  annual_rate REAL NOT NULL,
+  tax_rate REAL NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE (account, month)
+);
+
 -- Daily Trading 212 history from the API (one row per day, last sync of the day wins). Amounts in cents.
 CREATE TABLE IF NOT EXISTS t212_history (
   date TEXT PRIMARY KEY,
@@ -138,6 +158,24 @@ export const MIGRATIONS: string[] = [
     account TEXT,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v1.4.0: monthly interest credits for the Trade Republic account (new table only; no existing data is touched).
+  `CREATE TABLE IF NOT EXISTS interest_credits (
+    id INTEGER PRIMARY KEY,
+    account TEXT NOT NULL,
+    month TEXT NOT NULL,
+    credit_date TEXT NOT NULL,
+    opening INTEGER NOT NULL,
+    deposits INTEGER NOT NULL,
+    withdrawals INTEGER NOT NULL,
+    gross INTEGER NOT NULL,
+    tax INTEGER NOT NULL,
+    net INTEGER NOT NULL,
+    closing INTEGER NOT NULL,
+    annual_rate REAL NOT NULL,
+    tax_rate REAL NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (account, month)
   )`,
 ];
 

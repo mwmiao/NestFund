@@ -55,7 +55,16 @@ describe('balances read only what they need but give the same numbers', () => {
     const all = repo.listTransactions();
     const snaps = repo.listSnapshots();
     const fast = repo.accountBalances();
-    for (const a of ACCOUNT_IDS) expect(fast[a]).toEqual(accountBalance(a, snaps, all));
+    // Trade Republic also gets the interest credited after its last check-in (see interest.test.ts); nothing else differs.
+    const lastTr = snaps.filter((x) => x.account === 'traderepublic').map((x) => x.date).sort().at(-1) ?? '';
+    const credited = (db.getDb().prepare("SELECT credit_date, net FROM interest_credits WHERE account = 'traderepublic'").all() as { credit_date: string; net: number }[])
+      .filter((r) => r.credit_date > lastTr)
+      .reduce((sum, r) => sum + r.net / 100, 0);
+    for (const a of ACCOUNT_IDS) {
+      const expected = accountBalance(a, snaps, all);
+      if (a === 'traderepublic') expected.balance = Math.round((expected.balance + credited) * 100) / 100;
+      expect(fast[a]).toEqual(expected);
+    }
     expect(fast.ctt.balance).not.toBe(0);
   });
 });

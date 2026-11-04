@@ -3,9 +3,9 @@ import { deleteSnapshotAction, saveSnapshotAction } from '@/app/actions';
 import { AccountBadge } from '@/components/AccountBadge';
 import { LinesChart } from '@/components/charts/LazyCharts';
 import { ConfirmButton } from '@/components/ConfirmButton';
+import { InterestSection } from '@/components/portfolio/InterestSection';
 import { Alert, Badge, Card, Empty, Field, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
-import { INTEREST_TAX_RATE, grossMonthlyInterest } from '@/lib/calc';
 import { formatDate, formatDateTime, formatRelative, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
@@ -25,7 +25,6 @@ export default async function PortfolioPage() {
   const t212 = getT212Status();
   const etf = etfSummary(balances.trading212, t212);
   const tr = balances.traderepublic;
-  const netInterest = grossMonthlyInterest(tr.balance) * (1 - INTEREST_TAX_RATE);
 
   // Daily API history when there is enough of it; manual check-ins otherwise.
   const apiHistory = listT212History(365);
@@ -145,13 +144,7 @@ export default async function PortfolioPage() {
         <Card title="Trade Republic" subtitle={t('accounts.purpose.traderepublic')}>
           <div className="text-2xl font-semibold tabular-nums tracking-tight">{money(tr.balance)}</div>
           <div className="muted mt-1 text-xs">{tr.since ? t('portfolio.lastUpdate', { date: formatDate(tr.since) }) : t('accounts.noCheckIn')}</div>
-          {tr.balance > 0 && (
-            <p className="mt-3 text-sm">
-              <span className="muted">{t('accounts.estimatedInterest')}: </span>
-              <span className="font-medium tabular-nums text-positive">{money(netInterest)}</span>
-              <span className="muted"> · {t('portfolio.netOfTax', { tax: formatPercent(INTEREST_TAX_RATE, locale, 0) })}</span>
-            </p>
-          )}
+          <InterestSection />
           <div className="mt-4">
             <LinesChart data={trChart} xKey="label" height={160} series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />
           </div>

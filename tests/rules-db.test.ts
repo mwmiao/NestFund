@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { MIGRATIONS, SCHEMA, migrate } from '@/lib/schema';
+import { SCHEMA, migrate } from '@/lib/schema';
 
 describe('category_rules migration', () => {
   it('upgrades a v1.2 database without touching its data', () => {
@@ -11,7 +11,7 @@ describe('category_rules migration', () => {
     expect(db.prepare("SELECT name FROM sqlite_master WHERE name = 'category_rules'").get()).toBeUndefined();
     db.prepare("INSERT INTO categories (key, name, color, kind, builtin) VALUES ('food', 'food', '#000', 'expense', 1)").run();
     db.prepare("INSERT INTO transactions (date, amount, type, description, account, payment_method, category_id) VALUES ('2026-11-01', 1250, 'purchase', 'Lidl', 'ctt', 'card', 1)").run();
-    db.pragma(`user_version = ${MIGRATIONS.length}`);
+    db.pragma('user_version = 2'); // a v1.2 database: only the rules migration (and later ones) are pending
 
     migrate(db);
 

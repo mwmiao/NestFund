@@ -791,5 +791,41 @@
     "clear": "Apagar dados offline",
     "clearConfirm": "Apagar as páginas guardadas neste dispositivo para uso offline? Os teus dados no servidor não são afetados.",
     "cleared": "Dados offline apagados."
+  },
+  "interest": {
+    "title": "Juros (estimativa)",
+    "annualRate": "Taxa anual bruta",
+    "tax": "IRS sobre os juros",
+    "dailyGross": "Juro diário bruto",
+    "dailyNet": "Juro diário líquido",
+    "accruedMonth": "Acumulado no mês até hoje (líquido)",
+    "grossAmount": "bruto {amount}",
+    "taxAmount": "IRS {amount}",
+    "expectedCredit": "Previsto no próximo crédito (líquido)",
+    "nextCredit": "Próximo crédito",
+    "inDays": "em {n} dias",
+    "fromTomorrow": "A partir de amanhã, {base} rendem {gross} brutos / {net} líquidos por dia (um depósito recente só começa a render no dia seguinte).",
+    "disabled": "O cálculo de juros está desligado.",
+    "explanation": "Juros calculados diariamente e creditados mensalmente. Valor líquido após {tax} de IRS. São estimativas: os valores da Trade Republic prevalecem sempre.",
+    "history": "Créditos mensais",
+    "historyNote": "Os juros são creditados uma vez por mês, no dia 1. Um saldo que registes depois de um crédito substitui a estimativa.",
+    "month": "Mês",
+    "opening": "Inicial",
+    "deposits": "Depósitos",
+    "withdrawals": "Levantamentos",
+    "gross": "Bruto",
+    "irs": "IRS",
+    "net": "Líquido",
+    "closing": "Final",
+    "configure": "Definições dos juros",
+    "enabled": "Calcular juros nesta conta",
+    "depositLag": "Um depósito começa a render",
+    "withdrawalLag": "Um levantamento deixa de render",
+    "lag": {
+      "sameDay": "no próprio dia",
+      "nextDay": "no dia seguinte",
+      "days": "{n} dias depois"
+    },
+    "configureHint": "As alterações só afetam os meses seguintes. Os créditos já registados mantêm a taxa com que foram calculados."
   }
 }

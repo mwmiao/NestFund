@@ -7,6 +7,7 @@ import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './date
 import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
 import { accountBalance, allocateGoals, type AccountBalance } from './calc';
 import { memo } from './cache';
+import { INTEREST_ACCOUNT, materializeInterest } from './interest-repo';
 import { ACCOUNT_IDS } from './types';
 import type {
   AccountId,
@@ -503,6 +504,8 @@ function readSnapshots(account?: AccountId): Snapshot[] {
 
 /** Current balance of every account: last check-in + movements logged after it. */
 export function accountBalances(): Record<AccountId, AccountBalance> {
+  // Finished months whose interest is not booked yet are booked first (idempotent), so the balance below includes them.
+  materializeInterest();
   return memo('accountBalances', () => {
     const db = getDb();
     const snaps = listSnapshots();
@@ -514,7 +517,14 @@ export function accountBalances(): Record<AccountId, AccountBalance> {
       ACCOUNT_IDS.map((a) => {
         const last = snaps.reduce<string | null>((max, sn) => (sn.account === a && (max === null || sn.date > max) ? sn.date : max), null);
         const rows = (last ? involvingSince.all(a, a, last) : involving.all(a, a)) as Row[];
-        return [a, accountBalance(a, snaps, rows.map(mapTx))];
+        const bal = accountBalance(a, snaps, rows.map(mapTx));
+        if (a === INTEREST_ACCOUNT) {
+          // Interest credited after the last check-in is part of the balance (a check-in already contains older credits).
+          // It is a gain, not money paid in, so the "invested" figure is unchanged.
+          const credited = (db.prepare('SELECT credit_date, net FROM interest_credits WHERE account = ?').all(a) as Row[]).filter((r) => !last || r.credit_date > last).reduce((sum, r) => sum + e(r.net), 0);
+          return [a, { ...bal, balance: Math.round((bal.balance + credited) * 100) / 100 }];
+        }
+        return [a, bal];
       }),
     ) as Record<AccountId, AccountBalance>;
   });

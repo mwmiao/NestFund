@@ -61,6 +61,7 @@ export function resetAllData(db: Database.Database) {
       DELETE FROM goals;
       DELETE FROM categories;
       DELETE FROM t212_history;
+      DELETE FROM interest_credits;
       DELETE FROM settings WHERE key IN ('profile', 'onboarding', 't212');
     `);
     // Built-in categories come back with their original name, colour and kind, and no budget.

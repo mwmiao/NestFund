@@ -791,5 +791,41 @@
     "clear": "Delete offline data",
     "clearConfirm": "Delete the pages saved on this device for offline use? Your data on the server is not affected.",
     "cleared": "Offline data deleted."
+  },
+  "interest": {
+    "title": "Interest (estimate)",
+    "annualRate": "Annual rate (gross)",
+    "tax": "IRS on interest",
+    "dailyGross": "Daily interest, gross",
+    "dailyNet": "Daily interest, net",
+    "accruedMonth": "Accrued this month so far (net)",
+    "grossAmount": "gross {amount}",
+    "taxAmount": "IRS {amount}",
+    "expectedCredit": "Expected at the next credit (net)",
+    "nextCredit": "Next credit",
+    "inDays": "in {n} days",
+    "fromTomorrow": "From tomorrow {base} earns {gross} gross / {net} net per day (a recent deposit starts earning the day after).",
+    "disabled": "Interest calculation is switched off.",
+    "explanation": "Interest is calculated daily and credited monthly. Net amounts are after {tax} IRS. These are estimates: Trade Republic’s own figures always win.",
+    "history": "Monthly credits",
+    "historyNote": "Interest is credited once a month on the 1st. A balance you record after a credit replaces the estimate.",
+    "month": "Month",
+    "opening": "Opening",
+    "deposits": "Deposits",
+    "withdrawals": "Withdrawals",
+    "gross": "Gross",
+    "irs": "IRS",
+    "net": "Net",
+    "closing": "Closing",
+    "configure": "Interest settings",
+    "enabled": "Calculate interest on this account",
+    "depositLag": "A deposit starts earning",
+    "withdrawalLag": "A withdrawal stops earning",
+    "lag": {
+      "sameDay": "the same day",
+      "nextDay": "the next day",
+      "days": "{n} days later"
+    },
+    "configureHint": "Changes only affect future months. Credits already booked keep the rate they were computed with."
   }
 }

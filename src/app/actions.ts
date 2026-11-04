@@ -11,8 +11,9 @@ import { getI18n } from '@/i18n/server';
 import { UPLOADS_DIR } from '@/lib/db';
 import { isISODate, isMonth, todayISO } from '@/lib/dates';
 import { parseDecimal } from '@/lib/format';
+import { tooMany } from '@/lib/rate-limit';
 import * as repo from '@/lib/repo';
-import { importTransactionsCsv } from '@/lib/csv-import';
+import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
 import { connectT212, disconnectT212, syncT212 } from '@/lib/t212';
 import {
   ACCOUNT_IDS,
@@ -40,6 +41,14 @@ const str = (fd: FormData, k: string) => {
   return typeof v === 'string' ? v.trim() : '';
 };
 const optStr = (fd: FormData, k: string) => str(fd, k) || null;
+/** Free text with a length cap, so a single field can never hold megabytes. */
+const text = (fd: FormData, k: string, max: number) => clampText(str(fd, k), max);
+const optText = (fd: FormData, k: string, max: number) => text(fd, k, max) || null;
+/** A category id that really exists (otherwise null), so a forged id can never reach the database. */
+const existingCategoryId = (fd: FormData, k: string) => {
+  const id = optId(fd, k);
+  return id && repo.listCategories().some((c) => c.id === id) ? id : null;
+};
 const num = (fd: FormData, k: string, fallback = 0) => parseDecimal(str(fd, k)) ?? fallback;
 const optNum = (fd: FormData, k: string) => parseDecimal(str(fd, k));
 const optId = (fd: FormData, k: string) => {
@@ -55,10 +64,7 @@ const optAccount = (fd: FormData, k: string): AccountId | null => (ACCOUNT_IDS.i
 const color = (fd: FormData) => (/^#[0-9a-fA-F]{6}$/.test(str(fd, 'color')) ? str(fd, 'color') : '#71717a');
 
 /** Only allow redirecting back to a local path. */
-const safeBack = (fd: FormData, fallback: string) => {
-  const v = str(fd, 'back');
-  return v.startsWith('/') && !v.startsWith('//') ? v : fallback;
-};
+const safeBack = (fd: FormData, fallback: string) => safeLocalPath(str(fd, 'back'), fallback);
 
 const withParam = (url: string, key: string, value: string) => `${url}${url.includes('?') ? '&' : '?'}${key}=${value}`;
 
@@ -82,8 +88,14 @@ export async function setThemeAction(theme: string) {
 // ---------------------------------------------------------------- transactions
 
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const ATTACHMENT_EXTENSIONS = new Set(['.pdf', '.png', '.jpg', '.jpeg', '.webp', '.gif', '.heic']);
+// The browser-reported type is not trusted on its own: the file name must also end in a known receipt/invoice extension.
 const isAllowedAttachment = (file: File) =>
-  file.size > 0 && file.size <= MAX_ATTACHMENT_BYTES && (file.type.startsWith('image/') || file.type === 'application/pdf') && file.type !== 'image/svg+xml';
+  file.size > 0 &&
+  file.size <= MAX_ATTACHMENT_BYTES &&
+  (file.type.startsWith('image/') || file.type === 'application/pdf') &&
+  file.type !== 'image/svg+xml' &&
+  ATTACHMENT_EXTENSIONS.has(path.extname(file.name).toLowerCase());
 
 async function storeAttachment(file: File): Promise<string> {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-80);
@@ -102,7 +114,7 @@ export async function saveTransactionAction(fd: FormData) {
   const id = optId(fd, 'id');
   const existing = id ? repo.getTransaction(id) : null;
   const amount = Math.abs(num(fd, 'amount'));
-  const description = str(fd, 'description');
+  const description = text(fd, 'description', MAX_TEXT.description);
   if (!amount || !description) redirect(safeBack(fd, '/transactions'));
 
   let attachment = existing?.attachment ?? null;
@@ -129,13 +141,13 @@ export async function saveTransactionAction(fd: FormData) {
     amount,
     type,
     description,
-    categoryId: optId(fd, 'categoryId'),
-    subcategory: optStr(fd, 'subcategory'),
+    categoryId: existingCategoryId(fd, 'categoryId'),
+    subcategory: optText(fd, 'subcategory', MAX_TEXT.subcategory),
     account,
     toAccount,
     paymentMethod: oneOf<PaymentMethod>(PAYMENT_METHODS, str(fd, 'paymentMethod'), type === 'transfer' ? 'transfer' : 'card'),
-    merchant: optStr(fd, 'merchant'),
-    notes: optStr(fd, 'notes'),
+    merchant: optText(fd, 'merchant', MAX_TEXT.merchant),
+    notes: optText(fd, 'notes', MAX_TEXT.notes),
     attachment,
     recurring,
     recurrence: recurring ? oneOf<Recurrence>(RECURRENCES, str(fd, 'recurrence'), 'monthly') : null,
@@ -152,18 +164,10 @@ export async function deleteTransactionAction(fd: FormData) {
   redirect(safeBack(fd, '/transactions'));
 }
 
-export async function importCsvAction(_prev: unknown, fd: FormData): Promise<{ imported: number; skipped: number } | null> {
-  const file = fd.get('file');
-  if (!(file instanceof File) || file.size === 0) return null;
-  const result = importTransactionsCsv(await file.text());
-  refresh();
-  return result;
-}
-
 // ---------------------------------------------------------------- categories
 
 export async function saveCategoryAction(fd: FormData) {
-  const name = str(fd, 'name');
+  const name = text(fd, 'name', MAX_TEXT.name);
   if (!name) return;
   repo.upsertCategory({
     id: optId(fd, 'id') ?? undefined,
@@ -185,7 +189,7 @@ export async function deleteCategoryAction(fd: FormData) {
 // ---------------------------------------------------------------- budget
 
 export async function saveBudgetItemAction(fd: FormData) {
-  const name = str(fd, 'name');
+  const name = text(fd, 'name', MAX_TEXT.name);
   if (!name) return;
   const startMonth = optMonth(fd, 'startMonth');
   let endMonth = optMonth(fd, 'endMonth');
@@ -195,7 +199,7 @@ export async function saveBudgetItemAction(fd: FormData) {
     name,
     kind: oneOf<BudgetItemKind>(BUDGET_ITEM_KINDS, str(fd, 'kind'), 'fixed'),
     amount: Math.abs(num(fd, 'amount')),
-    categoryId: optId(fd, 'categoryId'),
+    categoryId: existingCategoryId(fd, 'categoryId'),
     account: optAccount(fd, 'account'),
     startMonth,
     endMonth,
@@ -216,7 +220,7 @@ export async function saveMonthBudgetAction(fd: FormData) {
     income: num(fd, 'income'),
     extraIncome: num(fd, 'extraIncome'),
     mealCard: num(fd, 'mealCard'),
-    notes: optStr(fd, 'notes'),
+    notes: optText(fd, 'notes', MAX_TEXT.notes),
   });
   refresh();
 }
@@ -237,7 +241,7 @@ export async function saveProfileAction(fd: FormData) {
 // ---------------------------------------------------------------- goals
 
 export async function saveGoalAction(fd: FormData) {
-  const name = str(fd, 'name');
+  const name = text(fd, 'name', MAX_TEXT.name);
   if (!name) return;
   const id = optId(fd, 'id');
   // Linked goals don't send a manual amount: keep the stored one instead of overwriting it with 0.
@@ -275,7 +279,7 @@ export async function saveSnapshotAction(fd: FormData) {
     value,
     // Only Trading 212 has a cost basis different from its balance.
     invested: account === 'trading212' ? (optNum(fd, 'invested') ?? value) : value,
-    notes: optStr(fd, 'notes'),
+    notes: optText(fd, 'notes', MAX_TEXT.notes),
   });
   refresh();
   const back = safeBack(fd, '');
@@ -322,7 +326,8 @@ export async function setupIncomeAction(fd: FormData) {
 }
 
 export async function setupFixedAction(fd: FormData) {
-  const names = fd.getAll('name').map(String);
+  const names = fd.getAll('name').map((v) => clampText(String(v), MAX_TEXT.name)).slice(0, 50);
+  const validCategories = new Set(repo.listCategories().map((c) => c.id));
   const amounts = fd.getAll('amount').map(String);
   const accounts = fd.getAll('account').map(String);
   const categoryIds = fd.getAll('categoryId').map((v) => Number(v));
@@ -334,7 +339,7 @@ export async function setupFixedAction(fd: FormData) {
       name,
       kind: 'fixed',
       amount,
-      categoryId: Number.isInteger(categoryIds[i]) && categoryIds[i] > 0 ? categoryIds[i] : null,
+      categoryId: validCategories.has(categoryIds[i]) ? categoryIds[i] : null,
       account: ACCOUNT_IDS.includes(accounts[i] as AccountId) ? (accounts[i] as AccountId) : 'ctt',
       startMonth: null,
       endMonth: null,
@@ -381,7 +386,7 @@ export async function dismissOnboardingAction() {
 }
 
 export async function resetDataAction(fd: FormData) {
-  if (str(fd, 'confirm') !== '1') redirect('/setup#reset');
+  if (str(fd, 'confirm') !== '1' || (await tooMany('reset-data', 3, 60 * 60 * 1000))) redirect('/setup#reset');
   repo.resetData();
   await fs.rm(UPLOADS_DIR, { recursive: true, force: true });
   await fs.mkdir(UPLOADS_DIR, { recursive: true });
@@ -394,8 +399,10 @@ export async function resetDataAction(fd: FormData) {
 export type T212ActionState = { ok: boolean; code?: string } | null;
 
 export async function connectT212Action(_prev: T212ActionState, fd: FormData): Promise<T212ActionState> {
-  const apiKey = str(fd, 'apiKey');
-  const apiSecret = str(fd, 'apiSecret');
+  // Attempts to validate a key are limited, so the form cannot be used to hammer the Trading 212 API.
+  if (await tooMany('connect-t212', 5, 10 * 60 * 1000)) return { ok: false, code: 'too_soon' };
+  const apiKey = clampText(str(fd, 'apiKey'), 300);
+  const apiSecret = clampText(str(fd, 'apiSecret'), 300);
   if (!apiKey) return { ok: false, code: 'missing_key' };
   const result = await connectT212({ env: str(fd, 'env') === 'demo' ? 'demo' : 'live', apiKey, apiSecret: apiSecret || undefined });
   refresh();

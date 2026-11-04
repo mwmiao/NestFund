@@ -1,26 +1,35 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { GrowthChart } from '@/components/charts/Charts';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { GrowthChart } from '@/components/charts/LazyCharts';
 import { Alert } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { simulateEtf } from '@/lib/calc';
 import { formatMoney } from '@/lib/format';
-import { NumberField } from './NumberField';
+import { NumberField, useFieldSetters } from './NumberField';
 
 export function EtfSimulator({ defaults }: { defaults: { monthlyContribution: number; currentValue: number } }) {
   const { t, locale } = useI18n();
   const money = (v: number) => formatMoney(v, locale);
   const [v, setV] = useState({ ...defaults, annualReturn: 6, years: 20 });
-  const set = (k: keyof typeof v) => (n: number) => setV((p) => ({ ...p, [k]: n }));
-  const years = Math.min(Math.max(Math.round(v.years), 1), 50);
+  const set = useFieldSetters(setV);
+  // The inputs update instantly; the projection and chart follow when the browser is idle, so typing never stutters.
+  const dv = useDeferredValue(v);
+  const years = Math.min(Math.max(Math.round(dv.years), 1), 50);
 
   const points = useMemo(
-    () => simulateEtf({ monthlyContribution: v.monthlyContribution, currentValue: v.currentValue, annualReturn: v.annualReturn / 100, years }),
-    [v, years],
+    () => simulateEtf({ monthlyContribution: dv.monthlyContribution, currentValue: dv.currentValue, annualReturn: dv.annualReturn / 100, years }),
+    [dv, years],
   );
   const last = points[points.length - 1];
-  const yearly = points.filter((p) => p.month % 12 === 0).map((p) => ({ label: `${p.month / 12}`, contributed: p.contributed, value: p.value }));
+  const yearly = useMemo(() => points.filter((p) => p.month % 12 === 0).map((p) => ({ label: `${p.month / 12}`, contributed: p.contributed, value: p.value })), [points]);
+  const series = useMemo(
+    () => [
+      { key: 'contributed', name: t('sim.contributed'), color: '#6366f1' },
+      { key: 'value', name: t('sim.projectedValue'), color: '#10b981' },
+    ],
+    [t],
+  );
 
   return (
     <div className="space-y-5">
@@ -43,14 +52,7 @@ export function EtfSimulator({ defaults }: { defaults: { monthlyContribution: nu
           </div>
         ))}
       </div>
-      <GrowthChart
-        data={yearly}
-        xKey="label"
-        series={[
-          { key: 'contributed', name: t('sim.contributed'), color: '#6366f1' },
-          { key: 'value', name: t('sim.projectedValue'), color: '#10b981' },
-        ]}
-      />
+      <GrowthChart data={yearly} xKey="label" series={series} />
     </div>
   );
 }

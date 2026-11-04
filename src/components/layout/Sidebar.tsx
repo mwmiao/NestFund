@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n/client';
 import { Icon } from './Icon';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { NAV_ICONS, PRIMARY_NAV, SECONDARY_NAV, isActive, type NavItem } from './nav';
+import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
 /** Desktop navigation (lg and up). */
@@ -49,7 +50,10 @@ export function Sidebar({ theme }: { theme: 'dark' | 'light' }) {
       </nav>
       <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-4">
         <LanguageSwitcher />
-        <ThemeToggle theme={theme} />
+        <div className="flex items-center">
+          <NotificationBell />
+          <ThemeToggle theme={theme} />
+        </div>
       </div>
     </aside>
   );

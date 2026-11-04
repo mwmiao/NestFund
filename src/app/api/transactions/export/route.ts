@@ -1,15 +1,21 @@
+import { rateLimited } from '@/lib/rate-limit';
 import type { NextRequest } from 'next/server';
 import { toCsv } from '@/lib/csv';
-import { CSV_COLUMNS } from '@/lib/csv-import';
+import { CSV_COLUMNS } from '@/lib/tx-csv';
 import { listCategories, listTransactions } from '@/lib/repo';
 import { parseTxFilters } from '@/lib/tx-filters';
 
 export const dynamic = 'force-dynamic';
 
+const LIMIT = { name: 'export-tx', max: 30, windowMs: 60_000 };
+
 /** Prevents spreadsheet formula injection when the CSV is opened in Excel/LibreOffice. */
-const safe = (v: string | null) => (v && /^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+import { neutralizeFormula } from '@/lib/security';
+const safe = (v: string | null) => (v ? neutralizeFormula(v) : v);
 
 export function GET(req: NextRequest) {
+  const limited = rateLimited(req, LIMIT.name, LIMIT.max, LIMIT.windowMs);
+  if (limited) return limited;
   const filters = parseTxFilters(Object.fromEntries(req.nextUrl.searchParams));
   const cats = new Map(listCategories().map((c) => [c.id, c]));
   const rows = listTransactions(filters).map((t) => {

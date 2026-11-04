@@ -1,12 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { GrowthChart } from '@/components/charts/Charts';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { GrowthChart } from '@/components/charts/LazyCharts';
 import { useI18n } from '@/i18n/client';
 import { milestones, simulateHouseSavings, type HouseSimInput } from '@/lib/calc';
 import { addMonths, currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
-import { NumberField } from './NumberField';
+import { NumberField, useFieldSetters } from './NumberField';
 
 export interface HouseDefaults {
   housePrice: number;
@@ -28,17 +28,23 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
     taxRate: 28,
     years: 10,
   });
-  const set = (k: keyof typeof v) => (n: number) => setV((p) => ({ ...p, [k]: n }));
+  const set = useFieldSetters(setV);
+  // Inputs update instantly; the heavy projection and chart follow when the browser is idle.
+  const dv = useDeferredValue(v);
 
-  const horizon = Math.min(Math.max(Math.round(v.years), 1), 40);
+  const horizon = Math.min(Math.max(Math.round(dv.years), 1), 40);
   // Always simulate at least 10 years so the 3/5/7/10-year table is complete; the chart follows the chosen horizon.
-  const result = useMemo(() => simulateHouseSavings({ ...toInput(v), years: Math.max(horizon, 10) }), [v, horizon]);
-  const tablePoints = milestones(result.points, [3, 5, 7, 10]);
+  const result = useMemo(() => simulateHouseSavings({ ...toInput(dv), years: Math.max(horizon, 10) }), [dv, horizon]);
+  const tablePoints = useMemo(() => milestones(result.points, [3, 5, 7, 10]), [result]);
   const monthsToTarget = result.monthsToTarget != null && result.monthsToTarget <= horizon * 12 ? result.monthsToTarget : null;
   const start = currentMonth();
-  const chart = result.points
-    .filter((p) => p.month <= horizon * 12 && p.month % 3 === 0)
-    .map((p) => ({ label: monthLabel(addMonths(start, p.month), locale, 'short'), deposited: p.deposited, interest: p.interest, balance: p.balance }));
+  const chart = useMemo(
+    () =>
+      result.points
+        .filter((p) => p.month <= horizon * 12 && p.month % 3 === 0)
+        .map((p) => ({ label: monthLabel(addMonths(start, p.month), locale, 'short'), deposited: p.deposited, interest: p.interest, balance: p.balance })),
+    [result, horizon, start, locale],
+  );
 
   return (
     <div className="space-y-5">

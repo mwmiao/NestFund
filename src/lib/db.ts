@@ -17,8 +17,12 @@ export function getDb(): Database.Database {
   const db = new Database(path.join(DATA_DIR, 'nestfund.db'));
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
+  // Query-planner statistics and a roomier page cache (both purely local to this connection; no data changes).
+  db.pragma('cache_size = -20000');
+  db.pragma('temp_store = MEMORY');
   db.exec(SCHEMA);
   migrate(db, { backupDir: BACKUP_DIR });
+  db.pragma('optimize');
   const seeded = db.prepare("SELECT value FROM settings WHERE key = 'seeded'").get();
   // First run: only the zeroed profile and the built-in categories; everything else is entered by the user.
   if (!seeded) db.transaction(() => seedDatabase(db))();

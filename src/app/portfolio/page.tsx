@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { deleteSnapshotAction, saveSnapshotAction } from '@/app/actions';
 import { AccountBadge } from '@/components/AccountBadge';
-import { LinesChart } from '@/components/charts/Charts';
+import { LinesChart } from '@/components/charts/LazyCharts';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Alert, Badge, Card, Empty, Field, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';

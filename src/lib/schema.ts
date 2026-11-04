@@ -65,6 +65,13 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE INDEX IF NOT EXISTS idx_tx_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_tx_category ON transactions(category_id);
 CREATE INDEX IF NOT EXISTS idx_tx_account ON transactions(account);
+-- Filters combine a period with an account or category, so the second column lets SQLite read them in date order without sorting.
+CREATE INDEX IF NOT EXISTS idx_tx_account_date ON transactions(account, date);
+CREATE INDEX IF NOT EXISTS idx_tx_to_account_date ON transactions(to_account, date) WHERE to_account IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tx_category_date ON transactions(category_id, date);
+CREATE INDEX IF NOT EXISTS idx_tx_type_date ON transactions(type, date);
+CREATE INDEX IF NOT EXISTS idx_tx_recurring ON transactions(recurring) WHERE recurring = 1 AND parent_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_tx_parent ON transactions(parent_id) WHERE parent_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS goals (
   id INTEGER PRIMARY KEY,
@@ -90,6 +97,17 @@ CREATE TABLE IF NOT EXISTS snapshots (
 );
 CREATE INDEX IF NOT EXISTS idx_snap_date ON snapshots(account, date);
 
+-- Automatic categorisation rules: if the description/merchant contains X (and the account is Y) then category Z. First enabled rule in sort order wins.
+CREATE TABLE IF NOT EXISTS category_rules (
+  id INTEGER PRIMARY KEY,
+  sort INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  match_text TEXT NOT NULL,
+  account TEXT,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Daily Trading 212 history from the API (one row per day, last sync of the day wins). Amounts in cents.
 CREATE TABLE IF NOT EXISTS t212_history (
   date TEXT PRIMARY KEY,
@@ -111,6 +129,16 @@ CREATE TABLE IF NOT EXISTS t212_history (
 export const MIGRATIONS: string[] = [
   // v1.1.0: when a balance was recorded, so same-day movements logged afterwards still count.
   'ALTER TABLE snapshots ADD COLUMN created_at TEXT',
+  // v1.3.0: categorisation rules (new table only; no existing data is touched).
+  `CREATE TABLE IF NOT EXISTS category_rules (
+    id INTEGER PRIMARY KEY,
+    sort INTEGER NOT NULL DEFAULT 0,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    match_text TEXT NOT NULL,
+    account TEXT,
+    category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
 ];
 
 export function migrate(db: Database.Database, opts: { backupDir?: string } = {}) {

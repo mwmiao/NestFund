@@ -5,6 +5,7 @@ import './globals.css';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { PwaClient } from '@/components/pwa/PwaClient';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n } from '@/i18n/server';
 
@@ -13,8 +14,13 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'NestFund',
   description: 'Personal finance dashboard for budgeting, expense tracking, savings goals and long-term investing.',
-  icons: { icon: '/icon.svg' },
+  icons: { icon: '/icon.svg', apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
   manifest: '/manifest.webmanifest',
+  // iOS "Add to Home Screen": opens full screen with its own name, and numbers are never turned into phone links.
+  appleWebApp: { capable: true, title: 'NestFund', statusBarStyle: 'default' },
+  formatDetection: { telephone: false, email: false, address: false },
+  // Older iOS versions only look for this tag; newer ones read the manifest.
+  other: { 'apple-mobile-web-app-capable': 'yes' },
 };
 
 export const viewport: Viewport = {
@@ -41,6 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <footer className="muted mx-auto hidden max-w-5xl px-10 pb-8 text-xs lg:block">{t('app.disclaimer')}</footer>
           </div>
           <BottomNav />
+          <PwaClient />
         </I18nProvider>
       </body>
     </html>

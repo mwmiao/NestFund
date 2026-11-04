@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { BarsChart, LinesChart } from '@/components/charts/Charts';
+import { BarsChart, LinesChart } from '@/components/charts/LazyCharts';
 import { Card, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { computeMonthSummary } from '@/lib/calc';
@@ -15,7 +15,16 @@ export default async function HistoryPage() {
   const catById = new Map(categories.map((c) => [c.id, c]));
 
   const months = listMonthBudgets().filter((b) => b.month <= currentMonth());
-  const rows = months.map((b) => ({ budget: b, s: computeMonthSummary(b, listTransactions({ month: b.month }), categories) }));
+  // One read of all transactions (shared with the other pages through the cache), grouped by month here,
+  // instead of one query per month.
+  const txsByMonth = new Map<string, ReturnType<typeof listTransactions>>();
+  for (const tx of listTransactions()) {
+    const key = tx.date.slice(0, 7);
+    const list = txsByMonth.get(key);
+    if (list) list.push(tx);
+    else txsByMonth.set(key, [tx]);
+  }
+  const rows = months.map((b) => ({ budget: b, s: computeMonthSummary(b, txsByMonth.get(b.month) ?? [], categories) }));
 
   let cumulative = 0;
   const savingsChart = rows.map(({ budget, s }) => {

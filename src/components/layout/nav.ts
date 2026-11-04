@@ -14,6 +14,8 @@ const I = {
   portfolio: 'M3 17l6-6 4 4 8-8M15 7h6v6',
   calc: 'M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h8M8 11h2m3 0h3M8 15h2m3 0h3M8 19h2m3 0h3',
   history: 'M12 8v4l3 2M3.05 11a9 9 0 112.9 6.6M3 4v5h5',
+  reports: 'M5 3h10l4 4v14H5V3zm9 0v5h5M8 13h8M8 17h5',
+  rules: 'M3 5h18l-7 8v6l-4 2v-8L3 5z',
   tags: 'M3 12V4a1 1 0 011-1h8l9 9-9 9-9-9zm5-4.5h.01',
   settings: 'M12 15a3 3 0 100-6 3 3 0 000 6zm7.4-3a7.4 7.4 0 00-.1-1.2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 00-2-1.2L14.5 3h-4l-.4 2.6a7.6 7.6 0 00-2 1.2l-2.4-1-2 3.4 2 1.6a7.4 7.4 0 000 2.4l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 002 1.2l.4 2.6h4l.4-2.6a7.6 7.6 0 002-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z',
   plus: 'M12 5v14M5 12h14',
@@ -33,14 +35,16 @@ export const PRIMARY_NAV: NavItem[] = [
 /** Occasional tools. */
 export const SECONDARY_NAV: NavItem[] = [
   { href: '/simulators', key: 'nav.simulators', icon: I.calc },
+  { href: '/reports', key: 'nav.reports', icon: I.reports },
   { href: '/history', key: 'nav.history', icon: I.history },
   { href: '/transactions/categories', key: 'nav.categories', icon: I.tags },
+  { href: '/transactions/rules', key: 'nav.rules', icon: I.rules },
   { href: '/settings', key: 'nav.settings', icon: I.settings },
 ];
 
-/** Mobile bottom bar: two items, the add button, one item, then "More". */
-export const MOBILE_TABS: NavItem[] = [PRIMARY_NAV[0], PRIMARY_NAV[1], PRIMARY_NAV[2]];
-export const MOBILE_MORE: NavItem[] = [PRIMARY_NAV[3], PRIMARY_NAV[4], ...SECONDARY_NAV];
+/** Mobile bottom bar: the five everyday destinations; the rest lives in the "More" sheet (header menu). */
+export const MOBILE_TABS: NavItem[] = PRIMARY_NAV;
+export const MOBILE_MORE: NavItem[] = SECONDARY_NAV;
 
 export function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';

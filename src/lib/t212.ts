@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { DATA_DIR, fromCents, getDb, toCents } from './db';
 import { todayISO } from './dates';
+import { describeError } from './security';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from './secret-box';
 import { T212Error, fetchT212, type T212Credentials, type T212Env, type T212ErrorCode, type T212Metrics, type T212Position } from './t212-core';
 
@@ -228,7 +229,7 @@ export async function syncT212({ force = false } = {}): Promise<T212SyncResult> 
     } catch (err) {
       // T212Error = the API said no; anything else is a problem inside NestFund (e.g. disk), not the network.
       const code: T212SyncErrorCode = err instanceof T212Error ? err.code : 'internal';
-      if (!(err instanceof T212Error)) console.error('[trading212] sync failed:', err);
+      if (!(err instanceof T212Error)) console.error('[trading212] sync failed:', describeError(err));
       writeState({ ...readState(), lastAttemptAt: at, lastError: { code, status: err instanceof T212Error ? err.status : undefined, at } });
       result = { ok: false, code };
     } finally {

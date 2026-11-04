@@ -1,3 +1,4 @@
+import { describeError } from './security';
 import { syncT212 } from './t212';
 
 const CHECK_EVERY_MS = 15 * 60 * 1000;
@@ -10,7 +11,7 @@ const globalForScheduler = globalThis as unknown as { __nestfundT212Timer?: Node
 export function startT212Scheduler() {
   if (globalForScheduler.__nestfundT212Timer) return;
   const tick = () => {
-    syncT212().catch((err) => console.error('[trading212] background sync failed:', err));
+    syncT212().catch((err) => console.error('[trading212] background sync failed:', describeError(err)));
   };
   setTimeout(tick, 30_000).unref();
   globalForScheduler.__nestfundT212Timer = setInterval(tick, CHECK_EVERY_MS);

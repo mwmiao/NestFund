@@ -3,12 +3,13 @@ import type { TFunction } from '@/i18n/config';
 import { getDb } from './db';
 import { categoryName } from './labels';
 import { listCategories } from './repo';
+import { historyHints, listRules } from './rules-repo';
 import { ACCOUNT_IDS, type AccountId } from './types';
 
 /** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
 export function transactionFormOptions(t: TFunction) {
   const db = getDb();
-  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color }));
+  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }));
   const column = (col: 'merchant' | 'subcategory') =>
     (db.prepare(`SELECT ${col} AS v FROM transactions WHERE ${col} IS NOT NULL AND ${col} != '' GROUP BY ${col} ORDER BY COUNT(*) DESC LIMIT 50`).all() as { v: string }[]).map(
       (r) => r.v,
@@ -27,5 +28,6 @@ export function transactionFormOptions(t: TFunction) {
       )
       .all() as { id: number }[]
   ).map((r) => r.id);
-  return { categories, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds };
+  const suggest = { rules: listRules().map((r) => ({ id: r.id, enabled: r.enabled, text: r.text, account: r.account, categoryId: r.categoryId })), history: historyHints() };
+  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds };
 }

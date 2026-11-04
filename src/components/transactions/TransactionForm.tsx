@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { saveTransactionAction } from '@/app/actions';
 import { Field, Spinner } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
+import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
 import { ACCOUNTS, ACCOUNT_IDS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
 
@@ -18,6 +19,7 @@ export interface CategoryOption {
   key: string | null;
   label: string;
   color: string;
+  kind?: string;
 }
 
 /** Account suggested when a category is picked, until the user chooses an account themself. */
@@ -33,10 +35,16 @@ const SUGGESTED_ACCOUNT: Record<string, AccountId> = {
   tech: 'revolut',
 };
 
+function shiftDay(iso: string, days: number) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 function SubmitButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn-primary flex-1 sm:flex-none" disabled={pending}>
+    <button type="submit" className="btn-primary min-h-12 flex-[2] sm:flex-none" disabled={pending}>
       {pending ? <Spinner /> : label}
     </button>
   );
@@ -45,7 +53,7 @@ function SubmitButton({ label }: { label: string }) {
 function AccountChips({ name, value, onChange, exclude }: { name: string; value: AccountId | ''; onChange: (a: AccountId) => void; exclude?: AccountId }) {
   const { t } = useI18n();
   return (
-    <div className="flex flex-wrap gap-1.5" role="radiogroup">
+    <div className="flex flex-wrap gap-2" role="radiogroup">
       <input type="hidden" name={name} value={value} />
       {ACCOUNT_IDS.filter((a) => a !== exclude).map((a) => {
         const active = a === value;
@@ -57,7 +65,7 @@ function AccountChips({ name, value, onChange, exclude }: { name: string; value:
             role="radio"
             aria-checked={active}
             onClick={() => onChange(a)}
-            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${active ? 'text-white' : 'border-line text-subtle hover:text-ink'}`}
+            className={`min-h-10 rounded-full border px-3.5 py-2 text-[13px] font-medium transition ${active ? 'text-white' : 'border-line text-subtle hover:text-ink'}`}
             style={active ? { background: color, borderColor: color } : undefined}
           >
             {accountName(a, t)}
@@ -78,6 +86,7 @@ export function TransactionForm({
   defaultAccount = 'ctt',
   initialType,
   topCategoryIds = [],
+  suggest,
   error,
 }: {
   categories: CategoryOption[];
@@ -89,6 +98,8 @@ export function TransactionForm({
   defaultAccount?: AccountId;
   initialType?: string;
   topCategoryIds?: number[];
+  /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
+  suggest?: { rules: RuleLike[]; history: HistoryHints };
   error?: string | null;
 }) {
   const { t } = useI18n();
@@ -101,6 +112,9 @@ export function TransactionForm({
   const [account, setAccount] = useState<AccountId>(transaction?.account ?? defaultAccount);
   const [toAccount, setToAccount] = useState<AccountId | ''>(transaction?.toAccount ?? '');
   const [accountTouched, setAccountTouched] = useState(!!transaction);
+  const [description, setDescription] = useState(transaction?.description ?? '');
+  const [merchant, setMerchant] = useState(transaction?.merchant ?? '');
+  const [date, setDate] = useState(transaction?.date ?? today);
   const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
   const isTransfer = type === 'transfer';
   const topCategories = topCategoryIds.map((id) => categories.find((c) => c.id === id)).filter((c): c is CategoryOption => !!c);
@@ -109,10 +123,32 @@ export function TransactionForm({
     const key = categories.find((c) => String(c.id) === value)?.key;
     if (!accountTouched && !isTransfer && key && SUGGESTED_ACCOUNT[key]) setAccount(SUGGESTED_ACCOUNT[key]);
   };
+  // The suggestion scans the user's history, so it runs on the deferred text: typing stays instant, the hint follows a moment later.
+  const typedDescription = useDeferredValue(description);
+  const typedMerchant = useDeferredValue(merchant);
+  const categoryLikes = useMemo(() => categories.map((c) => ({ id: c.id, key: c.key, kind: c.kind ?? 'expense' })), [categories]);
+  const suggestion = useMemo(
+    () => (suggest && !categoryId ? suggestCategory({ description: typedDescription, merchant: typedMerchant, account, kind }, { rules: suggest.rules, history: suggest.history, categories: categoryLikes }) : null),
+    [suggest, categoryId, typedDescription, typedMerchant, account, kind, categoryLikes],
+  );
+  const suggested = suggestion ? categories.find((c) => c.id === suggestion.categoryId) : undefined;
+  const yesterday = shiftDay(today, -1);
   const hasDetails = !!(transaction && (transaction.subcategory || transaction.notes || transaction.attachment || transaction.recurring));
 
   return (
-    <form action={saveTransactionAction} className="space-y-4">
+    <form
+      action={saveTransactionAction}
+      className="space-y-4"
+      onSubmit={(e) => {
+        // Description is optional in the UI: fall back to the merchant, the category or the type so a log takes seconds.
+        const f = e.currentTarget.elements;
+        const desc = f.namedItem('description') as HTMLInputElement | null;
+        if (desc && !desc.value.trim()) {
+          const merchant = (f.namedItem('merchant') as HTMLInputElement | null)?.value.trim();
+          desc.value = merchant || categories.find((c) => String(c.id) === categoryId)?.label || t(`tx.kinds.${kind}`);
+        }
+      }}
+    >
       {transaction && <input type="hidden" name="id" value={transaction.id} />}
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="type" value={type} />
@@ -131,7 +167,7 @@ export function TransactionForm({
             role="radio"
             aria-checked={kind === k}
             onClick={() => setKind(k)}
-            className={`truncate rounded-[0.6rem] px-1 py-2 text-[13px] font-medium transition sm:text-sm ${kind === k ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
+            className={`min-h-11 truncate rounded-[0.6rem] px-1 py-2 text-[13px] font-medium transition sm:text-sm ${kind === k ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
           >
             {t(`tx.kinds.${k}`)}
           </button>
@@ -155,11 +191,29 @@ export function TransactionForm({
       </div>
 
       <Field label={t('tx.description')}>
-        <input name="description" required defaultValue={transaction?.description ?? ''} className="input" />
+        <input name="description" value={description} onChange={(e) => setDescription(e.target.value)} enterKeyHint="done" placeholder={categories.find((c) => String(c.id) === categoryId)?.label ?? t(`tx.kinds.${kind}`)} className="input" />
       </Field>
 
       <div>
         <span className="label">{t('tx.category')}</span>
+        {suggestion && suggested && (
+          <button
+            type="button"
+            onClick={() => pickCategory(String(suggested.id))}
+            className="mb-2 flex min-h-12 w-full items-center gap-3 rounded-control border border-brand-500/40 bg-brand-500/10 px-3 py-2 text-left transition active:scale-[0.99]"
+          >
+            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: suggested.color }} aria-hidden />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium">
+                {t('tx.suggestFor')}: {suggested.label}
+              </span>
+              <span className="muted block truncate text-xs">
+                {t(suggestion.source === 'rule' ? 'tx.suggestRule' : suggestion.source === 'history' ? 'tx.suggestHistory' : 'tx.suggestKeyword', { text: suggestion.matched })}
+              </span>
+            </span>
+            <span className="shrink-0 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white">{t('tx.suggestAccept')}</span>
+          </button>
+        )}
         {topCategories.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
             {topCategories.map((c) => (
@@ -206,19 +260,29 @@ export function TransactionForm({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t('common.date')}>
-          <input type="date" name="date" required defaultValue={transaction?.date ?? today} className="input" />
-        </Field>
-        <Field label={t('tx.merchant')}>
-          <input name="merchant" list="merchants" defaultValue={transaction?.merchant ?? ''} className="input" />
-          <datalist id="merchants">
-            {merchants.map((s) => (
-              <option key={s} value={s} />
-            ))}
-          </datalist>
-        </Field>
+      <div>
+        <span className="label">{t('common.date')}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          {[
+            [today, t('common.today')],
+            [yesterday, t('common.yesterday')],
+          ].map(([value, label]) => (
+            <button key={value} type="button" aria-pressed={date === value} onClick={() => setDate(value)} className={`chip !min-h-10 !px-3.5 !text-[13px] ${date === value ? 'chip-active' : ''}`}>
+              {label}
+            </button>
+          ))}
+          <input type="date" name="date" required value={date} onChange={(e) => setDate(e.target.value)} aria-label={t('common.date')} className="input !w-auto min-w-0 flex-1 basis-36" />
+        </div>
       </div>
+
+      <Field label={`${t('tx.merchant')} (${t('common.optional')})`}>
+        <input name="merchant" list="merchants" enterKeyHint="done" value={merchant} onChange={(e) => setMerchant(e.target.value)} className="input" />
+        <datalist id="merchants">
+          {merchants.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      </Field>
 
       <details open={hasDetails} className="rounded-control border border-line px-3 py-2">
         <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('tx.moreDetails')}</summary>
@@ -302,8 +366,8 @@ export function TransactionForm({
         </div>
       </details>
 
-      <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] -mx-4 flex gap-2 border-t border-line bg-surface/95 px-4 py-2.5 backdrop-blur sm:static sm:mx-0 sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
-        <a href={back} className="btn-ghost">
+      <div className="sticky bottom-[calc(3.6rem+env(safe-area-inset-bottom))] -mx-4 flex gap-2 border-t border-line bg-surface/95 px-4 py-2.5 backdrop-blur sm:static sm:mx-0 sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
+        <a href={back} className="btn-ghost flex-1 sm:flex-none">
           {t('common.cancel')}
         </a>
         <SubmitButton label={t('common.save')} />

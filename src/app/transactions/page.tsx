@@ -6,9 +6,9 @@ import { getI18n } from '@/i18n/server';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
-import { listCategories, listTransactions, materializeRecurring } from '@/lib/repo';
+import { listCategories, listTransactionsPage, materializeRecurring, transactionTotals } from '@/lib/repo';
 import { parseTxFilters } from '@/lib/tx-filters';
-import { ACCOUNTS, PAYMENT_METHODS, TX_TYPES, isSpending, type AccountId } from '@/lib/types';
+import { ACCOUNTS, PAYMENT_METHODS, TX_TYPES, type AccountId } from '@/lib/types';
 
 const FILTER_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'meal_card', 'trading212', 'traderepublic', 'cash'];
 
@@ -21,12 +21,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   const hasFilter = ['month', 'year', 'category', 'account', 'method', 'type', 'q'].some((k) => sp[k] !== undefined);
   const filters = parseTxFilters(hasFilter ? sp : { ...sp, month: currentMonth() });
   const categories = listCategories();
-  const txs = listTransactions(filters);
-
-  const sum = (list: typeof txs) => list.reduce((s, x) => s + x.amount, 0);
-  const outflow = sum(txs.filter((x) => isSpending(x.type) && x.account !== 'meal_card'));
-  const inflow = sum(txs.filter((x) => x.type === 'income' && x.account !== 'meal_card'));
-  const meal = sum(txs.filter((x) => isSpending(x.type) && x.account === 'meal_card'));
+  // Only one page is read and rendered; the totals still cover everything the filters match (summed in SQL).
+  const { rows: txs, total, pages, page } = listTransactionsPage(filters, Number(sp.page));
+  const { outflow, inflow, meal } = transactionTotals(filters);
   const money = (v: number) => formatMoney(v, locale);
 
   const query = (overrides: Record<string, string | undefined>) => {
@@ -49,11 +46,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     <>
       <PageHeader
         title={t('tx.title')}
-        subtitle={filters.month ? `${monthLabel(filters.month, locale)} · ${t('tx.count', { n: txs.length })}` : t('tx.count', { n: txs.length })}
+        subtitle={filters.month ? `${monthLabel(filters.month, locale)} · ${t('tx.count', { n: total })}` : t('tx.count', { n: total })}
         actions={
           <>
             <Link href="/transactions/categories" className="btn-ghost">
               {t('tx.manageCategories')}
+            </Link>
+            <Link href="/transactions/rules" className="btn-ghost">
+              {t('rules.manage')}
             </Link>
             <Link href="/transactions/new" className="btn-primary hidden sm:inline-flex">
               + {t('tx.new')}
@@ -148,6 +148,25 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           )}
         </dl>
         <TransactionList transactions={txs} categories={categories} locale={locale} />
+        {pages > 1 && (
+          <nav className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3" aria-label={t('tx.pageOf', { page, pages })}>
+            {page > 1 ? (
+              <Link href={query({ page: String(page - 1) })} className="btn-secondary" rel="prev">
+                ‹ {t('common.previous')}
+              </Link>
+            ) : (
+              <span />
+            )}
+            <span className="muted text-sm tabular-nums">{t('tx.pageOf', { page, pages })}</span>
+            {page < pages ? (
+              <Link href={query({ page: String(page + 1) })} className="btn-secondary" rel="next">
+                {t('common.next')} ›
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        )}
         <p className="muted mt-4 text-xs">
           {t('tx.mealCardNote')} {t('tx.transferNote')}
         </p>

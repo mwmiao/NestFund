@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { OfflineDataCard } from '@/components/pwa/OfflineDataCard';
 import { T212Actions, T212ConnectForm } from '@/components/settings/T212Connection';
 import { Alert, Badge, Card, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
@@ -16,7 +17,30 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title={t('settings.title')} />
+      <PageHeader
+        title={t('settings.title')}
+        actions={
+          <>
+            <Link href="/settings/backup" className="btn-secondary">
+              {t('backup.openPage')}
+            </Link>
+            <Link href="/settings/notifications" className="btn-secondary">
+              {t('notifications.settingsTitle')}
+            </Link>
+          </>
+        }
+      />
+
+      {!process.env.BASIC_AUTH_USER && (
+        <div className="mb-6">
+          <Alert tone="info">{t('settings.noAuth')}</Alert>
+        </div>
+      )}
+
+      <h2 className="section-title mb-3">{t('pwa.title')}</h2>
+      <Card className="mb-6">
+        <OfflineDataCard />
+      </Card>
 
       <h2 className="section-title mb-3">{t('settings.connections')}</h2>
       <Card className="mb-6">

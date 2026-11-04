@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
               router.refresh();
             })
           }
-          className={`rounded-md px-2 py-1 font-medium transition ${
+          className={`flex min-h-9 items-center rounded-md px-3 py-1 font-medium transition ${
             l === locale ? 'bg-brand-600 text-white' : 'text-subtle hover:text-ink'
           }`}
         >

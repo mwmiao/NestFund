@@ -52,6 +52,8 @@ export async function t212Get<T>(path: T212Path, creds: T212Credentials, fetchIm
       headers: { Authorization: authorizationHeader(creds), Accept: 'application/json' },
       signal: AbortSignal.timeout(15_000),
       cache: 'no-store',
+      // The Authorization header must only ever go to the Trading 212 host: a redirect is treated as a failure.
+      redirect: 'error',
     });
   } catch (err) {
     throw new T212Error('network', err instanceof Error ? err.message : 'Network error');

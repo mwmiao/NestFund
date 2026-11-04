@@ -6,6 +6,7 @@ import { BACKUP_DIR, fromCents as e, getDb, toCents as c } from './db';
 import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './dates';
 import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
 import { accountBalance, allocateGoals, type AccountBalance } from './calc';
+import { memo } from './cache';
 import { ACCOUNT_IDS } from './types';
 import type {
   AccountId,
@@ -97,7 +98,7 @@ const mapCategory = (r: Row): Category => ({
 });
 
 export function listCategories(): Category[] {
-  return (getDb().prepare('SELECT * FROM categories ORDER BY sort, name').all() as Row[]).map(mapCategory);
+  return memo('categories', () => (getDb().prepare('SELECT * FROM categories ORDER BY sort, name').all() as Row[]).map(mapCategory));
 }
 
 /** `name: null` on update keeps the stored name. */
@@ -165,7 +166,7 @@ const mapItem = (r: Row): BudgetItem => ({
 });
 
 export function listBudgetItems(): BudgetItem[] {
-  return (getDb().prepare('SELECT * FROM budget_items ORDER BY sort, id').all() as Row[]).map(mapItem);
+  return memo('budgetItems', () => (getDb().prepare('SELECT * FROM budget_items ORDER BY sort, id').all() as Row[]).map(mapItem));
 }
 
 export function upsertBudgetItem(item: Omit<BudgetItem, 'id'> & { id?: number }) {
@@ -242,7 +243,7 @@ export function updateMonthBudget(month: string, data: { income: number; extraIn
 }
 
 export function listMonthBudgets(): MonthBudget[] {
-  return (getDb().prepare('SELECT * FROM month_budgets ORDER BY month').all() as Row[]).map(mapMonth);
+  return memo('monthBudgets', () => (getDb().prepare('SELECT * FROM month_budgets ORDER BY month').all() as Row[]).map(mapMonth));
 }
 
 // ---------------------------------------------------------------- transactions
@@ -278,15 +279,19 @@ export interface TxFilters {
   limit?: number;
 }
 
-export function listTransactions(f: TxFilters = {}): Transaction[] {
+/**
+ * WHERE clause for the filters. A month or year becomes a plain range on `date` ("YYYY-MM-DD" sorts as text),
+ * so SQLite can use the date index instead of evaluating substr() on every row.
+ */
+function txWhere(f: TxFilters): { sql: string; args: unknown[] } {
   const where: string[] = [];
   const args: unknown[] = [];
   if (f.month) {
-    where.push("substr(date, 1, 7) = ?");
-    args.push(f.month);
+    where.push('date >= ? AND date <= ?');
+    args.push(`${f.month}-01`, `${f.month}-31`);
   } else if (f.year) {
-    where.push("substr(date, 1, 4) = ?");
-    args.push(f.year);
+    where.push('date >= ? AND date <= ?');
+    args.push(`${f.year}-01-01`, `${f.year}-12-31`);
   }
   if (f.categoryId) {
     where.push('category_id = ?');
@@ -306,14 +311,51 @@ export function listTransactions(f: TxFilters = {}): Transaction[] {
     args.push(f.type);
   }
   if (f.q) {
-    where.push("(description LIKE ? OR merchant LIKE ? OR notes LIKE ? OR subcategory LIKE ?)");
+    where.push('(description LIKE ? OR merchant LIKE ? OR notes LIKE ? OR subcategory LIKE ?)');
     const like = `%${f.q}%`;
     args.push(like, like, like, like);
   }
-  const sql = `SELECT * FROM transactions ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY date DESC, id DESC ${
-    f.limit ? 'LIMIT ' + Number(f.limit) : ''
-  }`;
-  return (getDb().prepare(sql).all(...args) as Row[]).map(mapTx);
+  return { sql: where.length ? 'WHERE ' + where.join(' AND ') : '', args };
+}
+
+export function listTransactions(f: TxFilters = {}): Transaction[] {
+  return memo(`tx:${JSON.stringify(f)}`, () => {
+    const { sql, args } = txWhere(f);
+    const limit = f.limit ? 'LIMIT ' + Number(f.limit) : '';
+    return (getDb().prepare(`SELECT * FROM transactions ${sql} ORDER BY date DESC, id DESC ${limit}`).all(...args) as Row[]).map(mapTx);
+  });
+}
+
+export const TX_PAGE_SIZE = 50;
+
+/** One page of the filtered list (newest first) plus the total number of matches. */
+export function listTransactionsPage(f: TxFilters, page: number, size = TX_PAGE_SIZE): { rows: Transaction[]; total: number; pages: number; page: number } {
+  return memo(`txpage:${JSON.stringify(f)}:${page}:${size}`, () => {
+    const db = getDb();
+    const { sql, args } = txWhere(f);
+    const total = (db.prepare(`SELECT COUNT(*) AS n FROM transactions ${sql}`).get(...args) as Row).n as number;
+    const pages = Math.max(1, Math.ceil(total / size));
+    const current = Math.min(Math.max(1, Math.floor(page) || 1), pages);
+    const rows = (db.prepare(`SELECT * FROM transactions ${sql} ORDER BY date DESC, id DESC LIMIT ? OFFSET ?`).all(...args, size, (current - 1) * size) as Row[]).map(mapTx);
+    return { rows, total, pages, page: current };
+  });
+}
+
+/** Totals of everything the filters match (not just the visible page), computed in SQL. Meal-card money is kept apart. */
+export function transactionTotals(f: TxFilters): { outflow: number; inflow: number; meal: number } {
+  return memo(`txtotals:${JSON.stringify(f)}`, () => {
+    const { sql, args } = txWhere(f);
+    const r = getDb()
+      .prepare(
+        `SELECT
+           COALESCE(SUM(CASE WHEN type IN ('purchase','expense','payment') AND account != 'meal_card' THEN amount END), 0) AS outflow,
+           COALESCE(SUM(CASE WHEN type = 'income' AND account != 'meal_card' THEN amount END), 0) AS inflow,
+           COALESCE(SUM(CASE WHEN type IN ('purchase','expense','payment') AND account = 'meal_card' THEN amount END), 0) AS meal
+         FROM transactions ${sql}`,
+      )
+      .get(...args) as Row;
+    return { outflow: e(r.outflow), inflow: e(r.inflow), meal: e(r.meal) };
+  });
 }
 
 export function getTransaction(id: number): Transaction | null {
@@ -413,7 +455,7 @@ const mapGoal = (r: Row): Goal => ({
 
 /** Goals as stored: `current` is the manually entered amount (used when no account is linked). */
 export function listGoalsStored(): Goal[] {
-  return (getDb().prepare('SELECT * FROM goals ORDER BY sort, id').all() as Row[]).map(mapGoal);
+  return memo('goals', () => (getDb().prepare('SELECT * FROM goals ORDER BY sort, id').all() as Row[]).map(mapGoal));
 }
 
 /** Goals with `current` resolved: linked goals share their account balance in goal order. */
@@ -448,6 +490,10 @@ const mapSnap = (r: Row): Snapshot => ({
 });
 
 export function listSnapshots(account?: AccountId): Snapshot[] {
+  return memo(`snapshots:${account ?? 'all'}`, () => readSnapshots(account));
+}
+
+function readSnapshots(account?: AccountId): Snapshot[] {
   const db = getDb();
   const rows = account
     ? db.prepare('SELECT * FROM snapshots WHERE account = ? ORDER BY date, id').all(account)
@@ -457,9 +503,21 @@ export function listSnapshots(account?: AccountId): Snapshot[] {
 
 /** Current balance of every account: last check-in + movements logged after it. */
 export function accountBalances(): Record<AccountId, AccountBalance> {
-  const snaps = listSnapshots();
-  const txs = listTransactions();
-  return Object.fromEntries(ACCOUNT_IDS.map((a) => [a, accountBalance(a, snaps, txs)])) as Record<AccountId, AccountBalance>;
+  return memo('accountBalances', () => {
+    const db = getDb();
+    const snaps = listSnapshots();
+    const involving = db.prepare('SELECT * FROM transactions WHERE (account = ? OR to_account = ?)');
+    const involvingSince = db.prepare('SELECT * FROM transactions WHERE (account = ? OR to_account = ?) AND date >= ?');
+    // A balance only needs the movements of that account from its last check-in onwards (same-day ones included, the
+    // calculation decides which count), so the whole history is never loaded. Accounts without a check-in use all of theirs.
+    return Object.fromEntries(
+      ACCOUNT_IDS.map((a) => {
+        const last = snaps.reduce<string | null>((max, sn) => (sn.account === a && (max === null || sn.date > max) ? sn.date : max), null);
+        const rows = (last ? involvingSince.all(a, a, last) : involving.all(a, a)) as Row[];
+        return [a, accountBalance(a, snaps, rows.map(mapTx))];
+      }),
+    ) as Record<AccountId, AccountBalance>;
+  });
 }
 
 export function balanceMap(balances = accountBalances()): Partial<Record<AccountId, number>> {
@@ -478,13 +536,17 @@ export function deleteSnapshot(id: number) {
 
 /** Monthly outflow totals per category, for history charts. */
 export function spendingByMonthAndCategory(fromMonth: string): { month: string; categoryId: number | null; total: number }[] {
+  return memo(`spending:${fromMonth}`, () => readSpendingByMonthAndCategory(fromMonth));
+}
+
+function readSpendingByMonthAndCategory(fromMonth: string): { month: string; categoryId: number | null; total: number }[] {
   const rows = getDb()
     .prepare(
       `SELECT substr(t.date, 1, 7) AS month, t.category_id AS categoryId, SUM(t.amount) AS total
        FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
-       WHERE t.type != 'income' AND substr(t.date, 1, 7) >= ? AND (c.kind IS NULL OR c.kind = 'expense')
+       WHERE t.type != 'income' AND t.date >= ? AND (c.kind IS NULL OR c.kind = 'expense')
        GROUP BY month, t.category_id ORDER BY month`,
     )
-    .all(fromMonth) as Row[];
+    .all(`${fromMonth}-01`) as Row[];
   return rows.map((r) => ({ month: r.month, categoryId: r.categoryId, total: e(r.total) }));
 }

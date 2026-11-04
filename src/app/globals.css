@@ -63,6 +63,33 @@
   summary::-webkit-details-marker {
     display: none;
   }
+  html,
+  body {
+    overflow-x: clip; /* never a horizontal page scroll */
+  }
+  /* Touch devices: every control gets at least a 44px tap area (Apple HIG / WCAG 2.5.5). */
+  @media (pointer: coarse) {
+    .btn,
+    .chip,
+    .btn-ghost,
+    select,
+    input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']),
+    summary {
+      min-height: 2.75rem;
+    }
+    summary {
+      display: flex;
+      align-items: center;
+    }
+    .btn-ghost.\!p-2 {
+      min-width: 2.75rem;
+    }
+    input[type='checkbox'],
+    input[type='radio'] {
+      min-height: 1.25rem;
+      min-width: 1.25rem;
+    }
+  }
 }
 
 /* ---------------------------------------------------------------- components */

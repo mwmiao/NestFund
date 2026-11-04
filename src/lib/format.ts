@@ -1,3 +1,4 @@
+import { MAX_AMOUNT } from './security';
 const moneyFormatters = new Map<string, Intl.NumberFormat>();
 
 export function formatMoney(value: number, locale: string, opts: { decimals?: number; sign?: boolean } = {}): string {
@@ -39,7 +40,7 @@ export function formatPercent(ratio: number, locale: string, decimals = 1): stri
  * The right-most separator is treated as the decimal separator when both are present.
  */
 export function parseDecimal(input: unknown): number | null {
-  if (typeof input === 'number') return Number.isFinite(input) ? input : null;
+  if (typeof input === 'number') return Number.isFinite(input) && Math.abs(input) <= MAX_AMOUNT ? input : null;
   if (typeof input !== 'string') return null;
   let s = input.trim().replace(/[€\s ]/g, '');
   if (!s) return null;
@@ -53,7 +54,9 @@ export function parseDecimal(input: unknown): number | null {
     s = s.replace(',', '.');
   }
   if (!/^-?\d+(\.\d+)?$/.test(s)) return null;
-  return Number(s);
+  const n = Number(s);
+  // Absurdly large values (or ones that overflow to Infinity) are rejected instead of stored.
+  return Number.isFinite(n) && Math.abs(n) <= MAX_AMOUNT ? n : null;
 }
 
 /** Default value for a decimal text input, in Portuguese style ("39,9"). */

@@ -25,7 +25,8 @@ describe('fresh start seed', () => {
     expect(count(db, 'categories')).toBe(DEFAULT_CATEGORIES.length);
     expect(count(db, 'categories WHERE monthly_budget IS NOT NULL')).toBe(0);
     const profile = JSON.parse((db.prepare("SELECT value FROM settings WHERE key = 'profile'").get() as { value: string }).value);
-    expect(Object.values(profile).every((v) => v === 0)).toBe(true);
+    // Every amount is zero; only the pay days (25, the contract rule) have a value.
+    expect(Object.entries(profile).filter(([k]) => !k.endsWith('PayDay')).every(([, v]) => v === 0)).toBe(true);
     expect(profile).toEqual(DEFAULT_PROFILE);
   });
 

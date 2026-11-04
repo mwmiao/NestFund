@@ -178,7 +178,7 @@ describe('schema upgrade', () => {
     const old = new Database(':memory:');
     old.exec(SCHEMA.replace(/CREATE TABLE IF NOT EXISTS interest_credits[\s\S]*?\);\n/, ''));
     old.prepare("INSERT INTO transactions (date, amount, type, description, account, payment_method) VALUES ('2026-11-01', 1000, 'purchase', 'x', 'ctt', 'card')").run();
-    old.pragma(`user_version = ${MIGRATIONS.length - 1}`);
+    old.pragma("user_version = 3"); // interest_credits is migration 3
     expect(old.prepare("SELECT name FROM sqlite_master WHERE name = 'interest_credits'").get()).toBeUndefined();
     migrate(old);
     expect(old.prepare("SELECT name FROM sqlite_master WHERE name = 'interest_credits'").get()).toBeDefined();

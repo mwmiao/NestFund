@@ -98,8 +98,8 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Card title={t('setup.steps.income')}>
           <p className="muted mb-4 text-sm">{t('setup.incomeHint')}</p>
           <form action={setupIncomeAction} className="space-y-3">
-            <Field label={`${t('setup.salary')} (€)`}>{amountInput('salary', profile.defaultIncome)}</Field>
-            <Field label={`${t('dashboard.mealCard')} (€)`}>{amountInput('mealCard', profile.mealCard)}</Field>
+            <Field label={`${t('setup.salary')} (€)`}>{amountInput('salary')}</Field>
+            <Field label={`${t('dashboard.mealCard')} (€)`}>{amountInput('mealCard')}</Field>
             <p className="muted text-xs">{t('dashboard.mealCardHint')}</p>
             {actions('income')}
           </form>

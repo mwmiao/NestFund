@@ -128,6 +128,25 @@ CREATE TABLE IF NOT EXISTS interest_credits (
   UNIQUE (account, month)
 );
 
+-- Income of each month, entered by hand (salary and meal card depend on the days worked; a worked holiday counts double).
+-- Amounts in cents. month_budgets.income / meal_card mirror the values here so every calculation keeps working.
+CREATE TABLE IF NOT EXISTS month_income (
+  month TEXT PRIMARY KEY,
+  normal_days REAL NOT NULL DEFAULT 0,
+  holiday_days REAL NOT NULL DEFAULT 0,
+  salary_per_day INTEGER,
+  meal_per_day INTEGER,
+  salary_confirmed INTEGER NOT NULL DEFAULT 0,
+  meal_confirmed INTEGER NOT NULL DEFAULT 0,
+  expected_salary INTEGER,
+  expected_meal INTEGER,
+  salary_expected_date TEXT,
+  salary_paid_date TEXT,
+  meal_expected_date TEXT,
+  meal_paid_date TEXT,
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- Daily Trading 212 history from the API (one row per day, last sync of the day wins). Amounts in cents.
 CREATE TABLE IF NOT EXISTS t212_history (
   date TEXT PRIMARY KEY,
@@ -177,6 +196,24 @@ export const MIGRATIONS: string[] = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE (account, month)
   )`,
+  // v1.4.0: manual monthly income with days worked and pay dates (new table; existing months keep their values and are marked as entered).
+  `CREATE TABLE IF NOT EXISTS month_income (
+    month TEXT PRIMARY KEY,
+    normal_days REAL NOT NULL DEFAULT 0,
+    holiday_days REAL NOT NULL DEFAULT 0,
+    salary_per_day INTEGER,
+    meal_per_day INTEGER,
+    salary_confirmed INTEGER NOT NULL DEFAULT 0,
+    meal_confirmed INTEGER NOT NULL DEFAULT 0,
+    expected_salary INTEGER,
+    expected_meal INTEGER,
+    salary_expected_date TEXT,
+    salary_paid_date TEXT,
+    meal_expected_date TEXT,
+    meal_paid_date TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  `INSERT OR IGNORE INTO month_income (month) SELECT month FROM month_budgets WHERE income > 0 OR meal_card > 0`,
 ];
 
 export function migrate(db: Database.Database, opts: { backupDir?: string } = {}) {

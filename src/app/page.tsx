@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { dismissOnboardingAction } from '@/app/actions';
 import { Sparkline } from '@/components/charts/Sparkline';
 import { AccountsPanel, type AccountRow, type RecentTransfer } from '@/components/dashboard/AccountsPanel';
+import { IncomeCard } from '@/components/income/IncomeCard';
 import { MonthPicker } from '@/components/MonthPicker';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Alert, Badge, Card, Dot, EmptyState, ProgressBar } from '@/components/ui';
@@ -15,7 +16,10 @@ import {
   accountBalances,
   balanceMap,
   ensureMonthBudget,
+  getMonthIncome,
   getOnboarding,
+  getProfile,
+  listMonthIncomes,
   hasSampleData,
   listCategories,
   listGoals,
@@ -37,6 +41,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   materializeRecurring();
   const budget = ensureMonthBudget(month);
+  const monthIncome = getMonthIncome(month);
+  const incomes = new Map(listMonthIncomes().map((i) => [i.month, i]));
+  const profile = getProfile();
   const categories = listCategories();
   const txs = listTransactions({ month });
   const s = computeMonthSummary(budget, txs, categories);
@@ -52,7 +59,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const spent = s.manualSpent + s.mealCardSpent;
   const saved = s.etfTransferred + s.savingsTransferred;
   const spendable = Math.max(s.income - s.fixed - s.etf - s.savings, 0);
-  const hasIncome = s.income > 0;
+  // No salary is ever assumed: until the month's income is entered by hand, the budget shows "not defined".
+  const hasIncome = monthIncome != null || s.income > 0;
   const etf = etfSummary(balances.trading212, t212);
 
   const accountRows: AccountRow[] = ACCOUNT_ROWS.map((id) => {
@@ -135,7 +143,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <dd className={`mt-1 text-lg font-semibold tabular-nums sm:text-xl ${hasIncome && s.realAvailable < 0 ? 'text-negative' : ''}`}>{hasIncome ? money(s.realAvailable) : '—'}</dd>
             {!hasIncome && (
               <dd className="mt-0.5 text-[11px]">
-                <Link href="/setup?step=income" className="link !text-[11px]">
+                <Link href={`/budget?m=${month}#income`} className="link !text-[11px]">
                   {t('dashboard.setIncome')}
                 </Link>
               </dd>
@@ -143,6 +151,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
         </dl>
       </section>
+
+      <IncomeCard month={month} budget={budget} income={monthIncome} incomes={incomes} profile={profile} salaryTotal={s.salary} t={t} locale={locale} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* 2 — balances per account, with inline balance updates and quick transfers */}
@@ -210,7 +220,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )}
             </>
           ) : (
-            <EmptyState compact title={t('dashboard.emptyBudgetTitle')} hint={t('dashboard.emptyBudgetHint')} action={{ href: '/setup?step=income', label: t('dashboard.emptyBudgetAction') }} />
+            <EmptyState compact title={t('income.notDefined')} hint={t('income.notDefinedHint')} action={{ href: `/budget?m=${month}#income`, label: t('income.define') }} />
           )}
         </Card>
 

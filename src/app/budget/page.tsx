@@ -1,16 +1,19 @@
-import { deleteBudgetItemAction, saveBudgetItemAction, saveMonthBudgetAction, saveProfileAction } from '@/app/actions';
+import { deleteBudgetItemAction, saveBudgetItemAction, saveProfileAction } from '@/app/actions';
+import { IncomeForm } from '@/components/income/IncomeForm';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { MonthPicker } from '@/components/MonthPicker';
 import Link from 'next/link';
 import { Alert, Card, Dot, Empty, EmptyState, Field, PageHeader, ProgressBar, budgetTone, toneText } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import type { TFunction } from '@/i18n/config';
-import { availableForIncome, computeMonthSummary } from '@/lib/calc';
-import { currentMonth, isActiveInMonth, isMonth, monthLabel } from '@/lib/dates';
+import { computeMonthSummary } from '@/lib/calc';
+import { incomeDifference, payNote } from '@/lib/income-view';
+import { expectedPayDate } from '@/lib/payday';
+import { currentMonth, formatDate, isActiveInMonth, isMonth, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent, toInputDecimal } from '@/lib/format';
 import { AccountBadge } from '@/components/AccountBadge';
 import { accountName, categoryName } from '@/lib/labels';
-import { ensureMonthBudget, getProfile, listBudgetItems, listCategories, listTransactions } from '@/lib/repo';
+import { ensureMonthBudget, getMonthIncome, getProfile, lastDailyRates, listBudgetItems, listCategories, listTransactions } from '@/lib/repo';
 import { ACCOUNT_IDS, BUDGET_ITEM_KINDS, type BudgetItem, type Category } from '@/lib/types';
 
 function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Category[]; t: TFunction }) {
@@ -80,8 +83,17 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
   const isPast = month < currentMonth();
   const template = listBudgetItems();
 
-  const scenarioMin = availableForIncome(profile.incomeMin + budget.extraIncome, budget.items);
-  const scenarioMax = availableForIncome(profile.incomeMax + budget.extraIncome, budget.items);
+  const monthIncome = getMonthIncome(month);
+  // No salary is assumed: the budget is "not defined" until the income of this month is entered.
+  const hasIncome = monthIncome != null || s.income > 0;
+  const salaryPay = expectedPayDate(month, profile.salaryPayDay);
+  const mealPay = expectedPayDate(month, profile.mealPayDay);
+  const diff = incomeDifference(monthIncome, budget.income, budget.mealCard);
+  const rates = lastDailyRates(month);
+  const payText = (label: string, pd: ReturnType<typeof expectedPayDate>) => {
+    const note = payNote(pd, t);
+    return `${label}: ${formatDate(pd.date)}${note ? ` — ${note}` : ''}`;
+  };
 
   const spentByCat = new Map(s.byCategory.map((r) => [r.categoryId, r.total]));
   const planned = budget.items.reduce((sum, i) => sum + i.amount, 0);
@@ -98,7 +110,6 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
     [t('budget.kinds.leisure'), s.leisure],
     [t('budget.kinds.variable'), s.variablePlanned],
   ];
-  const hasRange = profile.incomeMax > profile.incomeMin;
 
   return (
     <>
@@ -107,7 +118,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         actions={<MonthPicker month={month} basePath="/budget" locale={locale} labels={{ prev: t('common.previous'), next: t('common.next'), today: t('common.today') }} />}
       />
 
-      {s.income > 0 && s.negativePlanned && (
+      {hasIncome && s.negativePlanned && (
         <div className="mb-4">
           <Alert tone="danger">{t('dashboard.alertPlanned', { amount: money(Math.abs(s.plannedAvailable)) })}</Alert>
         </div>
@@ -115,7 +126,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
 
       {/* 1 — the month at a glance */}
       <section className="card mb-4">
-        {s.income > 0 ? (
+        {hasIncome ? (
           <>
             <dl className="grid grid-cols-3 gap-3">
               <div>
@@ -155,19 +166,11 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
                   <dt className="muted">{t('dashboard.savingsRate')}</dt>
                   <dd className="tabular-nums">{formatPercent(s.savingsRate, locale)}</dd>
                 </div>
-                {hasRange && (
-                  <div className="flex justify-between sm:col-span-2">
-                    <dt className="muted">{t('budget.rangeHint', { min: money(profile.incomeMin), max: money(profile.incomeMax) })}</dt>
-                    <dd className="tabular-nums">
-                      {money(scenarioMin)} – {money(scenarioMax)}
-                    </dd>
-                  </div>
-                )}
               </dl>
             </details>
           </>
         ) : (
-          <EmptyState compact title={t('dashboard.emptyBudgetTitle')} hint={t('dashboard.emptyBudgetHint')} action={{ href: '/setup?step=income', label: t('dashboard.emptyBudgetAction') }} />
+          <EmptyState compact title={t('income.notDefined')} hint={t('income.notDefinedHint')} action={{ href: '#income', label: t('income.define') }} />
         )}
       </section>
 
@@ -276,28 +279,43 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         <p className="muted mt-4 text-xs">{t('budget.fixedNote')}</p>
       </Card>
 
-      {/* 4 — settings, out of the way */}
-      <details className="card mb-4">
-        <summary className="section-title cursor-pointer select-none">{t('budget.monthSettings')}</summary>
-        <form action={saveMonthBudgetAction} className="mt-4 grid gap-3 sm:grid-cols-3">
-          <input type="hidden" name="month" value={month} />
-          <Field label={`${t('budget.salary')} (€)`}>
-            <input name="income" inputMode="decimal" defaultValue={toInputDecimal(budget.income)} className="input tabular-nums" />
-          </Field>
-          <Field label={`${t('budget.extraIncome')} (€)`}>
-            <input name="extraIncome" inputMode="decimal" defaultValue={toInputDecimal(budget.extraIncome)} className="input tabular-nums" />
-          </Field>
-          <Field label={`${t('budget.mealCard')} (€)`}>
-            <input name="mealCard" inputMode="decimal" defaultValue={toInputDecimal(budget.mealCard)} className="input tabular-nums" />
-          </Field>
-          <Field label={t('common.notes')} className="sm:col-span-3">
-            <textarea name="notes" rows={2} defaultValue={budget.notes ?? ''} className="input" />
-          </Field>
-          <div className="sm:col-span-3">
-            <button className="btn-primary">{t('common.save')}</button>
-          </div>
-        </form>
-      </details>
+      {/* 4 — the month's income, entered by hand every month */}
+      <section className="card mb-4 scroll-mt-4" id="income">
+        <h2 className="section-title">{t('income.title')}</h2>
+        <p className="muted mb-4 mt-1 text-xs">{t('income.formHint')}</p>
+        {diff.total != null && (
+          <p className="mb-3 text-sm">
+            <span className="muted">{t('income.difference')}: </span>
+            <span className={`font-medium tabular-nums ${diff.total < 0 ? 'text-negative' : 'text-positive'}`}>{formatMoney(diff.total, locale, { sign: true })}</span>
+            <span className="muted text-xs">
+              {' '}
+              ({t('income.expectedWas', { salary: monthIncome?.expectedSalary != null ? money(monthIncome.expectedSalary) : '—', meal: monthIncome?.expectedMeal != null ? money(monthIncome.expectedMeal) : '—' })})
+            </span>
+          </p>
+        )}
+        <IncomeForm
+          key={`${month}-${budget.income}-${budget.mealCard}-${monthIncome?.salaryConfirmed}-${monthIncome?.mealConfirmed}`}
+          init={{
+            month,
+            salary: budget.income,
+            meal: budget.mealCard,
+            extraIncome: budget.extraIncome,
+            notes: budget.notes ?? '',
+            normalDays: monthIncome?.normalDays ?? 0,
+            holidayDays: monthIncome?.holidayDays ?? 0,
+            salaryPerDay: monthIncome?.salaryPerDay ?? rates.salaryPerDay,
+            mealPerDay: monthIncome?.mealPerDay ?? rates.mealPerDay,
+            salaryConfirmed: monthIncome?.salaryConfirmed ?? false,
+            mealConfirmed: monthIncome?.mealConfirmed ?? false,
+            salaryPaidDate: monthIncome?.salaryPaidDate ?? '',
+            mealPaidDate: monthIncome?.mealPaidDate ?? '',
+            defined: monthIncome != null,
+            ratesFromPast: monthIncome == null && (rates.salaryPerDay != null || rates.mealPerDay != null),
+          }}
+          expectedSalaryText={payText(t('income.expectedDate'), salaryPay)}
+          expectedMealText={payText(t('income.expectedDate'), mealPay)}
+        />
+      </section>
 
       <details className="card">
         <summary className="section-title cursor-pointer select-none">{t('budget.profile')}</summary>
@@ -305,10 +323,16 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         <form action={saveProfileAction} className="mt-4 grid grid-cols-2 items-end gap-3 md:grid-cols-3">
           {(
             [
-              ['incomeMin', t('budget.incomeMin'), profile.incomeMin],
-              ['incomeMax', t('budget.incomeMax'), profile.incomeMax],
-              ['defaultIncome', t('budget.defaultIncome'), profile.defaultIncome],
-              ['mealCard', t('budget.mealCard'), profile.mealCard],
+              ['salaryPayDay', t('income.salaryPayDay'), profile.salaryPayDay],
+              ['mealPayDay', t('income.mealPayDay'), profile.mealPayDay],
+            ] as const
+          ).map(([name, label, value]) => (
+            <Field key={name} label={label}>
+              <input name={name} type="number" min={1} max={31} defaultValue={value} className="input tabular-nums" />
+            </Field>
+          ))}
+          {(
+            [
               ['transportAllowance', t('budget.transportAllowance'), profile.transportAllowance],
               ['annualBonus', t('budget.annualBonus'), profile.annualBonus],
             ] as const

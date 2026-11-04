@@ -10,6 +10,8 @@ export const DEFAULT_PROFILE: Profile = {
   mealCard: 0,
   transportAllowance: 0,
   annualBonus: 0,
+  salaryPayDay: 25,
+  mealPayDay: 25,
 };
 
 // key, color, kind — names are translated in the UI from `categories.<key>`. No budgets are preset.
@@ -57,6 +59,7 @@ export function resetAllData(db: Database.Database) {
       DELETE FROM transactions;
       DELETE FROM snapshots;
       DELETE FROM month_budgets;
+      DELETE FROM month_income;
       DELETE FROM budget_items;
       DELETE FROM goals;
       DELETE FROM categories;

@@ -137,6 +137,27 @@ export interface Profile {
   mealCard: number;
   transportAllowance: number;
   annualBonus: number;
+  /** Day of the month salary / meal card are paid (moved back to the previous business day when not one). */
+  salaryPayDay: number;
+  mealPayDay: number;
+}
+
+/** Manually entered income of one month. Its existence means "the user has defined this month's income". */
+export interface MonthIncome {
+  month: string;
+  normalDays: number;
+  holidayDays: number;
+  salaryPerDay: number | null;
+  mealPerDay: number | null;
+  salaryConfirmed: boolean;
+  mealConfirmed: boolean;
+  /** The forecast that was replaced by the real amount (null when none was entered before confirming). */
+  expectedSalary: number | null;
+  expectedMeal: number | null;
+  salaryExpectedDate: string | null;
+  salaryPaidDate: string | null;
+  mealExpectedDate: string | null;
+  mealPaidDate: string | null;
 }
 
 /** Purchases, expenses and payments leave the account; income and transfers are handled separately. */

@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import { BarsChart, LinesChart } from '@/components/charts/LazyCharts';
+import { IncomeHistory } from '@/components/income/IncomeHistory';
 import { Card, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { computeMonthSummary } from '@/lib/calc';
 import { addMonths, currentMonth, formatDate, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent, round2 } from '@/lib/format';
 import { categoryName } from '@/lib/labels';
-import { listCategories, listMonthBudgets, listSnapshots, listTransactions, spendingByMonthAndCategory } from '@/lib/repo';
+import { listCategories, listMonthBudgets, listMonthIncomes, listSnapshots, listTransactions, spendingByMonthAndCategory } from '@/lib/repo';
 
 export default async function HistoryPage() {
   const { t, locale } = await getI18n();
@@ -128,6 +129,8 @@ export default async function HistoryPage() {
           </table>
         </div>
       </Card>
+
+      <IncomeHistory budgets={listMonthBudgets()} incomes={listMonthIncomes()} t={t} locale={locale} title={t('income.historyTitle')} />
     </>
   );
 }

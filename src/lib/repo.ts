@@ -5,6 +5,7 @@ import path from 'node:path';
 import { BACKUP_DIR, fromCents as e, getDb, toCents as c } from './db';
 import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './dates';
 import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
+import { expectedPayDate } from './payday';
 import { accountBalance, allocateGoals, type AccountBalance } from './calc';
 import { memo } from './cache';
 import { INTEREST_ACCOUNT, materializeInterest } from './interest-repo';
@@ -18,6 +19,7 @@ import type {
   Goal,
   GoalKind,
   MonthBudget,
+  MonthIncome,
   PaymentMethod,
   Profile,
   Recurrence,
@@ -75,15 +77,6 @@ export function resetData(): string {
 
 export function hasSampleData(): boolean {
   return hasLegacySampleData(getDb());
-}
-
-/** Applies a new salary / meal card to the current and future months that already exist. */
-export function applyIncomeToOpenMonths(income: number, mealCard: number) {
-  const months = getDb().prepare('SELECT month FROM month_budgets WHERE month >= ?').all(currentMonth()) as Row[];
-  for (const { month } of months) {
-    const b = ensureMonthBudget(month);
-    updateMonthBudget(month, { income, extraIncome: b.extraIncome, mealCard, notes: b.notes });
-  }
 }
 
 // ---------------------------------------------------------------- categories
@@ -208,12 +201,12 @@ export function ensureMonthBudget(month: string): MonthBudget {
   const db = getDb();
   const row = db.prepare('SELECT * FROM month_budgets WHERE month = ?').get(month) as Row | undefined;
   if (row) return mapMonth(row);
-  const profile = getProfile();
   const budget: MonthBudget = {
     month,
-    income: profile.defaultIncome,
+    // No assumed salary: the month's income is entered by hand (see month_income).
+    income: 0,
     extraIncome: 0,
-    mealCard: profile.mealCard,
+    mealCard: 0,
     items: itemsForMonth(month),
     notes: null,
   };
@@ -245,6 +238,102 @@ export function updateMonthBudget(month: string, data: { income: number; extraIn
 
 export function listMonthBudgets(): MonthBudget[] {
   return memo('monthBudgets', () => (getDb().prepare('SELECT * FROM month_budgets ORDER BY month').all() as Row[]).map(mapMonth));
+}
+
+// ---------------------------------------------------------------- manual monthly income
+
+const mapIncome = (r: Row): MonthIncome => ({
+  month: r.month,
+  normalDays: r.normal_days,
+  holidayDays: r.holiday_days,
+  salaryPerDay: r.salary_per_day == null ? null : e(r.salary_per_day),
+  mealPerDay: r.meal_per_day == null ? null : e(r.meal_per_day),
+  salaryConfirmed: !!r.salary_confirmed,
+  mealConfirmed: !!r.meal_confirmed,
+  expectedSalary: r.expected_salary == null ? null : e(r.expected_salary),
+  expectedMeal: r.expected_meal == null ? null : e(r.expected_meal),
+  salaryExpectedDate: r.salary_expected_date,
+  salaryPaidDate: r.salary_paid_date,
+  mealExpectedDate: r.meal_expected_date,
+  mealPaidDate: r.meal_paid_date,
+});
+
+export function listMonthIncomes(): MonthIncome[] {
+  return memo('monthIncomes', () => (getDb().prepare('SELECT * FROM month_income ORDER BY month').all() as Row[]).map(mapIncome));
+}
+
+/** null = the user has not defined this month's income yet. */
+export function getMonthIncome(month: string): MonthIncome | null {
+  const row = getDb().prepare('SELECT * FROM month_income WHERE month = ?').get(month) as Row | undefined;
+  return row ? mapIncome(row) : null;
+}
+
+/** Daily rates from the latest earlier month that has them, used only to pre-fill the optional estimate. */
+export function lastDailyRates(before: string): { salaryPerDay: number | null; mealPerDay: number | null } {
+  const row = getDb()
+    .prepare('SELECT salary_per_day, meal_per_day FROM month_income WHERE month < ? AND (salary_per_day IS NOT NULL OR meal_per_day IS NOT NULL) ORDER BY month DESC LIMIT 1')
+    .get(before) as Row | undefined;
+  return { salaryPerDay: row?.salary_per_day == null ? null : e(row.salary_per_day), mealPerDay: row?.meal_per_day == null ? null : e(row.meal_per_day) };
+}
+
+export interface MonthIncomeInput {
+  salary: number;
+  meal: number;
+  extraIncome: number;
+  normalDays: number;
+  holidayDays: number;
+  salaryPerDay: number | null;
+  mealPerDay: number | null;
+  salaryConfirmed: boolean;
+  mealConfirmed: boolean;
+  salaryPaidDate: string | null;
+  mealPaidDate: string | null;
+  notes: string | null;
+}
+
+/** Saves the month's manual income and mirrors it into the month budget. The forecast is kept when it is replaced by the real amount. */
+export function saveMonthIncome(month: string, d: MonthIncomeInput) {
+  const db = getDb();
+  const profile = getProfile();
+  const prev = getMonthIncome(month);
+  const budget = ensureMonthBudget(month);
+  const keepExpected = (old: number | null, was: number, wasConfirmed: boolean, confirmedNow: boolean, now: number) => {
+    if (!confirmedNow) return null;
+    if (old != null) return old;
+    return prev && !wasConfirmed && was !== now ? was : null;
+  };
+  const expectedSalary = keepExpected(prev?.expectedSalary ?? null, budget.income, !!prev?.salaryConfirmed, d.salaryConfirmed, d.salary);
+  const expectedMeal = keepExpected(prev?.expectedMeal ?? null, budget.mealCard, !!prev?.mealConfirmed, d.mealConfirmed, d.meal);
+  const salaryDate = expectedPayDate(month, profile.salaryPayDay).date;
+  const mealDate = expectedPayDate(month, profile.mealPayDay).date;
+  const cn = (v: number | null) => (v == null ? null : c(v));
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO month_income (month, normal_days, holiday_days, salary_per_day, meal_per_day, salary_confirmed, meal_confirmed, expected_salary, expected_meal,
+         salary_expected_date, salary_paid_date, meal_expected_date, meal_paid_date)
+       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(month) DO UPDATE SET normal_days=excluded.normal_days, holiday_days=excluded.holiday_days, salary_per_day=excluded.salary_per_day,
+         meal_per_day=excluded.meal_per_day, salary_confirmed=excluded.salary_confirmed, meal_confirmed=excluded.meal_confirmed,
+         expected_salary=excluded.expected_salary, expected_meal=excluded.expected_meal, salary_expected_date=excluded.salary_expected_date,
+         salary_paid_date=excluded.salary_paid_date, meal_expected_date=excluded.meal_expected_date, meal_paid_date=excluded.meal_paid_date,
+         updated_at=datetime('now')`,
+    ).run(
+      month,
+      d.normalDays,
+      d.holidayDays,
+      cn(d.salaryPerDay),
+      cn(d.mealPerDay),
+      d.salaryConfirmed ? 1 : 0,
+      d.mealConfirmed ? 1 : 0,
+      cn(expectedSalary),
+      cn(expectedMeal),
+      salaryDate,
+      d.salaryPaidDate,
+      mealDate,
+      d.mealPaidDate,
+    );
+    updateMonthBudget(month, { income: d.salary, extraIncome: d.extraIncome, mealCard: d.meal, notes: d.notes });
+  })();
 }
 
 // ---------------------------------------------------------------- transactions

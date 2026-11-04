@@ -9,7 +9,8 @@ import crypto from 'node:crypto';
 import { LOCALE_COOKIE, isLocale } from '@/i18n/config';
 import { getI18n } from '@/i18n/server';
 import { UPLOADS_DIR } from '@/lib/db';
-import { isISODate, isMonth, todayISO } from '@/lib/dates';
+import { currentMonth, isISODate, isMonth, todayISO } from '@/lib/dates';
+import { expectedPayDate } from '@/lib/payday';
 import { parseDecimal } from '@/lib/format';
 import { tooMany } from '@/lib/rate-limit';
 import * as repo from '@/lib/repo';
@@ -213,25 +214,44 @@ export async function deleteBudgetItemAction(fd: FormData) {
   refresh();
 }
 
-export async function saveMonthBudgetAction(fd: FormData) {
+export async function saveMonthIncomeAction(fd: FormData) {
   const month = optMonth(fd, 'month');
   if (!month) return;
-  repo.updateMonthBudget(month, {
-    income: num(fd, 'income'),
-    extraIncome: num(fd, 'extraIncome'),
-    mealCard: num(fd, 'mealCard'),
+  const profile = repo.getProfile();
+  const date = (k: string) => (isISODate(str(fd, k)) ? str(fd, k) : null);
+  const days = (k: string) => Math.min(Math.max(num(fd, k), 0), 31);
+  const rate = (k: string) => {
+    const v = optNum(fd, k);
+    return v == null || v < 0 ? null : v;
+  };
+  const salaryConfirmed = fd.get('salaryConfirmed') != null;
+  const mealConfirmed = fd.get('mealConfirmed') != null;
+  repo.saveMonthIncome(month, {
+    salary: Math.max(num(fd, 'salary'), 0),
+    meal: Math.max(num(fd, 'meal'), 0),
+    extraIncome: Math.max(num(fd, 'extraIncome'), 0),
+    normalDays: days('normalDays'),
+    holidayDays: days('holidayDays'),
+    salaryPerDay: rate('salaryPerDay'),
+    mealPerDay: rate('mealPerDay'),
+    salaryConfirmed,
+    mealConfirmed,
+    // Confirmed without a date: the expected date is recorded as the effective one (it can be corrected later).
+    salaryPaidDate: date('salaryPaidDate') ?? (salaryConfirmed ? expectedPayDate(month, profile.salaryPayDay).date : null),
+    mealPaidDate: date('mealPaidDate') ?? (mealConfirmed ? expectedPayDate(month, profile.mealPayDay).date : null),
     notes: optText(fd, 'notes', MAX_TEXT.notes),
   });
   refresh();
 }
 
+const payDay = (fd: FormData, k: string, fallback: number) => Math.min(Math.max(Math.round(num(fd, k, fallback)), 1), 31);
+
 export async function saveProfileAction(fd: FormData) {
   const current = repo.getProfile();
   repo.saveProfile({
-    incomeMin: num(fd, 'incomeMin', current.incomeMin),
-    incomeMax: num(fd, 'incomeMax', current.incomeMax),
-    defaultIncome: num(fd, 'defaultIncome', current.defaultIncome),
-    mealCard: num(fd, 'mealCard', current.mealCard),
+    ...current,
+    salaryPayDay: payDay(fd, 'salaryPayDay', current.salaryPayDay),
+    mealPayDay: payDay(fd, 'mealPayDay', current.mealPayDay),
     transportAllowance: num(fd, 'transportAllowance', current.transportAllowance),
     annualBonus: num(fd, 'annualBonus', current.annualBonus),
   });
@@ -313,13 +333,28 @@ export async function setupBalancesAction(fd: FormData) {
 }
 
 export async function setupIncomeAction(fd: FormData) {
+  // Income belongs to a month: this step records the current one, and nothing is assumed for other months.
+  const month = currentMonth();
   const salary = optNum(fd, 'salary');
-  const mealCard = optNum(fd, 'mealCard');
-  const profile = repo.getProfile();
-  const income = salary ?? profile.defaultIncome;
-  const meal = mealCard ?? profile.mealCard;
-  repo.saveProfile({ ...profile, defaultIncome: income, incomeMin: income, incomeMax: income, mealCard: meal });
-  repo.applyIncomeToOpenMonths(income, meal);
+  const meal = optNum(fd, 'mealCard');
+  if (salary != null || meal != null) {
+    const prev = repo.getMonthIncome(month);
+    const budget = repo.ensureMonthBudget(month);
+    repo.saveMonthIncome(month, {
+      salary: Math.max(salary ?? budget.income, 0),
+      meal: Math.max(meal ?? budget.mealCard, 0),
+      extraIncome: budget.extraIncome,
+      normalDays: prev?.normalDays ?? 0,
+      holidayDays: prev?.holidayDays ?? 0,
+      salaryPerDay: prev?.salaryPerDay ?? null,
+      mealPerDay: prev?.mealPerDay ?? null,
+      salaryConfirmed: prev?.salaryConfirmed ?? false,
+      mealConfirmed: prev?.mealConfirmed ?? false,
+      salaryPaidDate: prev?.salaryPaidDate ?? null,
+      mealPaidDate: prev?.mealPaidDate ?? null,
+      notes: budget.notes,
+    });
+  }
   repo.updateOnboarding({ complete: 'income' });
   refresh();
   redirect(nextStep('income'));

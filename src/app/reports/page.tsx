@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { BarsChart, DonutChart, LinesChart } from '@/components/charts/LazyCharts';
+import { IncomeHistory } from '@/components/income/IncomeHistory';
 import { Card, EmptyState, PageHeader, ProgressBar, Stat } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { currentMonth, formatDate, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
-import { listCategories } from '@/lib/repo';
+import { listCategories, listMonthBudgets, listMonthIncomes } from '@/lib/repo';
 import { changeRatio } from '@/lib/report-calc';
 import { buildReport, parseReportFilters } from '@/lib/reports';
 import { ACCOUNT_IDS } from '@/lib/types';
@@ -226,6 +227,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           {r.traderepublic.length >= 2 ? <LinesChart data={curve(r.traderepublic)} xKey="label" series={[{ key: 'value', name: accountName('traderepublic', t), color: '#0ea5e9' }]} /> : portfolioEmpty}
         </Card>
       </div>
+
+      <IncomeHistory budgets={listMonthBudgets()} incomes={listMonthIncomes()} months={r.window} t={t} locale={locale} title={t('income.compareTitle')} />
     </>
   );
 }

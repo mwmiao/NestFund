@@ -11,6 +11,7 @@ import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
 import { etfSummary } from '@/lib/portfolio';
 import { accountBalances, listSnapshots, materializeRecurring } from '@/lib/repo';
+import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
 import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
 
@@ -76,6 +77,9 @@ export default async function PortfolioPage() {
           </div>
         </div>
 
+        {t212.connected && (
+          <T212LiveStatus lastSyncAt={t212.lastSyncAt} lastChangedAt={t212.lastChangedAt} retryAt={t212.retryAt} needsAction={t212.needsAction} rateLimit={t212.rateLimit} />
+        )}
         {t212.connected && t212.lastError && (
           <div className="mt-4">
             <Alert tone={t212.needsAction ? 'warning' : 'info'}>

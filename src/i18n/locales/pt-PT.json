@@ -508,7 +508,7 @@
     "step3": "Cola aqui a API key e a API secret.",
     "securityStorage": "A chave é validada e guardada encriptada (AES-256-GCM); nunca é mostrada nem guardada em texto simples.",
     "securityReadOnly": "O NestFund só faz pedidos de leitura (resumo da conta e posições). Não consegue criar ordens, comprar nem vender.",
-    "securitySchedule": "Sincroniza automaticamente a cada 6 horas. Se falhar, a app continua a funcionar com os valores manuais.",
+    "securitySchedule": "Sincroniza a cada minuto com o painel ou a carteira abertos, e a cada 6 horas caso contrário. Se falhar, a app continua a funcionar com os valores manuais.",
     "errors": {
       "auth": "Chave ou secret inválidos.",
       "forbidden": "A chave não tem permissão de leitura para estes dados.",
@@ -544,7 +544,27 @@
     "updatedRelative": "Atualizado {when}",
     "waitingForYou": "A aguardar nova chave",
     "needsAction": "As sincronizações automáticas estão em pausa até atualizares a chave.",
-    "willRetry": "Nova tentativa automática dentro de 30 minutos."
+    "willRetry": "Nova tentativa automática dentro de 30 minutos.",
+    "live": {
+      "lastUpdate": "Última atualização",
+      "nextUpdate": "Próxima atualização prevista",
+      "connection": "Ligação",
+      "never": "Nunca",
+      "syncing": "A sincronizar…",
+      "state": {
+        "idle": "À espera",
+        "syncing": "A sincronizar…",
+        "ok": "Ligado",
+        "error": "Problema de ligação",
+        "rate_limited": "Limite de pedidos atingido — nova tentativa após {time}",
+        "paused": "Em pausa — atualiza a chave"
+      },
+      "mode": {
+        "active": "a cada minuto enquanto esta página está aberta",
+        "background": "a cada 6 horas em segundo plano"
+      },
+      "rateLimit": "Limite de pedidos: restam {remaining}/{limit}"
+    }
   },
   "rules": {
     "title": "Regras",

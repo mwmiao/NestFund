@@ -6,7 +6,8 @@ import { DATA_DIR, fromCents, getDb, toCents } from './db';
 import { todayISO } from './dates';
 import { describeError } from './security';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from './secret-box';
-import { T212Error, fetchT212, type T212Credentials, type T212Env, type T212ErrorCode, type T212Metrics, type T212Position } from './t212-core';
+import { T212Error, fetchT212, retryAtAfter, type T212Credentials, type T212Env, type T212ErrorCode, type T212Metrics, type T212Position, type T212RateLimit } from './t212-core';
+import { SERVER_POLL_MIN_AGE_MS, type PollResult } from './t212-polling';
 
 export const T212_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const MIN_MANUAL_INTERVAL_MS = 10_000; // the summary endpoint allows 1 request / 5 s
@@ -25,6 +26,9 @@ interface StoredState {
   positionsError?: T212ErrorCode | null;
   metrics?: T212Metrics;
   positions?: T212Position[];
+  lastChangedAt?: string | null; // ISO, last time total / invested / gain-loss actually changed
+  retryAt?: string | null; // ISO, after a 429: no request before this
+  rateLimit?: (T212RateLimit & { at: string }) | null; // x-ratelimit-* of the latest response
   syncStartedAt?: string | null; // cross-process lock (scheduler and "Sync now" may run in different module instances)
 }
 
@@ -42,7 +46,13 @@ export interface T212Status {
   env: T212Env;
   keyHint: string | null;
   hasSecret: boolean;
+  /** Last successful check (values may be unchanged). */
   lastSyncAt: string | null;
+  /** Last time the values changed. */
+  lastChangedAt: string | null;
+  /** After a 429: no request before this. */
+  retryAt: string | null;
+  rateLimit: NonNullable<StoredState['rateLimit']> | null;
   /** When the next automatic attempt is due; null when it waits for the user (e.g. invalid key). */
   nextSyncAt: string | null;
   lastError: StoredState['lastError'];
@@ -97,12 +107,14 @@ function credentials(state: StoredState): T212Credentials | null {
   }
 }
 
-function nextAttemptAt(s: StoredState): number | null {
+function nextAttemptAt(s: StoredState, maxAgeMs = T212_SYNC_INTERVAL_MS): number | null {
   if (!s.apiKey) return null;
   if (s.lastError && NEEDS_USER_ACTION.has(s.lastError.code)) return null;
   const lastSync = s.lastSyncAt ? Date.parse(s.lastSyncAt) : 0;
   const lastAttempt = s.lastAttemptAt ? Date.parse(s.lastAttemptAt) : 0;
-  return s.lastError ? Math.max(lastSync + T212_SYNC_INTERVAL_MS, lastAttempt + RETRY_AFTER_ERROR_MS) : lastSync + T212_SYNC_INTERVAL_MS;
+  const retryAt = s.retryAt ? Date.parse(s.retryAt) || 0 : 0;
+  const base = s.lastError ? Math.max(lastSync + maxAgeMs, lastAttempt + Math.min(RETRY_AFTER_ERROR_MS, maxAgeMs)) : lastSync + maxAgeMs;
+  return Math.max(base, retryAt); // never before the rate-limit reset
 }
 
 export function getT212Status(): T212Status {
@@ -117,6 +129,9 @@ export function getT212Status(): T212Status {
     keyHint: s.keyHint ?? null,
     hasSecret: !!s.apiSecret,
     lastSyncAt: s.lastSyncAt ?? null,
+    lastChangedAt: s.lastChangedAt ?? null,
+    retryAt: s.retryAt && Date.parse(s.retryAt) > Date.now() ? s.retryAt : null,
+    rateLimit: s.rateLimit ?? null,
     nextSyncAt: next ? new Date(next).toISOString() : null,
     lastError,
     needsAction: !!lastError && NEEDS_USER_ACTION.has(lastError.code),
@@ -173,9 +188,43 @@ function recordSync(m: T212Metrics, at: string) {
   })();
 }
 
+/** Did total value, invested capital or gain/loss change (to the cent) compared with the last stored values? */
+export function metricsChanged(prev: T212Metrics | undefined, next: T212Metrics): boolean {
+  if (!prev) return true;
+  return toCents(prev.totalValue) !== toCents(next.totalValue) || toCents(prev.invested) !== toCents(next.invested) || toCents(prev.unrealized) !== toCents(next.unrealized);
+}
+
+function hasHistoryToday(): boolean {
+  return !!getDb().prepare('SELECT 1 FROM t212_history WHERE date = ?').get(todayISO());
+}
+
 let syncing: Promise<T212SyncResult> | null = null;
 
-export type T212SyncResult = { ok: true } | { ok: false; code: T212SyncErrorCode | 'not_connected' | 'too_soon' | 'skipped' | 'in_progress' };
+export type T212SyncResult =
+  | { ok: true }
+  | { ok: false; code: T212SyncErrorCode | 'not_connected' | 'too_soon' | 'skipped' | 'in_progress'; retryAt?: string };
+
+/** Shapes a sync outcome for the browser poller: timestamps only, never keys or balances. */
+export function pollResult(result: T212SyncResult): PollResult {
+  const s = readState();
+  const retryAt = s.retryAt && Date.parse(s.retryAt) > Date.now() ? s.retryAt : null;
+  const code = result.ok ? undefined : result.code;
+  const lastError = s.lastError?.code;
+  return {
+    ok: result.ok,
+    code,
+    lastSyncAt: s.lastSyncAt ?? null,
+    retryAt,
+    lastChangedAt: s.lastChangedAt ?? null,
+    needsAction: !!s.apiKey && !!lastError && NEEDS_USER_ACTION.has(lastError),
+  };
+}
+
+/** One poll from the dashboard / portfolio page (or "Sync now" when manual). */
+export async function pollT212({ manual = false } = {}): Promise<PollResult> {
+  const result = await syncT212(manual ? { force: true } : { maxAgeMs: SERVER_POLL_MIN_AGE_MS });
+  return pollResult(result);
+}
 
 /** Takes the cross-process sync lock atomically; false if another sync holds a fresh lock. */
 function acquireLock(): boolean {
@@ -193,7 +242,7 @@ function acquireLock(): boolean {
  * success is 6 hours old (30 minutes after a temporary error; never on its own after an invalid
  * key). Failures only update the connection status: manual data and last values are untouched.
  */
-export async function syncT212({ force = false } = {}): Promise<T212SyncResult> {
+export async function syncT212({ force = false, maxAgeMs = T212_SYNC_INTERVAL_MS } = {}): Promise<T212SyncResult> {
   if (syncing) return syncing;
   const state = readState();
   if (!state.apiKey) return { ok: false, code: 'not_connected' };
@@ -205,7 +254,10 @@ export async function syncT212({ force = false } = {}): Promise<T212SyncResult> 
   const now = Date.now();
   const lastAttempt = state.lastAttemptAt ? Date.parse(state.lastAttemptAt) : 0;
   if (now - lastAttempt < MIN_MANUAL_INTERVAL_MS) return { ok: false, code: 'too_soon' };
-  const due = nextAttemptAt(state);
+  // After a 429 nothing (not even "Sync now") goes out before the reset time announced by Trading 212.
+  const retryAt = state.retryAt ? Date.parse(state.retryAt) : 0;
+  if (retryAt > now) return { ok: false, code: 'rate_limit', retryAt: state.retryAt! };
+  const due = nextAttemptAt(state, maxAgeMs);
   if (!force && (due === null || now < due)) return { ok: false, code: 'skipped' };
   if (!acquireLock()) return { ok: false, code: 'in_progress' };
 
@@ -214,12 +266,20 @@ export async function syncT212({ force = false } = {}): Promise<T212SyncResult> 
     let result: T212SyncResult;
     try {
       const snap = await fetchT212(creds);
-      recordSync(snap.metrics, at);
+      const before = readState();
+      // History only when something changed (plus the day's first row, so the daily series has no gaps);
+      // otherwise just the "last checked" timestamp moves.
+      const changed = metricsChanged(before.metrics, snap.metrics);
+      if (changed || !hasHistoryToday()) recordSync(snap.metrics, at);
       const current = readState();
+      const exhausted = snap.rateLimit?.remaining === 0 || snap.positionsError === 'rate_limit';
       writeState({
         ...current,
         lastAttemptAt: at,
         lastSyncAt: at,
+        lastChangedAt: changed ? at : (current.lastChangedAt ?? at),
+        retryAt: exhausted ? new Date(retryAtAfter(snap.rateLimit)).toISOString() : null,
+        rateLimit: snap.rateLimit ? { ...snap.rateLimit, at } : current.rateLimit,
         lastError: null,
         metrics: snap.metrics,
         positions: snap.positions ?? current.positions ?? [],
@@ -230,8 +290,18 @@ export async function syncT212({ force = false } = {}): Promise<T212SyncResult> 
       // T212Error = the API said no; anything else is a problem inside NestFund (e.g. disk), not the network.
       const code: T212SyncErrorCode = err instanceof T212Error ? err.code : 'internal';
       if (!(err instanceof T212Error)) console.error('[trading212] sync failed:', describeError(err));
-      writeState({ ...readState(), lastAttemptAt: at, lastError: { code, status: err instanceof T212Error ? err.status : undefined, at } });
-      result = { ok: false, code };
+      const rl = err instanceof T212Error ? err.rateLimit : null;
+      // 429: schedule the next try only after x-ratelimit-reset (never an immediate retry).
+      const retryAt = code === 'rate_limit' ? new Date(retryAtAfter(rl)).toISOString() : null;
+      const cur = readState();
+      writeState({
+        ...cur,
+        lastAttemptAt: at,
+        lastError: { code, status: err instanceof T212Error ? err.status : undefined, at },
+        retryAt: retryAt ?? (cur.retryAt && Date.parse(cur.retryAt) > Date.now() ? cur.retryAt : null),
+        rateLimit: rl ? { ...rl, at } : cur.rateLimit,
+      });
+      result = retryAt ? { ok: false, code, retryAt } : { ok: false, code };
     } finally {
       writeState({ ...readState(), syncStartedAt: null });
       syncing = null;
@@ -258,6 +328,8 @@ export async function connectT212(input: T212Credentials): Promise<T212SyncResul
     apiSecret: input.apiSecret ? encryptSecret(input.apiSecret, key) : undefined,
     keyHint: input.apiKey.slice(-4),
     lastSyncAt: at,
+    lastChangedAt: at,
+    rateLimit: snap.rateLimit ? { ...snap.rateLimit, at } : null,
     lastAttemptAt: at,
     lastError: null,
     metrics: snap.metrics,

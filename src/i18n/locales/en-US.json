@@ -508,7 +508,7 @@
     "step3": "Paste the API key and API secret here.",
     "securityStorage": "The key is validated and stored encrypted (AES-256-GCM); it is never shown or stored in plain text.",
     "securityReadOnly": "NestFund only makes read requests (account summary and positions). It cannot place orders, buy or sell.",
-    "securitySchedule": "Syncs automatically every 6 hours. If it fails, the app keeps working with manual values.",
+    "securitySchedule": "Syncs every minute while the dashboard or portfolio is open, and every 6 hours otherwise. If it fails, the app keeps working with manual values.",
     "errors": {
       "auth": "Invalid key or secret.",
       "forbidden": "The key has no read permission for this data.",
@@ -544,7 +544,27 @@
     "updatedRelative": "Updated {when}",
     "waitingForYou": "Waiting for a new key",
     "needsAction": "Automatic syncs are paused until you update the key.",
-    "willRetry": "Retrying automatically in 30 minutes."
+    "willRetry": "Retrying automatically in 30 minutes.",
+    "live": {
+      "lastUpdate": "Last update",
+      "nextUpdate": "Next update (expected)",
+      "connection": "Connection",
+      "never": "Never",
+      "syncing": "Syncing…",
+      "state": {
+        "idle": "Waiting",
+        "syncing": "Syncing…",
+        "ok": "Connected",
+        "error": "Connection problem",
+        "rate_limited": "Rate limit reached — retrying after {time}",
+        "paused": "Paused — update the key"
+      },
+      "mode": {
+        "active": "every minute while this page is open",
+        "background": "every 6 hours in the background"
+      },
+      "rateLimit": "Rate limit: {remaining}/{limit} requests left"
+    }
   },
   "rules": {
     "title": "Rules",

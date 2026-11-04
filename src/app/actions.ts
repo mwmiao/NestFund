@@ -15,7 +15,8 @@ import { parseDecimal } from '@/lib/format';
 import { tooMany } from '@/lib/rate-limit';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
-import { connectT212, disconnectT212, syncT212 } from '@/lib/t212';
+import { connectT212, disconnectT212, pollT212, syncT212 } from '@/lib/t212';
+import type { PollResult } from '@/lib/t212-polling';
 import {
   ACCOUNT_IDS,
   BUDGET_ITEM_KINDS,
@@ -453,4 +454,9 @@ export async function syncT212Action(_prev: T212ActionState): Promise<T212Action
 export async function disconnectT212Action() {
   disconnectT212();
   refresh();
+}
+
+/** Adaptive polling from the dashboard / portfolio (no page refresh here: the client refreshes only when values changed). */
+export async function pollT212Action(manual = false): Promise<PollResult> {
+  return pollT212({ manual: manual === true });
 }

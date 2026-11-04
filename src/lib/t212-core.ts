@@ -16,11 +16,50 @@ export type T212Path = (typeof T212_READ_ONLY_PATHS)[number];
 
 export type T212ErrorCode = 'auth' | 'forbidden' | 'rate_limit' | 'not_found' | 'network' | 'server' | 'invalid_response' | 'blocked';
 
+/** Rate-limit headers (x-ratelimit-*) of a Trading 212 response. */
+export interface T212RateLimit {
+  limit?: number;
+  /** Window length in seconds. */
+  period?: number;
+  remaining?: number;
+  used?: number;
+  /** When the window resets (epoch ms). */
+  resetAt?: number;
+}
+
+/** Parses the x-ratelimit-* headers; null when none is present. `reset` may be epoch seconds/ms or seconds from now. */
+export function parseRateLimit(headers: { get(name: string): string | null } | null | undefined, now = Date.now()): T212RateLimit | null {
+  if (!headers || typeof headers.get !== 'function') return null;
+  const n = (name: string) => {
+    const raw = headers.get(name);
+    if (raw === null || raw.trim() === '') return undefined;
+    const v = Number(raw);
+    return Number.isFinite(v) ? v : undefined;
+  };
+  const reset = n('x-ratelimit-reset');
+  const out: T212RateLimit = {
+    limit: n('x-ratelimit-limit'),
+    period: n('x-ratelimit-period'),
+    remaining: n('x-ratelimit-remaining'),
+    used: n('x-ratelimit-used'),
+    resetAt: reset === undefined ? undefined : reset > 1e12 ? reset : reset > 1e9 ? reset * 1000 : now + reset * 1000,
+  };
+  return Object.values(out).some((v) => v !== undefined) ? out : null;
+}
+
+const RATE_LIMIT_FALLBACK_MS = 60_000;
+
+/** When to try again after a 429 (or an exhausted window): the reset time, never earlier than 1 s from now. */
+export function retryAtAfter(rl: T212RateLimit | null | undefined, now = Date.now()): number {
+  return Math.max(rl?.resetAt ?? now + RATE_LIMIT_FALLBACK_MS, now + 1000);
+}
+
 export class T212Error extends Error {
   constructor(
     public code: T212ErrorCode,
     message: string,
     public status?: number,
+    public rateLimit?: T212RateLimit | null,
   ) {
     super(message);
     this.name = 'T212Error';
@@ -40,7 +79,7 @@ export function authorizationHeader({ apiKey, apiSecret }: T212Credentials): str
 
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
 
-export async function t212Get<T>(path: T212Path, creds: T212Credentials, fetchImpl: FetchLike = fetch): Promise<T> {
+export async function t212Get<T>(path: T212Path, creds: T212Credentials, fetchImpl: FetchLike = fetch, onRateLimit?: (rl: T212RateLimit) => void): Promise<T> {
   if (!T212_READ_ONLY_PATHS.includes(path)) throw new T212Error('blocked', `Path not allowed: ${path}`);
   const base = T212_BASE_URLS[creds.env];
   if (!base) throw new T212Error('blocked', 'Unknown environment');
@@ -59,15 +98,17 @@ export async function t212Get<T>(path: T212Path, creds: T212Credentials, fetchIm
     throw new T212Error('network', err instanceof Error ? err.message : 'Network error');
   }
 
-  if (res.status === 401) throw new T212Error('auth', 'Invalid API key or secret', 401);
-  if (res.status === 403) throw new T212Error('forbidden', 'The API key lacks the required read permission', 403);
-  if (res.status === 404) throw new T212Error('not_found', 'Endpoint not found', 404);
-  if (res.status === 429) throw new T212Error('rate_limit', 'Rate limit reached', 429);
-  if (!res.ok) throw new T212Error('server', `Trading 212 responded with HTTP ${res.status}`, res.status);
+  const rl = parseRateLimit(res.headers);
+  if (rl) onRateLimit?.(rl);
+  if (res.status === 401) throw new T212Error('auth', 'Invalid API key or secret', 401, rl);
+  if (res.status === 403) throw new T212Error('forbidden', 'The API key lacks the required read permission', 403, rl);
+  if (res.status === 404) throw new T212Error('not_found', 'Endpoint not found', 404, rl);
+  if (res.status === 429) throw new T212Error('rate_limit', 'Rate limit reached', 429, rl);
+  if (!res.ok) throw new T212Error('server', `Trading 212 responded with HTTP ${res.status}`, res.status, rl);
   try {
     return (await res.json()) as T;
   } catch {
-    throw new T212Error('invalid_response', 'Response was not valid JSON', res.status);
+    throw new T212Error('invalid_response', 'Response was not valid JSON', res.status, rl);
   }
 }
 
@@ -151,21 +192,25 @@ export interface T212Snapshot {
   positions: T212Position[] | null;
   /** Set when the summary worked but positions could not be read (e.g. missing permission). */
   positionsError: T212ErrorCode | null;
+  /** Rate-limit headers of the most recent response. */
+  rateLimit: T212RateLimit | null;
 }
 
 /** One read-only sync: account summary (required) + positions (optional). */
 export async function fetchT212(creds: T212Credentials, fetchImpl: FetchLike = fetch): Promise<T212Snapshot> {
-  const metrics = metricsFromSummary(await t212Get('/equity/account/summary', creds, fetchImpl));
+  let rateLimit: T212RateLimit | null = null;
+  const seen = (rl: T212RateLimit) => (rateLimit = rl);
+  const metrics = metricsFromSummary(await t212Get('/equity/account/summary', creds, fetchImpl, seen));
   try {
     let raw: unknown;
     try {
-      raw = await t212Get('/equity/positions', creds, fetchImpl);
+      raw = await t212Get('/equity/positions', creds, fetchImpl, seen);
     } catch (err) {
       if (!(err instanceof T212Error && err.code === 'not_found')) throw err;
-      raw = await t212Get('/equity/portfolio', creds, fetchImpl); // older API versions
+      raw = await t212Get('/equity/portfolio', creds, fetchImpl, seen); // older API versions
     }
-    return { metrics, positions: mapPositions(raw), positionsError: null };
+    return { metrics, positions: mapPositions(raw), positionsError: null, rateLimit };
   } catch (err) {
-    return { metrics, positions: null, positionsError: err instanceof T212Error ? err.code : 'network' };
+    return { metrics, positions: null, positionsError: err instanceof T212Error ? err.code : 'network', rateLimit };
   }
 }

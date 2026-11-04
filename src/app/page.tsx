@@ -27,6 +27,7 @@ import {
   materializeRecurring,
 } from '@/lib/repo';
 import { etfSummary } from '@/lib/portfolio';
+import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
 import type { AccountId } from '@/lib/types';
 
@@ -236,6 +237,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             ) : undefined
           }
         >
+          {t212.connected && (
+            <T212LiveStatus lastSyncAt={t212.lastSyncAt} lastChangedAt={t212.lastChangedAt} retryAt={t212.retryAt} needsAction={t212.needsAction} rateLimit={t212.rateLimit} />
+          )}
           {etf.source !== 'none' ? (
             <>
               <div className="eyebrow">Trading 212</div>

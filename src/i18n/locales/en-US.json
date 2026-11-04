@@ -95,7 +95,7 @@
     "etfValue": "ETF at Trading 212",
     "canSpend": "You can still spend",
     "canSpendHint": "This month's actual available amount, after fixed costs, ETF and savings",
-    "houseFundHint": "{pct} of {target} · the emergency fund is filled first",
+    "houseFundHint": "{pct} of {target}",
     "transferred": "Transferred this month: {amount}",
     "actions": {
       "expense": "Expense",
@@ -325,7 +325,7 @@
     "summary": "{saved} saved of {target} in total",
     "progressSource": "Current amount comes from",
     "fromAccountOption": "{account} balance (automatic)",
-    "linkedHint": "The current amount is the {account} balance and updates by itself. When several goals share an account, the balance is split in list order: the first goal fills up before the next one gets anything. To type the amount yourself, choose \"Manual amount\"."
+    "linkedHint": "The current amount is the {account} balance and updates by itself. When several goals share an account, each one shows that account's full balance. To type the amount yourself, choose \"Manual amount\"."
   },
   "sim": {
     "title": "Simulators",
@@ -444,7 +444,7 @@
     "fixedNamePlaceholder": "e.g. Gym",
     "addRow": "Add row",
     "goalsHint": "How much do you want to save for the emergency fund and the house down payment?",
-    "goalsAccountNote": "Both goals use the Trade Republic balance — the emergency fund is filled first.",
+    "goalsAccountNote": "Both goals follow the Trade Republic balance.",
     "skip": "Skip",
     "saveContinue": "Save and continue",
     "later": "Do this later",

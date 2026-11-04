@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { accountBalance, allocateGoals, availableForIncome, computeMonthSummary, monthMovements, totalsByCategory } from '@/lib/calc';
+import { accountBalance, allocateGoals, availableForIncome, goalsSavedTotal, computeMonthSummary, monthMovements, totalsByCategory } from '@/lib/calc';
 import type { BudgetItem, Category, MonthBudget, Transaction } from '@/lib/types';
 
 let nextId = 1;
@@ -183,14 +183,18 @@ describe('goal allocation from account balances', () => {
     { id: 4, target: 1000, current: 123, account: null },
   ];
 
-  it('fills the emergency fund first, then the house', () => {
-    const r = allocateGoals(goals, { traderepublic: 8000, trading212: 9242.3 });
-    expect(r.map((g) => g.current)).toEqual([6000, 2000, 9242.3, 123]);
+  it('shows the whole account balance on every goal linked to it', () => {
+    const r = allocateGoals(goals, { traderepublic: 2900.61, trading212: 9242.3 });
+    expect(r.map((g) => g.current)).toEqual([2900.61, 2900.61, 9242.3, 123]);
   });
 
-  it('gives everything to the first goal while it is not full', () => {
-    const r = allocateGoals(goals, { traderepublic: 2800 });
-    expect(r[0].current).toBe(2800);
-    expect(r[1].current).toBe(0);
+  it('keeps the stored amount when the account has no balance entry, and never goes negative', () => {
+    const r = allocateGoals(goals, { traderepublic: -50 });
+    expect(r.map((g) => g.current)).toEqual([0, 0, 0, 123]);
+  });
+
+  it('counts a shared account once in the saved total', () => {
+    const r = allocateGoals(goals, { traderepublic: 2900.61, trading212: 9242.3 });
+    expect(goalsSavedTotal(r)).toBe(12265.91);
   });
 });

@@ -95,7 +95,7 @@
     "etfValue": "ETF na Trading 212",
     "canSpend": "Ainda podes gastar",
     "canSpendHint": "Disponível real deste mês, depois de fixas, ETF e poupança",
-    "houseFundHint": "{pct} de {target} · a reserva de emergência é preenchida primeiro",
+    "houseFundHint": "{pct} de {target}",
     "transferred": "Transferido este mês: {amount}",
     "actions": {
       "expense": "Despesa",
@@ -325,7 +325,7 @@
     "summary": "{saved} poupados de {target} no total",
     "progressSource": "Origem do valor atual",
     "fromAccountOption": "Saldo de {account} (automático)",
-    "linkedHint": "O valor atual vem do saldo de {account} e atualiza sozinho. Se vários objetivos usam a mesma conta, o saldo é repartido pela ordem da lista: o primeiro fica completo antes de o seguinte receber. Para escreveres o valor à mão, escolhe «Valor manual»."
+    "linkedHint": "O valor atual vem do saldo de {account} e atualiza sozinho. Se vários objetivos usam a mesma conta, todos mostram o saldo completo dessa conta. Para escreveres o valor à mão, escolhe «Valor manual»."
   },
   "sim": {
     "title": "Simuladores",
@@ -444,7 +444,7 @@
     "fixedNamePlaceholder": "Ex.: Ginásio",
     "addRow": "Adicionar linha",
     "goalsHint": "Quanto queres juntar para a reserva de emergência e para a entrada da casa?",
-    "goalsAccountNote": "Os dois objetivos usam o saldo da Trade Republic — a reserva de emergência é preenchida primeiro.",
+    "goalsAccountNote": "Os dois objetivos acompanham o saldo da Trade Republic.",
     "skip": "Saltar",
     "saveContinue": "Guardar e continuar",
     "later": "Fazer mais tarde",

@@ -365,7 +365,7 @@ export async function setupGoalsAction(fd: FormData) {
       monthly: Math.abs(optNum(fd, `${g.prefix}Monthly`) ?? current?.monthly ?? 0),
       targetDate: optMonth(fd, `${g.prefix}Date`) ?? current?.targetDate ?? null,
       color: current?.color ?? g.color,
-      // Both goals are funded from Trade Republic; the emergency fund is filled first.
+      // Both goals follow the Trade Republic balance.
       account: 'traderepublic',
     });
   }

@@ -178,22 +178,29 @@ export function goalProgress(goal: Pick<Goal, 'target' | 'current' | 'monthly' |
 }
 
 /**
- * Splits an account balance across the goals linked to it, in goal order (waterfall):
- * e.g. Trade Republic fills the emergency fund first, the remainder counts toward the house.
- * The last goal linked to an account receives any surplus, so no money disappears from view.
+ * A goal linked to an account shows that account's whole balance as its current amount.
+ * Goals sharing an account each show the same balance (it is not split between them).
  */
 export function allocateGoals<G extends Pick<Goal, 'target' | 'current' | 'account'>>(goals: G[], balances: Partial<Record<AccountId, number>>): G[] {
-  const left: Partial<Record<AccountId, number>> = {};
-  for (const [k, v] of Object.entries(balances)) left[k as AccountId] = Math.max(v ?? 0, 0);
-  const lastLinked = new Map<AccountId, number>();
-  goals.forEach((g, i) => g.account && lastLinked.set(g.account, i));
-  return goals.map((g, i) => {
-    const available = g.account ? left[g.account] : undefined;
-    if (!g.account || available === undefined) return g;
-    const take = lastLinked.get(g.account) === i ? available : Math.min(available, g.target);
-    left[g.account] = round2(available - take);
-    return { ...g, current: round2(take) };
+  return goals.map((g) => {
+    const balance = g.account ? balances[g.account] : undefined;
+    if (!g.account || balance === undefined) return g;
+    return { ...g, current: round2(Math.max(balance, 0)) };
   });
+}
+
+/** Total saved across goals: manual amounts plus each linked account counted once. */
+export function goalsSavedTotal(goals: Pick<Goal, 'current' | 'account'>[]): number {
+  const seen = new Set<AccountId>();
+  let total = 0;
+  for (const g of goals) {
+    if (g.account) {
+      if (seen.has(g.account)) continue;
+      seen.add(g.account);
+    }
+    total += g.current;
+  }
+  return round2(total);
 }
 
 // ---------------------------------------------------------------------------

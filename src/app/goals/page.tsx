@@ -1,7 +1,7 @@
 import { GoalForm } from '@/components/goals/GoalForm';
 import { Badge, Card, EmptyState, PageHeader, ProgressBar } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
-import { goalProgress } from '@/lib/calc';
+import { goalProgress, goalsSavedTotal } from '@/lib/calc';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { AccountBadge } from '@/components/AccountBadge';
@@ -15,7 +15,7 @@ export default async function GoalsPage() {
   const manualById = new Map(listGoalsStored().map((g) => [g.id, g.current]));
   const now = currentMonth();
 
-  const total = goals.reduce((sum, g) => sum + g.current, 0);
+  const total = goalsSavedTotal(goals);
   const totalTarget = goals.reduce((sum, g) => sum + g.target, 0);
 
   return (

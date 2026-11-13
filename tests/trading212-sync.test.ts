@@ -144,15 +144,15 @@ describe('Trading 212 error handling', () => {
     ageAttempt();
     const state = JSON.parse(rawSettings());
     state.lastError = null;
-    state.syncStartedAt = new Date().toISOString();
     db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
+    db.getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('t212_lock', ?)").run(new Date().toISOString());
     expect(await t212.syncT212({ force: true })).toEqual({ ok: false, code: 'in_progress' });
+    db.getDb().prepare("DELETE FROM settings WHERE key = 't212_lock'").run();
   });
 
   it('reports a key that can no longer be decrypted instead of failing silently', async () => {
     ageAttempt();
     const state = JSON.parse(rawSettings());
-    state.syncStartedAt = null;
     state.apiKey = 'v1:' + Buffer.from('garbage-garbage-garbage-garbage!').toString('base64');
     db.getDb().prepare("UPDATE settings SET value = ? WHERE key = 't212'").run(JSON.stringify(state));
     expect(t212.getT212Status()).toMatchObject({ connected: true, needsAction: true, lastError: { code: 'key_unreadable' } });

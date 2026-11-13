@@ -7,9 +7,8 @@ import { todayISO } from './dates';
 import { describeError } from './security';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from './secret-box';
 import { T212Error, fetchT212, retryAtAfter, type T212Credentials, type T212Env, type T212ErrorCode, type T212Metrics, type T212Position, type T212RateLimit } from './t212-core';
-import { SERVER_POLL_MIN_AGE_MS, type PollResult } from './t212-polling';
+import { SERVER_POLL_MIN_AGE_MS, SYNC_INTERVAL_MS, isoToMs, type PollResult } from './t212-policy';
 
-export const T212_SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 const MIN_MANUAL_INTERVAL_MS = 10_000; // the summary endpoint allows 1 request / 5 s
 const RETRY_AFTER_ERROR_MS = 30 * 60 * 1000;
 /** Notes marker for balance check-ins written by the integration (one per day). */
@@ -29,7 +28,6 @@ interface StoredState {
   lastChangedAt?: string | null; // ISO, last time total / invested / gain-loss actually changed
   retryAt?: string | null; // ISO, after a 429: no request before this
   rateLimit?: (T212RateLimit & { at: string }) | null; // x-ratelimit-* of the latest response
-  syncStartedAt?: string | null; // cross-process lock (scheduler and "Sync now" may run in different module instances)
 }
 
 /** API errors plus local ones: the stored key cannot be decrypted, or NestFund itself failed. */
@@ -96,6 +94,33 @@ function writeState(state: StoredState) {
   getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('t212', ?)").run(JSON.stringify(state));
 }
 
+/** Read-modify-write in one transaction, so concurrent writers cannot overwrite each other's fields. */
+function patchState(patch: (current: StoredState) => Partial<StoredState>) {
+  getDb().transaction(() => {
+    const current = readState();
+    writeState({ ...current, ...patch(current) });
+  })();
+}
+
+/**
+ * Cross-process sync lock (the scheduler and "Sync now" may run in different module instances).
+ * Its own settings row, so releasing it never rewrites the connection state.
+ */
+function acquireLock(): boolean {
+  const db = getDb();
+  return db.transaction(() => {
+    const row = db.prepare("SELECT value FROM settings WHERE key = 't212_lock'").get() as { value: string } | undefined;
+    const startedAt = isoToMs(row?.value);
+    if (startedAt !== null && Date.now() - startedAt < LOCK_TTL_MS) return false;
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('t212_lock', ?)").run(new Date().toISOString());
+    return true;
+  }).immediate();
+}
+
+function releaseLock() {
+  getDb().prepare("DELETE FROM settings WHERE key = 't212_lock'").run();
+}
+
 function credentials(state: StoredState): T212Credentials | null {
   if (!state.apiKey) return null;
   try {
@@ -107,7 +132,7 @@ function credentials(state: StoredState): T212Credentials | null {
   }
 }
 
-function nextAttemptAt(s: StoredState, maxAgeMs = T212_SYNC_INTERVAL_MS): number | null {
+function nextAttemptAt(s: StoredState, maxAgeMs = SYNC_INTERVAL_MS): number | null {
   if (!s.apiKey) return null;
   if (s.lastError && NEEDS_USER_ACTION.has(s.lastError.code)) return null;
   const lastSync = s.lastSyncAt ? Date.parse(s.lastSyncAt) : 0;
@@ -207,15 +232,14 @@ export type T212SyncResult =
 /** Shapes a sync outcome for the browser poller: timestamps only, never keys or balances. */
 export function pollResult(result: T212SyncResult): PollResult {
   const s = readState();
-  const retryAt = s.retryAt && Date.parse(s.retryAt) > Date.now() ? s.retryAt : null;
-  const code = result.ok ? undefined : result.code;
+  const retryAt = isoToMs(s.retryAt);
   const lastError = s.lastError?.code;
   return {
     ok: result.ok,
-    code,
-    lastSyncAt: s.lastSyncAt ?? null,
-    retryAt,
-    lastChangedAt: s.lastChangedAt ?? null,
+    code: result.ok ? undefined : result.code,
+    lastSyncAt: isoToMs(s.lastSyncAt),
+    retryAt: retryAt !== null && retryAt > Date.now() ? retryAt : null,
+    lastChangedAt: isoToMs(s.lastChangedAt),
     needsAction: !!s.apiKey && !!lastError && NEEDS_USER_ACTION.has(lastError),
   };
 }
@@ -226,23 +250,12 @@ export async function pollT212({ manual = false } = {}): Promise<PollResult> {
   return pollResult(result);
 }
 
-/** Takes the cross-process sync lock atomically; false if another sync holds a fresh lock. */
-function acquireLock(): boolean {
-  const db = getDb();
-  return db.transaction(() => {
-    const s = readState();
-    if (s.syncStartedAt && Date.now() - Date.parse(s.syncStartedAt) < LOCK_TTL_MS) return false;
-    writeState({ ...s, syncStartedAt: new Date().toISOString() });
-    return true;
-  }).immediate();
-}
-
 /**
  * Runs a read-only sync. `force` is the "Sync now" button; otherwise it runs when the last
  * success is 6 hours old (30 minutes after a temporary error; never on its own after an invalid
  * key). Failures only update the connection status: manual data and last values are untouched.
  */
-export async function syncT212({ force = false, maxAgeMs = T212_SYNC_INTERVAL_MS } = {}): Promise<T212SyncResult> {
+export async function syncT212({ force = false, maxAgeMs = SYNC_INTERVAL_MS } = {}): Promise<T212SyncResult> {
   if (syncing) return syncing;
   const state = readState();
   if (!state.apiKey) return { ok: false, code: 'not_connected' };
@@ -266,25 +279,27 @@ export async function syncT212({ force = false, maxAgeMs = T212_SYNC_INTERVAL_MS
     let result: T212SyncResult;
     try {
       const snap = await fetchT212(creds);
-      const before = readState();
-      // History only when something changed (plus the day's first row, so the daily series has no gaps);
-      // otherwise just the "last checked" timestamp moves.
-      const changed = metricsChanged(before.metrics, snap.metrics);
-      if (changed || !hasHistoryToday()) recordSync(snap.metrics, at);
-      const current = readState();
       const exhausted = snap.rateLimit?.remaining === 0 || snap.positionsError === 'rate_limit';
-      writeState({
-        ...current,
-        lastAttemptAt: at,
-        lastSyncAt: at,
-        lastChangedAt: changed ? at : (current.lastChangedAt ?? at),
-        retryAt: exhausted ? new Date(retryAtAfter(snap.rateLimit)).toISOString() : null,
-        rateLimit: snap.rateLimit ? { ...snap.rateLimit, at } : current.rateLimit,
-        lastError: null,
-        metrics: snap.metrics,
-        positions: snap.positions ?? current.positions ?? [],
-        positionsError: snap.positionsError,
-      });
+      // History row, balance check-in and connection state commit together or not at all.
+      getDb().transaction(() => {
+        const current = readState();
+        // History only when something changed (plus the day's first row, so the daily series has no gaps);
+        // otherwise just the "last checked" timestamp moves.
+        const changed = metricsChanged(current.metrics, snap.metrics);
+        if (changed || !hasHistoryToday()) recordSync(snap.metrics, at);
+        writeState({
+          ...current,
+          lastAttemptAt: at,
+          lastSyncAt: at,
+          lastChangedAt: changed ? at : (current.lastChangedAt ?? at),
+          retryAt: exhausted ? new Date(retryAtAfter(snap.rateLimit)).toISOString() : null,
+          rateLimit: snap.rateLimit ? { ...snap.rateLimit, at } : current.rateLimit,
+          lastError: null,
+          metrics: snap.metrics,
+          positions: snap.positions ?? current.positions ?? [],
+          positionsError: snap.positionsError,
+        });
+      })();
       result = { ok: true };
     } catch (err) {
       // T212Error = the API said no; anything else is a problem inside NestFund (e.g. disk), not the network.
@@ -293,17 +308,15 @@ export async function syncT212({ force = false, maxAgeMs = T212_SYNC_INTERVAL_MS
       const rl = err instanceof T212Error ? err.rateLimit : null;
       // 429: schedule the next try only after x-ratelimit-reset (never an immediate retry).
       const retryAt = code === 'rate_limit' ? new Date(retryAtAfter(rl)).toISOString() : null;
-      const cur = readState();
-      writeState({
-        ...cur,
+      patchState((cur) => ({
         lastAttemptAt: at,
         lastError: { code, status: err instanceof T212Error ? err.status : undefined, at },
         retryAt: retryAt ?? (cur.retryAt && Date.parse(cur.retryAt) > Date.now() ? cur.retryAt : null),
         rateLimit: rl ? { ...rl, at } : cur.rateLimit,
-      });
+      }));
       result = retryAt ? { ok: false, code, retryAt } : { ok: false, code };
     } finally {
-      writeState({ ...readState(), syncStartedAt: null });
+      releaseLock();
       syncing = null;
     }
     return result;

@@ -1,12 +1,10 @@
 // Adaptive Trading 212 polling — pure logic (no React, no server imports), so it is unit-testable.
 // The UI only decides *when* to ask the server to sync; the server still enforces its own limits.
 
-export const ACTIVE_POLL_MS = 60_000; // dashboard / portfolio open and in use
-export const BACKGROUND_POLL_MS = 6 * 60 * 60 * 1000; // hidden tab, locked or idle device
-export const RESUME_MIN_AGE_MS = 60_000; // sync on return only if the last check is older than this
-export const IDLE_AFTER_MS = 10 * 60 * 1000; // no input for this long = idle device
-/** The server accepts a poll slightly early so small clock differences never cause a skipped round. */
-export const SERVER_POLL_MIN_AGE_MS = 50_000;
+import { ACTIVE_POLL_MS, BACKGROUND_POLL_MS, RESUME_MIN_AGE_MS, isoToMs, type PollResult } from './t212-policy';
+
+export { ACTIVE_POLL_MS, BACKGROUND_POLL_MS, IDLE_AFTER_MS } from './t212-policy';
+export type { PollResult } from './t212-policy';
 
 export type PollMode = 'active' | 'background';
 
@@ -23,29 +21,27 @@ export function shouldSyncOnReturn(lastCheckedAt: number | null, now: number): b
   return lastCheckedAt === null || now - lastCheckedAt >= RESUME_MIN_AGE_MS;
 }
 
-/** What the server reports after a poll (see pollT212Action). */
-export interface PollResult {
-  ok: boolean;
-  /** Error or benign skip code ('skipped', 'too_soon', 'in_progress' are not failures). */
-  code?: string;
-  /** Last successful check (ISO). */
-  lastSyncAt: string | null;
-  /** Do not call again before this (ISO) — set after a 429. */
-  retryAt: string | null;
-  /** Last time the values actually changed (ISO). */
-  lastChangedAt: string | null;
-  /** Needs the user (invalid key, no permission): stop polling. */
-  needsAction: boolean;
-}
-
 export type PollStatus = 'idle' | 'syncing' | 'ok' | 'error' | 'rate_limited' | 'paused';
+
+/** How one server answer is treated. Everything else (status, error code, retry anchor) derives from this. */
+type Outcome = 'ok' | 'benign' | 'rate_limited' | 'error' | 'paused';
+
+const BENIGN = new Set(['skipped', 'too_soon', 'in_progress']);
+const STATUS_OF: Record<Outcome, PollStatus> = { ok: 'ok', benign: 'ok', rate_limited: 'rate_limited', error: 'error', paused: 'paused' };
+
+function classify(r: PollResult): Outcome {
+  if (r.needsAction) return 'paused';
+  if (r.code === 'rate_limit') return 'rate_limited';
+  if (r.ok) return 'ok';
+  return r.code && BENIGN.has(r.code) ? 'benign' : 'error';
+}
 
 export interface PollerState {
   mode: PollMode;
   status: PollStatus;
   errorCode: string | null;
   lastSyncAt: number | null;
-  lastChangedAt: string | null;
+  lastChangedAt: number | null;
   retryAt: number | null;
   /** When the next automatic attempt is planned (epoch ms); null when paused. */
   nextAt: number | null;
@@ -62,6 +58,7 @@ export interface PollerDeps {
   onChanged?: () => void;
 }
 
+/** Starting point from the server-rendered page (ISO strings, as stored). */
 export interface PollerInit {
   lastSyncAt: string | null;
   lastChangedAt?: string | null;
@@ -70,9 +67,6 @@ export interface PollerInit {
   visible?: boolean;
   idle?: boolean;
 }
-
-const BENIGN = new Set(['skipped', 'too_soon', 'in_progress']);
-const ms = (iso: string | null | undefined) => (iso ? Date.parse(iso) || null : null);
 
 export class T212Poller {
   private deps: Required<Pick<PollerDeps, 'sync' | 'now' | 'setTimer' | 'clearTimer'>> & PollerDeps;
@@ -99,9 +93,9 @@ export class T212Poller {
       mode: pollMode(this.visible, this.idle),
       status: this.paused ? 'paused' : 'idle',
       errorCode: null,
-      lastSyncAt: ms(init.lastSyncAt),
-      lastChangedAt: init.lastChangedAt ?? null,
-      retryAt: ms(init.retryAt),
+      lastSyncAt: isoToMs(init.lastSyncAt),
+      lastChangedAt: isoToMs(init.lastChangedAt),
+      retryAt: isoToMs(init.retryAt),
       nextAt: null,
       inFlight: false,
     };
@@ -154,7 +148,8 @@ export class T212Poller {
     if (this.s.retryAt !== null && now < this.s.retryAt) {
       // Rate limited: wait for the reset time instead of asking again.
       this.schedule();
-      return Promise.resolve(this.localResult('rate_limit'));
+      const { lastSyncAt, retryAt, lastChangedAt } = this.s;
+      return Promise.resolve({ ok: false, code: 'rate_limit', lastSyncAt, retryAt, lastChangedAt, needsAction: false });
     }
     this.clear();
     this.emit({ status: 'syncing', inFlight: true, nextAt: null });
@@ -172,31 +167,20 @@ export class T212Poller {
     return p;
   }
 
-  private localResult(code: string): PollResult {
-    return {
-      ok: false,
-      code,
-      lastSyncAt: this.s.lastSyncAt === null ? null : new Date(this.s.lastSyncAt).toISOString(),
-      retryAt: this.s.retryAt === null ? null : new Date(this.s.retryAt).toISOString(),
-      lastChangedAt: this.s.lastChangedAt,
-      needsAction: false,
-    };
-  }
-
   private apply(r: PollResult) {
-    const lastSyncAt = ms(r.lastSyncAt) ?? this.s.lastSyncAt;
-    const retryAt = ms(r.retryAt);
+    const now = this.deps.now();
+    const outcome = classify(r);
+    const failed = outcome === 'error' || outcome === 'paused' || outcome === 'rate_limited';
+    this.paused = outcome === 'paused';
+    this.lastFailedAt = outcome === 'error' || outcome === 'paused' ? now : null;
     const changed = r.lastChangedAt !== null && r.lastChangedAt !== this.s.lastChangedAt;
-    this.paused = r.needsAction;
-    this.lastFailedAt = !r.ok && !(r.code && BENIGN.has(r.code)) && r.code !== 'rate_limit' ? this.deps.now() : null;
-    const failed = !r.ok && !(r.code && BENIGN.has(r.code));
     this.emit({
       inFlight: false,
-      lastSyncAt,
+      lastSyncAt: r.lastSyncAt ?? this.s.lastSyncAt,
       lastChangedAt: r.lastChangedAt ?? this.s.lastChangedAt,
-      retryAt: retryAt !== null && retryAt > this.deps.now() ? retryAt : null,
+      retryAt: r.retryAt !== null && r.retryAt > now ? r.retryAt : null,
       errorCode: failed ? (r.code ?? 'network') : null,
-      status: r.needsAction ? 'paused' : r.code === 'rate_limit' ? 'rate_limited' : failed ? 'error' : 'ok',
+      status: STATUS_OF[outcome],
     });
     if (changed) this.deps.onChanged?.();
     if (this.running) this.schedule();
@@ -209,10 +193,10 @@ export class T212Poller {
       return;
     }
     const now = this.deps.now();
-    const mode = this.s.mode;
-    const base = Math.max(this.s.lastSyncAt ?? 0, this.lastFailedAt ?? 0, this.s.lastSyncAt === null && this.lastFailedAt === null ? now : 0) + pollInterval(mode);
+    // Count from the latest attempt (success or failure); with none yet, from now.
+    const anchor = Math.max(this.s.lastSyncAt ?? 0, this.lastFailedAt ?? 0) || now;
     // Always wait at least until the rate-limit reset; an overdue run fires right away.
-    const at = Math.max(base, this.s.retryAt ?? 0, now);
+    const at = Math.max(anchor + pollInterval(this.s.mode), this.s.retryAt ?? 0, now);
     this.emit({ nextAt: at });
     this.timer = this.deps.setTimer(() => {
       this.timer = null;

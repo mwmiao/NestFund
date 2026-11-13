@@ -12,7 +12,7 @@ import { parseRateLimit, retryAtAfter } from '@/lib/t212-core';
 
 const T0 = Date.parse('2026-11-04T10:00:00Z');
 const iso = (ms: number) => new Date(ms).toISOString();
-const ok = (at: number, extra: Partial<PollResult> = {}): PollResult => ({ ok: true, lastSyncAt: iso(at), retryAt: null, lastChangedAt: iso(T0), needsAction: false, ...extra });
+const ok = (at: number, extra: Partial<PollResult> = {}): PollResult => ({ ok: true, lastSyncAt: at, retryAt: null, lastChangedAt: T0, needsAction: false, ...extra });
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -107,7 +107,7 @@ describe('tab visibility', () => {
 
   it('refreshes the page only when the values changed', async () => {
     let call = 0;
-    const { poller, onChanged } = make({}, async () => ok(Date.now(), { lastChangedAt: iso(++call === 1 ? T0 : T0 + 1) }));
+    const { poller, onChanged } = make({}, async () => ok(Date.now(), { lastChangedAt: ++call === 1 ? T0 : T0 + 1 }));
     poller.start();
     await vi.advanceTimersByTimeAsync(60_000);
     expect(onChanged).not.toHaveBeenCalled();
@@ -124,7 +124,7 @@ describe('HTTP 429', () => {
     const { poller, syncFn } = make({}, async () => {
       if (first) {
         first = false;
-        return { ok: false, code: 'rate_limit', lastSyncAt: iso(T0), retryAt: iso(resetAt), lastChangedAt: iso(T0), needsAction: false };
+        return { ok: false, code: 'rate_limit', lastSyncAt: T0, retryAt: resetAt, lastChangedAt: T0, needsAction: false };
       }
       return ok(Date.now());
     });
@@ -177,7 +177,7 @@ describe('duplicate requests', () => {
   });
 
   it('does not hammer the server after a failed attempt', async () => {
-    const { poller, syncFn } = make({ lastSyncAt: iso(T0 - 10 * 60_000) }, async () => ({ ok: false, code: 'server', lastSyncAt: iso(T0 - 10 * 60_000), retryAt: null, lastChangedAt: null, needsAction: false }));
+    const { poller, syncFn } = make({ lastSyncAt: iso(T0 - 10 * 60_000) }, async () => ({ ok: false, code: 'server', lastSyncAt: T0 - 10 * 60_000, retryAt: null, lastChangedAt: null, needsAction: false }));
     poller.start(); // stale → immediate attempt, fails
     await vi.advanceTimersByTimeAsync(0);
     expect(syncFn).toHaveBeenCalledTimes(1);
@@ -188,7 +188,7 @@ describe('duplicate requests', () => {
   });
 
   it('stops polling when the key needs attention', async () => {
-    const { poller, syncFn } = make({}, async () => ({ ok: false, code: 'auth', lastSyncAt: iso(T0), retryAt: null, lastChangedAt: null, needsAction: true }));
+    const { poller, syncFn } = make({}, async () => ({ ok: false, code: 'auth', lastSyncAt: T0, retryAt: null, lastChangedAt: null, needsAction: true }));
     poller.start();
     await vi.advanceTimersByTimeAsync(60_000);
     await vi.advanceTimersByTimeAsync(10 * 60_000);

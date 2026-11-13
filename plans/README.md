@@ -12,6 +12,7 @@ and update your row when done.
 | [002](002-test-middleware-and-routes.md) | Add tests for the auth middleware and the file-serving routes | P2 | M | LOW | — | TODO |
 | [003](003-trust-proxy-headers-only-when-configured.md) | Ignore client-supplied proxy headers unless `TRUST_PROXY=1` | P1 | S | LOW code / MED behavior | 002 | TODO |
 | [004](004-prune-old-backup-copies.md) | Prune old safety copies (newest 10 per kind, nothing under 30 days) | P2 | S | MED | — | TODO |
+| [005](005-reject-impossible-calendar-dates.md) | Reject impossible calendar dates (such as 2026-02-31) | P3 | S | LOW | — | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -19,6 +20,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - 003 requires 002: the middleware tests from 002 pin the current lockout behavior, and 003 rewrites one of them
   deliberately. Do not start 003 before 002 is merged.
+- 005 (written against `5fcba62`, second audit) is independent: it edits `src/lib/dates.ts` and tests only. It touches
+  `tests/utils.test.ts` and `tests/backup.test.ts`, which no other plan edits.
 - 001 and 004 are independent of everything else and of each other. 001 edits `src/app/actions.ts`; 004 edits
   `src/lib/backup.ts` and `src/instrumentation.ts`; 002/003 touch `src/lib/security.ts` and tests. No file overlaps,
   so 001, 002 and 004 can run in parallel in separate worktrees.
@@ -39,6 +42,8 @@ Plans are numbered in execution order, so audit #2 is plan 003, audit #3 is plan
 - Next 15 → 16 upgrade for the bundled PostCSS advisory (build-time only; documented in `SECURITY.md`).
 - Remaining items 5–8 of the Trading 212 code review (props duplication, `t212Get` callback, `T212LiveStatus` hook, minor cleanups).
 - Memo cache invalidated on every Trading 212 poll (low impact; investigate first).
+- Service worker keeps the dashboard page (balances, ETF value) for 7 days and "reset data" does not clear it
+  (`src/lib/sw-main.ts:21`); decide whether that is intended before planning a fix.
 - No lint step in CI although 7 `eslint-disable` comments exist.
 
 ## Findings considered and rejected

@@ -68,7 +68,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
                   current ? 'border-brand-500 bg-brand-500/10' : 'border-line '
                 }`}
               >
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-600 text-white' : 'bg-raised '}`}>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-700 text-white' : 'bg-raised '}`}>
                   {done ? '✓' : i + 1}
                 </span>
                 <span className="truncate font-medium">{t(`setup.steps.${s}`)}</span>

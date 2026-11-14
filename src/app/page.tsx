@@ -125,12 +125,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div>
             <dt className="eyebrow">{t('dashboard.spentMonth')}</dt>
             <dd className="mt-1 text-lg font-semibold tabular-nums sm:text-xl">{money(spent)}</dd>
-            {s.mealCardSpent > 0 && <dd className="muted mt-0.5 text-[11px]">{t('dashboard.ofWhichMeal', { amount: money(s.mealCardSpent) })}</dd>}
+            {s.mealCardSpent > 0 && <dd className="muted mt-0.5 text-xs">{t('dashboard.ofWhichMeal', { amount: money(s.mealCardSpent) })}</dd>}
           </div>
           <div>
             <dt className="eyebrow">{t('dashboard.savedMonth')}</dt>
             <dd className="mt-1 text-lg font-semibold tabular-nums text-positive sm:text-xl">{money(saved)}</dd>
-            {s.savingsTotal > 0 && <dd className="muted mt-0.5 text-[11px]">{t('dashboard.ofPlanned', { amount: money(s.savingsTotal) })}</dd>}
+            {s.savingsTotal > 0 && <dd className="muted mt-0.5 text-xs">{t('dashboard.ofPlanned', { amount: money(s.savingsTotal) })}</dd>}
           </div>
           <div>
             <dt className="eyebrow">
@@ -139,8 +139,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </dt>
             <dd className={`mt-1 text-lg font-semibold tabular-nums sm:text-xl ${hasIncome && s.realAvailable < 0 ? 'text-negative' : ''}`}>{hasIncome ? money(s.realAvailable) : '—'}</dd>
             {!hasIncome && !setupMode && (
-              <dd className="mt-0.5 text-[11px]">
-                <Link href={`/budget?m=${month}#income`} className="link !text-[11px]">
+              <dd className="mt-0.5 text-xs">
+                <Link href={`/budget?m=${month}#income`} className="link !text-xs">
                   {t('dashboard.setIncome')}
                 </Link>
               </dd>

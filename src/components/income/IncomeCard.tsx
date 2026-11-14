@@ -65,12 +65,12 @@ export function IncomeCard({
             <div>
               <dt className="eyebrow">{t('income.daysWorked')}</dt>
               <dd className="mt-1 text-lg font-semibold tabular-nums">{income.normalDays + income.holidayDays}</dd>
-              <dd className="muted mt-0.5 text-[11px]">{t('income.holidayWorkedCount', { n: String(income.holidayDays) })}</dd>
+              <dd className="muted mt-0.5 text-xs">{t('income.holidayWorkedCount', { n: String(income.holidayDays) })}</dd>
             </div>
             <div>
               <dt className="eyebrow">{t('income.totalIncome')}</dt>
               <dd className="mt-1 text-lg font-semibold tabular-nums">{money(salaryTotal + budget.extraIncome + budget.mealCard)}</dd>
-              <dd className="muted mt-0.5 text-[11px]">{t('income.totalHint')}</dd>
+              <dd className="muted mt-0.5 text-xs">{t('income.totalHint')}</dd>
             </div>
           </dl>
           {diff.total != null && (

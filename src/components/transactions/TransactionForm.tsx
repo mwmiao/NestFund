@@ -204,7 +204,7 @@ export function TransactionForm({
                 {t(suggestion.source === 'rule' ? 'tx.suggestRule' : suggestion.source === 'history' ? 'tx.suggestHistory' : 'tx.suggestKeyword', { text: suggestion.matched })}
               </span>
             </span>
-            <span className="shrink-0 rounded-full bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white">{t('tx.suggestAccept')}</span>
+            <span className="shrink-0 rounded-full bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white">{t('tx.suggestAccept')}</span>
           </button>
         )}
         {topCategories.length > 0 && (

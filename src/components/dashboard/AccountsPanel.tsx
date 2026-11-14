@@ -156,7 +156,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
                     <span className={`block text-sm font-semibold tabular-nums ${row.balance < 0 ? 'text-negative' : ''}`}>
                       {row.balanceText || <span className="muted font-normal">{t('accounts.noCheckIn')}</span>}
                     </span>
-                    {row.extraText && <span className={`block text-[11px] tabular-nums ${toneClass[row.extraTone ?? 'muted']}`}>{row.extraText}</span>}
+                    {row.extraText && <span className={`block text-xs tabular-nums ${toneClass[row.extraTone ?? 'muted']}`}>{row.extraText}</span>}
                   </span>
                 </Link>
                 <button
@@ -201,7 +201,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
                         </button>
                         <SubmitButton className="btn-primary !px-3 !py-2">{t('common.save')}</SubmitButton>
                       </div>
-                      <p className="muted basis-full text-[11px]">{t('dashboard.updateBalanceHint')}</p>
+                      <p className="muted basis-full text-xs">{t('dashboard.updateBalanceHint')}</p>
                     </form>
                   )}
                   <div className="mt-2 flex flex-wrap gap-3 border-t border-line pt-2 text-xs">

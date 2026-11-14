@@ -90,6 +90,17 @@
       min-width: 1.25rem;
     }
   }
+  /* Calm the interface for people who ask for less motion; the spinner keeps turning so progress stays visible. */
+  @media (prefers-reduced-motion: reduce) {
+    *:not(.animate-spin),
+    *:not(.animate-spin)::before,
+    *:not(.animate-spin)::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* ---------------------------------------------------------------- components */
@@ -99,7 +110,7 @@
     @apply min-w-0 rounded-card border border-line bg-surface p-4 shadow-card dark:shadow-none sm:p-5;
   }
   .input {
-    @apply w-full rounded-control border border-line bg-surface px-3 py-2.5 text-ink outline-none transition placeholder:text-subtle/70 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 disabled:opacity-60 dark:bg-canvas;
+    @apply w-full rounded-control border border-line bg-surface px-3 py-2.5 text-ink outline-none transition placeholder:text-subtle focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25 disabled:opacity-60 dark:bg-canvas;
   }
   .label {
     @apply mb-1.5 block text-xs font-medium text-subtle;
@@ -108,7 +119,7 @@
     @apply inline-flex items-center justify-center gap-1.5 rounded-control px-4 py-2.5 text-sm font-medium transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-500;
+    @apply btn bg-brand-700 text-white shadow-sm hover:bg-brand-600;
   }
   .btn-secondary {
     @apply btn border border-line bg-surface text-ink hover:bg-raised;
@@ -139,7 +150,7 @@
     @apply border-transparent bg-ink text-canvas hover:text-canvas;
   }
   .link {
-    @apply text-sm font-medium text-brand-600 hover:underline dark:text-brand-400;
+    @apply text-sm font-medium text-brand-700 hover:underline dark:text-brand-400;
   }
   .skeleton {
     @apply animate-pulse rounded-control bg-raised;

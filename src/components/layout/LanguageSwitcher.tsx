@@ -27,7 +27,7 @@ export function LanguageSwitcher() {
             })
           }
           className={`flex min-h-9 items-center rounded-md px-3 py-1 font-medium transition ${
-            l === locale ? 'bg-brand-600 text-white' : 'text-subtle hover:text-ink'
+            l === locale ? 'bg-brand-700 text-white' : 'text-subtle hover:text-ink'
           }`}
         >
           {LABELS[l]}

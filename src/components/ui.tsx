@@ -96,7 +96,7 @@ export function ProgressBar({
       className={`w-full overflow-hidden rounded-full bg-raised ${size === 'sm' ? 'h-1.5' : 'h-2'}`}
       role="progressbar"
       aria-label={label}
-      aria-valuenow={Math.round(ratio * 100)}
+      aria-valuenow={Math.round(pct)} aria-valuetext={`${Math.round(ratio * 100)} %`}
       aria-valuemin={0}
       aria-valuemax={100}
     >
@@ -117,7 +117,7 @@ export function Badge({ tone = 'muted', children }: { tone?: Tone | 'info'; chil
     negative: 'bg-negative/10 text-negative',
     info: 'bg-info/10 text-info',
   }[tone];
-  return <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium ${cls}`}>{children}</span>;
+  return <span className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${cls}`}>{children}</span>;
 }
 
 export function Alert({ tone = 'warning', children }: { tone?: 'warning' | 'danger' | 'info' | 'success'; children: ReactNode }) {
@@ -143,20 +143,7 @@ export function Field({ label, children, className = '' }: { label: string; chil
   );
 }
 
-/** Small "i" next to a term. The explanation shows on hover or focus and is read out by screen readers. */
-export function Hint({ text }: { text: string }) {
-  return (
-    <span
-      tabIndex={0}
-      role="note"
-      title={text}
-      aria-label={text}
-      className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line align-middle text-[10px] font-semibold normal-case leading-none text-subtle outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
-    >
-      i
-    </span>
-  );
-}
+export { Hint } from '@/components/Hint';
 
 export function Dot({ color }: { color: string }) {
   return <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden />;

@@ -28,7 +28,7 @@ export function NotificationBell({ className = 'btn-ghost !p-2' }: { className?:
     <Link href="/notifications" className={`relative ${className}`} title={label} aria-label={label}>
       <Icon d={BELL} className="h-[18px] w-[18px]" />
       {count > 0 && (
-        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-semibold leading-none text-white">{count > 9 ? '9+' : count}</span>
+        <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-700 px-1 text-[10px] font-semibold leading-none text-white">{count > 9 ? '9+' : count}</span>
       )}
     </Link>
   );

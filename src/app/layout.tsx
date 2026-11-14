@@ -42,12 +42,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} className={theme === 'dark' ? 'dark' : ''}>
       <body className="min-h-screen">
+        <a
+          href="#main-content"
+          className="btn-primary sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[60] focus:rounded-control focus:px-4 focus:py-2.5"
+        >
+          {t('nav.skipToContent')}
+        </a>
         <I18nProvider locale={locale}>
           <AccountsProvider visible={visibleAccounts()}>
           <Sidebar theme={theme} />
           <Header theme={theme} />
           <div className="lg:pl-60">
-            <main className="mx-auto max-w-5xl px-4 pb-32 pt-5 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8">{children}</main>
+            <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-4 pb-32 pt-5 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8 outline-none focus-visible:ring-0 focus-visible:ring-offset-0">{children}</main>
             <footer className="muted mx-auto hidden max-w-5xl px-10 pb-8 text-xs lg:block">{t('app.disclaimer')}</footer>
           </div>
           <BottomNav />

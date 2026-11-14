@@ -13,6 +13,11 @@ and update your row when done.
 | [003](003-trust-proxy-headers-only-when-configured.md) | Ignore client-supplied proxy headers unless `TRUST_PROXY=1` | P1 | S | LOW code / MED behavior | 002 | TODO |
 | [004](004-prune-old-backup-copies.md) | Prune old safety copies (newest 10 per kind, nothing under 30 days) | P2 | S | MED | — | TODO |
 | [005](005-reject-impossible-calendar-dates.md) | Reject impossible calendar dates (such as 2026-02-31) | P3 | S | LOW | — | TODO |
+| [006](006-unique-page-titles.md) | Give every page its own translated browser title | P1 | S–M | LOW | — | DONE (reviewed; on branch `advisor/006-unique-page-titles`, commit de39052, not merged) |
+| [007](007-submit-feedback-on-all-forms.md) | Show progress and block double-submits on every server-action form | P1 | M | LOW | — | DONE (reviewed; on branch `advisor/007-submit-feedback`, commits 39ddc82 + 39d0e19, not merged) |
+| [008](008-accessible-labelled-more-menu.md) | Replace the hidden mobile hamburger with a labelled, keyboard-accessible "More" tab | P1 | M | MED | — | DONE (reviewed in a browser at 375px; one focus bug found and fixed; merged to main) |
+| [009](009-chart-text-alternatives.md) | Give every chart a text summary and a data table | P2 | M | LOW | — | DONE (reviewed in a browser with seeded data; merged to main) |
+| [010](010-accessibility-quick-fixes.md) | Accessibility quick fixes: contrast, placeholders, reduced motion, progress bars, hints, small text | P2 | S–M | LOW | 007, 008 | DONE (reviewed in a browser; two Hint bugs found and fixed; merged to main) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -32,12 +37,24 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   Cloudflare Tunnel must set `TRUST_PROXY=1`. If you prefer the opposite default, change Step 1 of the plan first.
 - **004**: retention is 10 per kind and 30 days. Adjust the two constants in Step 1 if you want a different policy.
 
+- **006–010 (UX and accessibility audit, written against `3ca9a94`, 2026-11-14)** are logically independent of each other
+  and of 001–005. 010 is listed as depending on 007 and 008 only because all three edit `AccountsPanel.tsx`,
+  `BottomNav.tsx` and `TransactionForm.tsx`; run them in the order 006, 007, 008, 009, 010 to avoid merge conflicts, or in
+  separate worktrees if you accept resolving small conflicts. 006 and 007 both touch many page files (one-line edits).
+  008 rewrites `BottomNav.tsx` and 010 later changes one colour class in it, hence 010 after 008. 009 touches no file
+  that 006–008 or 010 edit apart from the chart call sites and one-line imports.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
 Plans are numbered in execution order, so audit #2 is plan 003, audit #3 is plan 004 and audit #4 is plan 002.
 
 ## Findings not planned yet
+
+From the UX and accessibility audit (3ca9a94), not selected for a plan:
+- No `error.tsx` / `global-error.tsx`: a failed database read shows Next.js's default error page with no retry (S).
+- Amount fields use `pattern` without a custom message, so mistyped amounts show the browser's generic wording (S).
+- No skip-to-content link; keyboard users pass about 14 sidebar links on every page (S).
 
 - Next 15 → 16 upgrade for the bundled PostCSS advisory (build-time only; documented in `SECURITY.md`).
 - Remaining items 5–8 of the Trading 212 code review (props duplication, `t212Get` callback, `T212LiveStatus` hook, minor cleanups).

@@ -24,6 +24,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
   };
 
   const balances = accountBalances();
+  const visible = visibleAccounts();
   const profile = getProfile();
   const goals = listGoals();
   const fixed = listBudgetItems().filter((i) => i.kind === 'fixed');
@@ -79,7 +80,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Card title={t('setup.steps.balances')}>
           <p className="muted mb-4 text-sm">{t('setup.balancesHint')}</p>
           <form action={setupBalancesAction} className="space-y-3">
-            {(['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'] as const).filter((a) => visibleAccounts().includes(a)).map((a) => (
+            {(['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'] as const).filter((a) => visible.includes(a)).map((a) => (
               <div key={a} className="grid grid-cols-[1fr_9rem] items-center gap-3">
                 <div>
                   <AccountBadge id={a} label={accountName(a, t)} />

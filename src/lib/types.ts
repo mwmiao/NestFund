@@ -12,6 +12,9 @@ export type TxType = (typeof TX_TYPES)[number];
 export const ACCOUNT_IDS = ['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card', 'cash', 'other'] as const;
 export type AccountId = (typeof ACCOUNT_IDS)[number];
 
+/** The account id matching untrusted text (a query parameter, say), or undefined. */
+export const asAccountId = (v: string | undefined): AccountId | undefined => ACCOUNT_IDS.find((a) => a === v);
+
 export type AccountRole = 'salary' | 'leisure' | 'etf' | 'savings' | 'meal' | 'cash' | 'other';
 
 export interface AccountMeta {

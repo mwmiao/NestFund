@@ -19,7 +19,7 @@ import {
   type ReportFilters,
 } from './report-calc';
 import { listT212History } from './t212';
-import { ACCOUNT_IDS } from './types';
+import { asAccountId } from './types';
 
 export function parseReportFilters(sp: Record<string, string | string[] | undefined>): ReportFilters {
   const get = (k: string) => {
@@ -35,7 +35,7 @@ export function parseReportFilters(sp: Record<string, string | string[] | undefi
     year: validYear,
     // A year replaces the month; with neither, the report covers the current month.
     month: validYear ? undefined : isMonth(month) ? month : currentMonth(),
-    account: ACCOUNT_IDS.includes(account as never) ? account : undefined,
+    account: asAccountId(account),
     categoryId: Number.isInteger(cat) && cat > 0 ? cat : undefined,
   };
 }
@@ -56,7 +56,6 @@ export interface Report {
   budget: BudgetRow[];
   budgetTotals: { planned: number; spent: number };
   topStores: LabelTotal[];
-  window: string[];
   contributions: ContributionRow[];
   trading212: PortfolioPoint[];
   traderepublic: PortfolioPoint[];
@@ -100,7 +99,6 @@ export function buildReport(filters: ReportFilters): Report {
     budget: shownBudget,
     budgetTotals: { planned: round2(shownBudget.reduce((s, b) => s + b.planned, 0)), spent: round2(shownBudget.reduce((s, b) => s + b.spent, 0)) },
     topStores: topLabels(current, 5),
-    window,
     contributions: monthlyContributions(all, window),
     trading212: history.length >= t212Snaps.length ? history : t212Snaps,
     traderepublic: snaps('traderepublic'),

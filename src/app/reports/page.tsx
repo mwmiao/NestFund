@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { BarsChart, DonutChart, LinesChart } from '@/components/charts/LazyCharts';
 import { AutoSubmitForm } from '@/components/AutoSubmitForm';
-import { HistoryView } from '@/components/reports/HistoryView';
+import { ReportTabs } from '@/components/reports/ReportTabs';
 import { Card, EmptyState, PageHeader, ProgressBar, Stat } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { currentMonth, formatDate, monthLabel } from '@/lib/dates';
@@ -10,39 +10,11 @@ import { accountName, categoryName } from '@/lib/labels';
 import { listCategories, visibleAccounts } from '@/lib/repo';
 import { changeRatio } from '@/lib/report-calc';
 import { buildReport, parseReportFilters } from '@/lib/reports';
-import type { AccountId } from '@/lib/types';
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
-  const view = sp.view === 'time' ? 'time' : 'month';
-
-  const tabs = (
-    <nav className="mb-4 inline-flex gap-1 rounded-control bg-raised p-1" aria-label={t('reports.title')}>
-      {(['month', 'time'] as const).map((v) => (
-        <Link
-          key={v}
-          href={v === 'time' ? '/reports?view=time' : '/reports'}
-          aria-current={view === v ? 'page' : undefined}
-          className={`min-h-10 rounded-[0.6rem] px-4 py-2 text-sm font-medium transition ${view === v ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
-        >
-          {t(`reports.view.${v}`)}
-        </Link>
-      ))}
-    </nav>
-  );
-
-  if (view === 'time') {
-    return (
-      <>
-        <PageHeader title={t('reports.title')} subtitle={t('reports.viewTimeHint')} />
-        {tabs}
-        <HistoryView />
-      </>
-    );
-  }
-
   const filters = parseReportFilters(sp);
   const r = buildReport(filters);
   const categories = listCategories();
@@ -85,7 +57,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         }
       />
 
-      {tabs}
+      <ReportTabs active="month" t={t} />
 
       <Card className="mb-4">
         <AutoSubmitForm method="get" className="grid grid-cols-2 gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
@@ -108,7 +80,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             <span className="label">{t('reports.account')}</span>
             <select name="account" defaultValue={filters.account ?? ''} className="input">
               <option value="">{t('reports.allAccounts')}</option>
-              {visibleAccounts([filters.account as AccountId | undefined]).map((a) => (
+              {visibleAccounts(filters.account ? [filters.account] : []).map((a) => (
                 <option key={a} value={a}>
                   {accountName(a, t)}
                 </option>

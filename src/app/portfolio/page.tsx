@@ -6,14 +6,14 @@ import { ConfirmButton } from '@/components/ConfirmButton';
 import { InterestSection } from '@/components/portfolio/InterestSection';
 import { Alert, Badge, Card, Empty, Field, Hint, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
-import { formatDate, formatDateTime, formatRelative, todayISO } from '@/lib/dates';
+import { formatDate, formatDateTime, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
-import { etfSummary } from '@/lib/portfolio';
-import { accountBalances, listSnapshots, materializeRecurring } from '@/lib/repo';
+import { etfStatusText, etfSummary } from '@/lib/portfolio';
+import { accountBalances, listSnapshots, materializeRecurring, visibleAccounts } from '@/lib/repo';
 import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
-import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
+import { ACCOUNTS } from '@/lib/types';
 
 const dayMonth = (iso: string) => formatDate(iso).slice(0, 5);
 
@@ -26,6 +26,7 @@ export default async function PortfolioPage() {
   const t212 = getT212Status();
   const etf = etfSummary(balances.trading212, t212);
   const tr = balances.traderepublic;
+  const visible = visibleAccounts();
 
   // Daily API history when there is enough of it; manual check-ins otherwise.
   const apiHistory = listT212History(365);
@@ -65,11 +66,7 @@ export default async function PortfolioPage() {
           <div className="text-right text-xs">
             {syncBadge}
             <div className="muted mt-1.5">
-              {etf.source === 'api' && etf.asOf
-                ? t('t212.statusLive', { when: formatRelative(etf.asOf, locale) })
-                : etf.asOf
-                  ? t('portfolio.statusManual', { date: formatDate(etf.asOf) })
-                  : t('accounts.noCheckIn')}
+              {etfStatusText(etf, t, locale)}
             </div>
             <Link href="/settings" className="link mt-1 inline-block !text-xs">
               {t212.connected ? t('t212.manage') : t('t212.connectCta')}
@@ -160,7 +157,7 @@ export default async function PortfolioPage() {
         {/* Day-to-day accounts */}
         <Card title={t('portfolio.otherAccounts')}>
           <ul className="divide-y divide-line/70">
-            {(['ctt', 'revolut', 'meal_card', 'cash'] as const).map((id) => (
+            {(['ctt', 'revolut', 'meal_card', 'cash'] as const).filter((id) => visible.includes(id)).map((id) => (
               <li key={id} className="flex items-center justify-between gap-3 py-3">
                 <span className="min-w-0">
                   <AccountBadge id={id} label={accountName(id, t)} />
@@ -179,7 +176,7 @@ export default async function PortfolioPage() {
         <form action={saveSnapshotAction} className="mt-4 grid gap-3 sm:grid-cols-2">
           <Field label={t('portfolio.account')}>
             <select name="account" className="input">
-              {ACCOUNT_IDS.map((a) => (
+              {visible.map((a) => (
                 <option key={a} value={a}>
                   {accountName(a, t)}
                 </option>

@@ -1,14 +1,14 @@
 // Pure aggregation for the Reports page and its CSV export. No I/O, no sample data: everything comes from the transactions passed in.
 import { addMonths } from './dates';
 import { round2 } from './format';
-import { isSpending, type Category, type Transaction } from './types';
+import { isSpending, type AccountId, type Category, type Transaction } from './types';
 
 export interface ReportFilters {
   /** YYYY-MM. Ignored when `year` is set. */
   month?: string;
   /** YYYY */
   year?: string;
-  account?: string;
+  account?: AccountId;
   categoryId?: number;
 }
 

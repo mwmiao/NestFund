@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { setupFixedAction } from '@/app/actions';
+import { useAccounts } from '@/components/AccountsProvider';
 import { useI18n } from '@/i18n/client';
 import { accountName } from '@/lib/labels';
-import { ACCOUNT_IDS } from '@/lib/types';
 
 /** Editable list of fixed monthly costs; empty rows are ignored on save. */
 export function FixedExpensesForm({ categories, skipHref }: { categories: { id: number; label: string }[]; skipHref: string }) {
   const { t } = useI18n();
+  const accounts = useAccounts();
   const [rows, setRows] = useState([0, 1, 2]);
   return (
     <form action={setupFixedAction} className="space-y-3">
@@ -24,8 +25,8 @@ export function FixedExpensesForm({ categories, skipHref }: { categories: { id: 
               </option>
             ))}
           </select>
-          <select name="account" defaultValue="ctt" aria-label={t('tx.account')} className="input">
-            {ACCOUNT_IDS.map((a) => (
+          <select name="account" defaultValue={accounts.includes('ctt') ? 'ctt' : accounts[0]} aria-label={t('tx.account')} className="input">
+            {accounts.map((a) => (
               <option key={a} value={a}>
                 {accountName(a, t)}
               </option>

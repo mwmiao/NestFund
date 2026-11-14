@@ -62,7 +62,7 @@ export function saveHiddenAccounts(ids: AccountId[]) {
 }
 
 /** Every account that is not hidden, in the standard order. Pass `keep` to force some in (e.g. those an existing transaction uses). */
-export function visibleAccounts(keep: (AccountId | null | undefined)[] = []): AccountId[] {
+export function visibleAccounts(keep: readonly AccountId[] = []): AccountId[] {
   const hidden = new Set(getHiddenAccounts());
   return ACCOUNT_IDS.filter((a) => !hidden.has(a) || keep.includes(a));
 }
@@ -387,7 +387,7 @@ export interface TxFilters {
   month?: string;
   year?: string;
   categoryId?: number;
-  account?: string;
+  account?: AccountId;
   paymentMethod?: string;
   type?: string;
   q?: string;

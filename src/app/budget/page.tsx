@@ -13,8 +13,8 @@ import { currentMonth, formatDate, isActiveInMonth, isMonth, monthLabel } from '
 import { formatMoney, formatPercent, toInputDecimal } from '@/lib/format';
 import { AccountBadge } from '@/components/AccountBadge';
 import { accountName, categoryName } from '@/lib/labels';
-import { ensureMonthBudget, getMonthIncome, getProfile, lastDailyRates, listBudgetItems, listCategories, listTransactions } from '@/lib/repo';
-import { ACCOUNT_IDS, BUDGET_ITEM_KINDS, type BudgetItem, type Category } from '@/lib/types';
+import { ensureMonthBudget, getMonthIncome, getProfile, lastDailyRates, listBudgetItems, listCategories, listTransactions, visibleAccounts } from '@/lib/repo';
+import { BUDGET_ITEM_KINDS, type BudgetItem, type Category } from '@/lib/types';
 
 function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Category[]; t: TFunction }) {
   return (
@@ -48,7 +48,7 @@ function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Cate
       <Field label={t('budget.account')}>
         <select name="account" defaultValue={item?.account ?? ''} className="input">
           <option value="">—</option>
-          {ACCOUNT_IDS.map((a) => (
+          {visibleAccounts(item?.account ? [item.account] : []).map((a) => (
             <option key={a} value={a}>
               {accountName(a, t)}
             </option>

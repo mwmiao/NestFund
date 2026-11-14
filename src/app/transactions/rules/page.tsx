@@ -4,9 +4,9 @@ import { ConfirmButton } from '@/components/ConfirmButton';
 import { Badge, Card, EmptyState, Field, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { accountName, categoryName } from '@/lib/labels';
-import { listCategories } from '@/lib/repo';
+import { listCategories, visibleAccounts } from '@/lib/repo';
+import { ACCOUNT_IDS, type AccountId } from '@/lib/types';
 import { listRules } from '@/lib/rules-repo';
-import { ACCOUNT_IDS } from '@/lib/types';
 
 export default async function RulesPage({ searchParams }: { searchParams: Promise<{ applied?: string }> }) {
   const { applied } = await searchParams;
@@ -30,7 +30,7 @@ export default async function RulesPage({ searchParams }: { searchParams: Promis
   const accountSelect = (value?: string | null) => (
     <select name="account" defaultValue={value ?? ''} className="input">
       <option value="">{t('rules.anyAccount')}</option>
-      {ACCOUNT_IDS.map((a) => (
+      {visibleAccounts(ACCOUNT_IDS.filter((a) => a === value)).map((a) => (
         <option key={a} value={a}>
           {accountName(a, t)}
         </option>

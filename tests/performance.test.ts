@@ -10,6 +10,7 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nf-perf-'));
 process.env.DATA_DIR = dir;
 
 type Repo = typeof import('@/lib/repo');
+type TxFilters = import('@/lib/repo').TxFilters;
 type Db = typeof import('@/lib/db');
 let repo: Repo;
 let db: Db;
@@ -70,7 +71,7 @@ describe('balances read only what they need but give the same numbers', () => {
 });
 
 describe('paginated transactions', () => {
-  const filters = [{}, { month: '2025-03' }, { year: '2025' }, { account: 'trading212' }, { account: 'ctt', year: '2024' }, { q: 'Lidl' }, { type: 'transfer' }, { month: '2024-02' }];
+  const filters: TxFilters[] = [{}, { month: '2025-03' }, { year: '2025' }, { account: 'trading212' }, { account: 'ctt', year: '2024' }, { q: 'Lidl' }, { type: 'transfer' }, { month: '2024-02' }];
 
   it('pages add up to exactly the unpaginated list, in the same order', () => {
     for (const f of filters) {

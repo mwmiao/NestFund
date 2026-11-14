@@ -6,11 +6,10 @@ import { formatMoney } from '@/lib/format';
 import type { MonthBudget, MonthIncome } from '@/lib/types';
 
 /** Month-by-month income: salary, meal card, days worked (holidays apart), total and the real pay date. Averages are never shown as official values. */
-export function IncomeHistory({ budgets, incomes, months, t, locale, title }: { budgets: MonthBudget[]; incomes: MonthIncome[]; months?: string[]; t: TFunction; locale: string; title: string }) {
+export function IncomeHistory({ budgets, incomes, t, locale, title }: { budgets: MonthBudget[]; incomes: MonthIncome[]; t: TFunction; locale: string; title: string }) {
   const money = (v: number) => formatMoney(v, locale);
   const budgetBy = new Map(budgets.map((b) => [b.month, b]));
   const rows = incomes
-    .filter((i) => !months || months.includes(i.month))
     .map((i) => ({ i, b: budgetBy.get(i.month) }))
     .filter((r): r is { i: MonthIncome; b: MonthBudget } => r.b != null)
     .reverse();

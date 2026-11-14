@@ -11,7 +11,6 @@
     "goals": "Objetivos",
     "simulators": "Simuladores",
     "portfolio": "Carteira",
-    "history": "Histórico",
     "categories": "Categorias",
     "more": "Mais",
     "setup": "Configuração",
@@ -76,8 +75,6 @@
     "manualExpensesHint": "Pagas com dinheiro do salário (sem cartão de refeição)",
     "availableToAssign": "Rendimento por planear",
     "availableToAssignHint": "Rendimento − todas as rubricas planeadas",
-    "realAvailable": "Resta para gastar",
-    "realAvailableHint": "Rendimento − fixas − ETF − poupança − despesas variáveis registadas",
     "totalSavings": "Poupança do mês",
     "totalSavingsHint": "ETF {etf} + poupança {savings}",
     "savingsRate": "Taxa de poupança",
@@ -275,7 +272,6 @@
     "pageOf": "Página {page} de {pages}",
     "manage": "Gerir",
     "searchAll": "A pesquisar em todos os meses",
-    "net": "Saldo",
     "clearFilter": "Remover filtro"
   },
   "categories": {
@@ -501,7 +497,6 @@
     "dataHint": "Exporta, restaura ou importa os teus dados e escolhe que avisos queres ver.",
     "accountsTitle": "As tuas contas",
     "accountsHint": "Esconde as contas que não usas. As contas escondidas desaparecem do painel, dos formulários e dos filtros. Os dados mantêm-se.",
-    "accountHidden": "Escondida",
     "accountsKeepOne": "Pelo menos uma conta tem de ficar visível."
   },
   "t212": {
@@ -634,7 +629,6 @@
   "reports": {
     "title": "Relatórios",
     "subtitle": "Números reais a partir das tuas transações e saldos.",
-    "nav": "Relatórios",
     "month": "Mês",
     "year": "Ano",
     "allYears": "Escolher ano",
@@ -942,7 +936,6 @@
       "christmas": "Natal"
     },
     "historyTitle": "Rendimento mês a mês",
-    "compareTitle": "Rendimento e dias trabalhados por mês",
     "historyEmpty": "Ainda não há rendimento registado.",
     "historyNote": "Valores introduzidos por ti. Os meses «previstos» ainda não foram confirmados; não há médias automáticas.",
     "paidDateShort": "Pagamento efetivo"

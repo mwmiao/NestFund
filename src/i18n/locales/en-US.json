@@ -11,7 +11,6 @@
     "goals": "Goals",
     "simulators": "Simulators",
     "portfolio": "Portfolio",
-    "history": "History",
     "categories": "Categories",
     "more": "More",
     "setup": "Setup",
@@ -76,8 +75,6 @@
     "manualExpensesHint": "Paid with salary money (excluding meal card)",
     "availableToAssign": "Unplanned income",
     "availableToAssignHint": "Income − every planned budget line",
-    "realAvailable": "Left to spend",
-    "realAvailableHint": "Income − fixed − ETF − savings − logged variable spending",
     "totalSavings": "Saved this month",
     "totalSavingsHint": "ETF {etf} + savings {savings}",
     "savingsRate": "Savings rate",
@@ -275,7 +272,6 @@
     "pageOf": "Page {page} of {pages}",
     "manage": "Manage",
     "searchAll": "Searching all months",
-    "net": "Net",
     "clearFilter": "Remove filter"
   },
   "categories": {
@@ -501,7 +497,6 @@
     "dataHint": "Export, restore or import your data, and choose which notices you see.",
     "accountsTitle": "Your accounts",
     "accountsHint": "Hide accounts you do not use. Hidden accounts disappear from the dashboard, forms and filters. Their data is kept.",
-    "accountHidden": "Hidden",
     "accountsKeepOne": "At least one account must stay visible."
   },
   "t212": {
@@ -634,7 +629,6 @@
   "reports": {
     "title": "Reports",
     "subtitle": "Real numbers from your own transactions and balances.",
-    "nav": "Reports",
     "month": "Month",
     "year": "Year",
     "allYears": "Choose a year",
@@ -942,7 +936,6 @@
       "christmas": "Christmas Day"
     },
     "historyTitle": "Income month by month",
-    "compareTitle": "Income and days worked by month",
     "historyEmpty": "No income recorded yet.",
     "historyNote": "Amounts you entered. \"Expected\" months are not confirmed yet; there are no automatic averages.",
     "paidDateShort": "Actual payment"

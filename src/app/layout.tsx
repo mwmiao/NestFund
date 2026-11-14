@@ -5,9 +5,11 @@ import './globals.css';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { AccountsProvider } from '@/components/AccountsProvider';
 import { PwaClient } from '@/components/pwa/PwaClient';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n } from '@/i18n/server';
+import { visibleAccounts } from '@/lib/repo';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +42,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className={theme === 'dark' ? 'dark' : ''}>
       <body className="min-h-screen">
         <I18nProvider locale={locale}>
+          <AccountsProvider visible={visibleAccounts()}>
           <Sidebar theme={theme} />
           <Header theme={theme} />
           <div className="lg:pl-60">
@@ -48,6 +51,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
           <BottomNav />
           <PwaClient />
+          </AccountsProvider>
         </I18nProvider>
       </body>
     </html>

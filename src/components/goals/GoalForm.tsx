@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { deleteGoalAction, saveGoalAction } from '@/app/actions';
+import { useAccounts } from '@/components/AccountsProvider';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
-import { ACCOUNT_IDS, GOAL_KINDS, type AccountId, type Goal } from '@/lib/types';
+import { GOAL_KINDS, type AccountId, type Goal } from '@/lib/types';
 
 /**
  * Create/edit a goal. A goal linked to an account takes its progress from that account's
@@ -15,6 +16,7 @@ import { ACCOUNT_IDS, GOAL_KINDS, type AccountId, type Goal } from '@/lib/types'
  */
 export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?: number }) {
   const { t } = useI18n();
+  const accounts = useAccounts(goal?.account ? [goal.account] : []);
   const [account, setAccount] = useState<string>(goal?.account ?? '');
   const linked = account !== '';
 
@@ -43,7 +45,7 @@ export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?:
       <Field label={t('goals.progressSource')} className="sm:col-span-2">
         <select name="account" value={account} onChange={(e) => setAccount(e.target.value)} className="input">
           <option value="">{t('goals.manual')}</option>
-          {ACCOUNT_IDS.map((a) => (
+          {accounts.map((a) => (
             <option key={a} value={a}>
               {t('goals.fromAccountOption', { account: accountName(a, t) })}
             </option>

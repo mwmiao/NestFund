@@ -12,7 +12,6 @@ import { parseTxFilters } from '@/lib/tx-filters';
 import { ACCOUNTS, PAYMENT_METHODS, TX_TYPES, type AccountId } from '@/lib/types';
 
 const FILTER_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'meal_card', 'trading212', 'traderepublic', 'cash'];
-const TYPE_LABEL_KEYS = ['year', 'category', 'method', 'type', 'q'] as const;
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
@@ -43,15 +42,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     return qs ? `?${qs}` : '?month=';
   };
   const secondaryActive = !!(filters.year || filters.categoryId || filters.paymentMethod || filters.type);
-  const shownAccounts = visibleAccounts([filters.account as AccountId | undefined]).filter((a) => FILTER_ACCOUNTS.includes(a));
-  // Every active filter as a removable chip, so what is applied is always visible.
-  const activeChips: { key: (typeof TYPE_LABEL_KEYS)[number]; label: string }[] = [];
-  if (filters.q) activeChips.push({ key: 'q', label: `“${filters.q}”` });
-  if (filters.year) activeChips.push({ key: 'year', label: filters.year });
-  if (filters.categoryId) activeChips.push({ key: 'category', label: categoryName(categories.find((c) => c.id === filters.categoryId), t) });
-  if (filters.paymentMethod) activeChips.push({ key: 'method', label: t(`tx.methods.${filters.paymentMethod}`) });
-  if (filters.type) activeChips.push({ key: 'type', label: t(`tx.types.${filters.type}`) });
-  const chipOverride = { q: 'q', year: 'year', category: 'category', method: 'method', type: 'type' } as const;
+  const shownAccounts = visibleAccounts(filters.account ? [filters.account] : []);
+  // Every active filter as a removable chip, so what is applied is always visible: [query parameter, label].
+  const activeChips = [
+    ['q', filters.q && `“${filters.q}”`],
+    ['year', filters.year],
+    ['category', filters.categoryId && categoryName(categories.find((c) => c.id === filters.categoryId), t)],
+    ['method', filters.paymentMethod && t(`tx.methods.${filters.paymentMethod}`)],
+    ['type', filters.type && t(`tx.types.${filters.type}`)],
+  ].filter((c): c is [string, string] => !!c[1]);
+  // The search box has its own form without the month, so a search covers every month; the month picker narrows it.
+  const carried = { account: filters.account, year: filters.year, category: filters.categoryId, method: filters.paymentMethod, type: filters.type };
 
   return (
     <>
@@ -91,10 +92,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         {meal > 0 && <Stat label={t('tx.mealCardTotal')} value={money(meal)} />}
       </div>
 
-      <AutoSubmitForm method="get" searchAllMonths className="mb-4 space-y-3">
+      <form id="tx-search" method="get" hidden>
+        {Object.entries(carried).map(([name, value]) => value && <input key={name} type="hidden" name={name} value={value} />)}
+      </form>
+      <AutoSubmitForm method="get" className="mb-4 space-y-3">
         {filters.account && <input type="hidden" name="account" value={filters.account} />}
+        {filters.q && <input type="hidden" name="q" value={filters.q} />}
         <div className="grid grid-cols-[1fr_auto] gap-2">
-          <input type="search" name="q" defaultValue={filters.q ?? ''} placeholder={t('tx.search')} aria-label={t('tx.search')} className="input" />
+          <input form="tx-search" type="search" name="q" defaultValue={filters.q ?? ''} placeholder={t('tx.search')} aria-label={t('tx.search')} className="input" />
           <input type="month" name="month" defaultValue={filters.month ?? ''} className="input w-auto" aria-label={t('common.month')} />
         </div>
 
@@ -103,7 +108,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           <Link href={query({ account: undefined })} className={`chip shrink-0 ${!filters.account ? 'chip-active' : ''}`} aria-current={!filters.account ? 'true' : undefined}>
             {t('tx.anyAccount')}
           </Link>
-          {shownAccounts.map((a) => (
+          {FILTER_ACCOUNTS.filter((a) => shownAccounts.includes(a)).map((a) => (
             <Link key={a} href={query({ account: a })} className={`chip shrink-0 ${filters.account === a ? 'chip-active' : ''}`} aria-current={filters.account === a ? 'true' : undefined}>
               <span className="h-2 w-2 rounded-full" style={{ background: ACCOUNTS[a].color }} aria-hidden />
               {accountName(a, t)}
@@ -112,51 +117,51 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
 
         <div className="flex items-start gap-3">
-        <details open={secondaryActive} className="min-w-0 flex-1">
-          <summary className="link inline-flex cursor-pointer select-none py-2">{t('tx.filters')}</summary>
-          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
-            <input name="year" inputMode="numeric" defaultValue={filters.year ?? ''} placeholder={t('common.year')} className="input" aria-label={t('common.year')} />
-            <select name="category" defaultValue={filters.categoryId ?? ''} className="input" aria-label={t('tx.category')}>
-              <option value="">{t('tx.anyCategory')}</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {categoryName(c, t)}
-                </option>
-              ))}
-            </select>
-            <select name="method" defaultValue={filters.paymentMethod ?? ''} className="input" aria-label={t('tx.paymentMethod')}>
-              <option value="">{t('tx.anyMethod')}</option>
-              {PAYMENT_METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {t(`tx.methods.${m}`)}
-                </option>
-              ))}
-            </select>
-            <select name="type" defaultValue={filters.type ?? ''} className="input" aria-label={t('tx.type')}>
-              <option value="">{t('tx.anyType')}</option>
-              {TX_TYPES.map((m) => (
-                <option key={m} value={m}>
-                  {t(`tx.types.${m}`)}
-                </option>
-              ))}
-            </select>
+          <details open={secondaryActive} className="min-w-0 flex-1">
+            <summary className="link inline-flex cursor-pointer select-none py-2">{t('tx.filters')}</summary>
+            <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+              <input name="year" inputMode="numeric" defaultValue={filters.year ?? ''} placeholder={t('common.year')} className="input" aria-label={t('common.year')} />
+              <select name="category" defaultValue={filters.categoryId ?? ''} className="input" aria-label={t('tx.category')}>
+                <option value="">{t('tx.anyCategory')}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {categoryName(c, t)}
+                  </option>
+                ))}
+              </select>
+              <select name="method" defaultValue={filters.paymentMethod ?? ''} className="input" aria-label={t('tx.paymentMethod')}>
+                <option value="">{t('tx.anyMethod')}</option>
+                {PAYMENT_METHODS.map((m) => (
+                  <option key={m} value={m}>
+                    {t(`tx.methods.${m}`)}
+                  </option>
+                ))}
+              </select>
+              <select name="type" defaultValue={filters.type ?? ''} className="input" aria-label={t('tx.type')}>
+                <option value="">{t('tx.anyType')}</option>
+                {TX_TYPES.map((m) => (
+                  <option key={m} value={m}>
+                    {t(`tx.types.${m}`)}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </details>
+          <div className="flex shrink-0 gap-2">
+            <Link href="/transactions?month=" className="btn-ghost">
+              {t('common.clear')}
+            </Link>
+            <button className="btn-secondary">{t('common.apply')}</button>
           </div>
-        </details>
-        <div className="flex shrink-0 gap-2">
-          <Link href="/transactions?month=" className="btn-ghost">
-            {t('common.clear')}
-          </Link>
-          <button className="btn-secondary">{t('common.apply')}</button>
-        </div>
         </div>
       </AutoSubmitForm>
 
       {(activeChips.length > 0 || (filters.q && !filters.month)) && (
         <div className="-mt-1 mb-4 flex flex-wrap items-center gap-1.5">
           {filters.q && !filters.month && <span className="muted mr-1 text-xs">{t('tx.searchAll')}</span>}
-          {activeChips.map((c) => (
-            <Link key={c.key} href={query({ [chipOverride[c.key]]: undefined })} className="chip chip-active" aria-label={`${t('tx.clearFilter')}: ${c.label}`}>
-              {c.label} <span aria-hidden>✕</span>
+          {activeChips.map(([param, label]) => (
+            <Link key={param} href={query({ [param]: undefined })} className="chip chip-active" aria-label={`${t('tx.clearFilter')}: ${label}`}>
+              {label} <span aria-hidden>✕</span>
             </Link>
           ))}
         </div>

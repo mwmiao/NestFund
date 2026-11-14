@@ -3,11 +3,12 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { saveTransactionAction } from '@/app/actions';
+import { useAccounts } from '@/components/AccountsProvider';
 import { Field, Spinner } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
-import { ACCOUNTS, ACCOUNT_IDS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
+import { ACCOUNTS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
 
 type Kind = 'spending' | 'income' | 'transfer';
 const KINDS: Kind[] = ['spending', 'income', 'transfer'];
@@ -84,7 +85,6 @@ export function TransactionForm({
   merchants = [],
   subcategories = [],
   defaultAccount = 'ctt',
-  accounts = ACCOUNT_IDS,
   initialType,
   topCategoryIds = [],
   suggest,
@@ -97,8 +97,6 @@ export function TransactionForm({
   merchants?: string[];
   subcategories?: string[];
   defaultAccount?: AccountId;
-  /** Accounts offered as chips (the ones not hidden in Settings). */
-  accounts?: readonly AccountId[];
   initialType?: string;
   topCategoryIds?: number[];
   /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
@@ -106,6 +104,7 @@ export function TransactionForm({
   error?: string | null;
 }) {
   const { t } = useI18n();
+  const accounts = useAccounts([transaction?.account, transaction?.toAccount].filter((a): a is AccountId => !!a));
   const initial = transaction?.type ?? (TX_TYPES.includes(initialType as never) ? (initialType as TxType) : 'purchase');
   // Purchase / expense / payment behave the same; the main toggle is spending · income · transfer.
   const [kind, setKind] = useState<Kind>(kindOf(initial));

@@ -29,7 +29,7 @@ export default async function EditTransactionPage({ params, searchParams }: { pa
         }
       />
       <Card>
-        <TransactionForm {...transactionFormOptions(t, [tx.account, tx.toAccount])} transaction={tx} today={todayISO()} back={back} error={error} />
+        <TransactionForm {...transactionFormOptions(t)} transaction={tx} today={todayISO()} back={back} error={error} />
       </Card>
     </div>
   );

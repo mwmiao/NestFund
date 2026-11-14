@@ -237,14 +237,14 @@ describe('what is never stored as a page', () => {
     const w = makeWorld();
     routes = (u) => (u.pathname === '/offline.html' ? html('OFFLINE PAGE') : html('old page'));
     await w.handlers.install({ waitUntil: (p: Promise<unknown>) => p });
-    const warm = w.go(nav('/history'));
+    const warm = w.go(nav('/reports/over-time'));
     await vi.runAllTimersAsync();
     await warm;
     online = false;
     vi.setSystemTime(new Date('2026-11-05T10:00:00Z'));
-    expect(await (await w.go(nav('/history')))!.text()).toBe('old page');
+    expect(await (await w.go(nav('/reports/over-time')))!.text()).toBe('old page');
     vi.setSystemTime(new Date('2026-11-09T10:00:00Z'));
-    expect(await (await w.go(nav('/history')))!.text()).toBe('OFFLINE PAGE');
+    expect(await (await w.go(nav('/reports/over-time')))!.text()).toBe('OFFLINE PAGE');
     expect(w.pagesCache()!.size).toBe(0);
   });
 

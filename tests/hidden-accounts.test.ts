@@ -31,7 +31,7 @@ describe('hidden accounts', () => {
   it('keeps a hidden account visible when an existing record still uses it', () => {
     repo.saveHiddenAccounts(['revolut']);
     expect(repo.visibleAccounts(['revolut'])).toContain('revolut');
-    expect(repo.visibleAccounts([null, undefined])).not.toContain('revolut');
+    expect(repo.visibleAccounts([])).not.toContain('revolut');
   });
 
   it('recovers from a corrupt stored value', async () => {

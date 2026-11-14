@@ -4,12 +4,13 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { saveSnapshotAction, saveTransactionAction } from '@/app/actions';
+import { useAccounts } from '@/components/AccountsProvider';
 import { Icon } from '@/components/layout/Icon';
 import { Spinner } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
-import { ACCOUNTS, ACCOUNT_IDS, type AccountId } from '@/lib/types';
+import { ACCOUNTS, type AccountId } from '@/lib/types';
 
 export interface AccountRow {
   id: AccountId;
@@ -43,8 +44,9 @@ function Save({ label }: { label: string }) {
 }
 
 /** Dashboard account list: inline "update balance" per account and a quick transfer form. */
-export function AccountsPanel({ rows, recentTransfers, today, accounts = ACCOUNT_IDS, wide = false }: { rows: AccountRow[]; recentTransfers: RecentTransfer[]; today: string; accounts?: readonly AccountId[]; wide?: boolean }) {
+export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { rows: AccountRow[]; recentTransfers: RecentTransfer[]; today: string; wide?: boolean }) {
   const { t } = useI18n();
+  const accounts = useAccounts();
   const [editing, setEditing] = useState<AccountId | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
   const [from, setFrom] = useState<AccountId>(accounts[0] ?? 'ctt');

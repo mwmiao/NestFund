@@ -1,5 +1,7 @@
 import 'server-only';
+import type { TFunction } from '@/i18n/config';
 import type { AccountBalance } from './calc';
+import { formatDate, formatRelative } from './dates';
 import type { T212Status } from './t212';
 
 export interface EtfSummary {
@@ -35,4 +37,10 @@ export function etfSummary(balance: AccountBalance, t212: T212Status): EtfSummar
     asOf: balance.since,
     currency: 'EUR',
   };
+}
+
+/** One line saying where a Trading 212 figure comes from: live from the API, or typed in by the user. */
+export function etfStatusText(etf: EtfSummary, t: TFunction, locale: string): string {
+  if (!etf.asOf) return t('accounts.noCheckIn');
+  return etf.source === 'api' ? t('t212.statusLive', { when: formatRelative(etf.asOf, locale) }) : t('portfolio.statusManual', { date: formatDate(etf.asOf) });
 }

@@ -13,7 +13,6 @@ const I = {
   goal: 'M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10zm0-4a1 1 0 100-2 1 1 0 000 2z',
   portfolio: 'M3 17l6-6 4 4 8-8M15 7h6v6',
   calc: 'M6 3h12a1 1 0 011 1v16a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1zm2 4h8M8 11h2m3 0h3M8 15h2m3 0h3M8 19h2m3 0h3',
-  history: 'M12 8v4l3 2M3.05 11a9 9 0 112.9 6.6M3 4v5h5',
   reports: 'M5 3h10l4 4v14H5V3zm9 0v5h5M8 13h8M8 17h5',
   rules: 'M3 5h18l-7 8v6l-4 2v-8L3 5z',
   tags: 'M3 12V4a1 1 0 011-1h8l9 9-9 9-9-9zm5-4.5h.01',
@@ -58,6 +57,5 @@ export function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   // "/transactions" must not light up on "/transactions/categories".
   if (href === '/transactions') return pathname === '/transactions' || /^\/transactions\/(new|\d+)/.test(pathname);
-  if (href === '/reports') return pathname.startsWith('/reports') || pathname.startsWith('/history');
   return pathname.startsWith(href);
 }

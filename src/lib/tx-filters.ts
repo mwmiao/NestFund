@@ -1,5 +1,6 @@
 import { isMonth } from './dates';
 import type { TxFilters } from './repo';
+import { asAccountId } from './types';
 
 /** Shared by the transactions page and the CSV export so both apply identical filters. */
 export function parseTxFilters(sp: Record<string, string | string[] | undefined>): TxFilters {
@@ -14,7 +15,7 @@ export function parseTxFilters(sp: Record<string, string | string[] | undefined>
     month: isMonth(month) ? month : undefined,
     year: year && /^\d{4}$/.test(year) ? year : undefined,
     categoryId: Number.isInteger(cat) && cat > 0 ? cat : undefined,
-    account: get('account'),
+    account: asAccountId(get('account')),
     paymentMethod: get('method'),
     type: get('type'),
     q: get('q'),

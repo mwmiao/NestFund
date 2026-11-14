@@ -1,16 +1,17 @@
 import Link from 'next/link';
-import { dismissOnboardingAction } from '@/app/actions';
-import { Sparkline } from '@/components/charts/Sparkline';
 import { AccountsPanel, type AccountRow, type RecentTransfer } from '@/components/dashboard/AccountsPanel';
+import { GoalsCard } from '@/components/dashboard/GoalsCard';
+import { InvestmentsCard } from '@/components/dashboard/InvestmentsCard';
+import { MonthBudgetCard } from '@/components/dashboard/MonthBudgetCard';
+import { SetupPanel } from '@/components/dashboard/SetupPanel';
 import { IncomeCard } from '@/components/income/IncomeCard';
 import { MonthPicker } from '@/components/MonthPicker';
 import { TransactionList } from '@/components/transactions/TransactionList';
-import { Alert, Badge, Card, Dot, EmptyState, Hint, ProgressBar } from '@/components/ui';
+import { Alert, Card, Hint } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
-import { computeMonthSummary, goalProgress } from '@/lib/calc';
-import { currentMonth, formatDate, formatRelative, isMonth, monthLabel, todayISO } from '@/lib/dates';
+import { computeMonthSummary } from '@/lib/calc';
+import { currentMonth, formatDate, isMonth, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
-import { categoryName } from '@/lib/labels';
 import {
   ONBOARDING_STEPS,
   accountBalances,
@@ -28,7 +29,6 @@ import {
   visibleAccounts,
 } from '@/lib/repo';
 import { etfSummary } from '@/lib/portfolio';
-import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
 import type { AccountId } from '@/lib/types';
 
@@ -49,13 +49,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const categories = listCategories();
   const txs = listTransactions({ month });
   const s = computeMonthSummary(budget, txs, categories);
-  const catById = new Map(categories.map((c) => [c.id, c]));
   const balances = accountBalances();
   const goals = listGoals(balanceMap(balances));
   const onboarding = getOnboarding();
-  const setupLeft = ONBOARDING_STEPS.length - onboarding.done.length;
   // While setup is unfinished the page shows one "start here" panel instead of a wall of empty cards.
-  const setupMode = setupLeft > 0 && !onboarding.dismissed;
+  const setupMode = onboarding.done.length < ONBOARDING_STEPS.length && !onboarding.dismissed;
   const visible = visibleAccounts();
   const t212 = getT212Status();
   const t212Trend = listT212History(30).map((h) => h.totalValue);
@@ -63,10 +61,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const netWorth = NET_WORTH_ACCOUNTS.reduce((sum, a) => sum + balances[a].balance, 0);
   const spent = s.manualSpent + s.mealCardSpent;
   const saved = s.etfTransferred + s.savingsTransferred;
-  const spendable = Math.max(s.income - s.fixed - s.etf - s.savings, 0);
   // No salary is ever assumed: until the month's income is entered by hand, the budget shows "not defined".
   const hasIncome = monthIncome != null || s.income > 0;
   const etf = etfSummary(balances.trading212, t212);
+  // In setup mode a card is shown only once it has something to show.
+  const show = {
+    incomeCard: !setupMode || monthIncome != null,
+    goals: !setupMode || goals.length > 0,
+    budget: !setupMode || hasIncome,
+    investments: !setupMode || etf.source !== 'none',
+  };
 
   const accountRows: AccountRow[] = ACCOUNT_ROWS.filter((id) => visible.includes(id)).map((id) => {
     const b = balances[id];
@@ -84,7 +88,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const recentTransfers: RecentTransfer[] = listTransactions({ type: 'transfer', limit: 4 })
     .filter((x) => x.toAccount)
     .map((x) => ({ id: x.id, from: x.account, to: x.toAccount as AccountId, amountText: money(x.amount), dateText: formatDate(x.date) }));
-
 
   return (
     <>
@@ -108,41 +111,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {hasIncome && s.negativeReal && <Alert tone="warning">{t('dashboard.alertReal', { amount: money(Math.abs(s.realAvailable)) })}</Alert>}
       </div>
 
-      {setupMode && (
-        <section className="card mb-4 border-brand-500/30 bg-brand-500/5">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h2 className="section-title">{t('setup.cardTitle')}</h2>
-              <p className="muted mt-0.5 text-sm">
-                {t('setup.cardHint', { n: setupLeft })} · {t('setup.progress', { done: onboarding.done.length, total: ONBOARDING_STEPS.length })}
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <form action={dismissOnboardingAction}>
-                <button className="btn-ghost">{t('setup.notNow')}</button>
-              </form>
-              <Link href="/setup" className="btn-primary">
-                {onboarding.done.length ? t('setup.resume') : t('setup.start')}
-              </Link>
-            </div>
-          </div>
-          <ol className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {ONBOARDING_STEPS.map((step, i) => {
-              const done = onboarding.done.includes(step);
-              return (
-                <li key={step}>
-                  <Link href={`/setup?step=${step}`} className="flex min-h-11 items-center gap-2 rounded-control border border-line bg-surface px-3 py-2 text-sm transition hover:border-brand-500/50">
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-600 text-white' : 'bg-raised'}`} aria-hidden>
-                      {done ? '✓' : i + 1}
-                    </span>
-                    <span className="truncate font-medium">{t(`setup.steps.${step}`)}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      )}
+      {setupMode && <SetupPanel onboarding={onboarding} t={t} />}
 
       {/* 1 — the four answers: how much I have, spent, saved and can still spend */}
       <section className="card mb-4 grid gap-6 lg:grid-cols-[1.3fr_2fr] lg:items-end">
@@ -163,7 +132,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {s.savingsTotal > 0 && <dd className="muted mt-0.5 text-[11px]">{t('dashboard.ofPlanned', { amount: money(s.savingsTotal) })}</dd>}
           </div>
           <div>
-            <dt className="eyebrow">{t('dashboard.canSpend')}</dt>
+            <dt className="eyebrow">
+              {t('dashboard.canSpend')}
+              <Hint text={t('dashboard.canSpendHint')} />
+            </dt>
             <dd className={`mt-1 text-lg font-semibold tabular-nums sm:text-xl ${hasIncome && s.realAvailable < 0 ? 'text-negative' : ''}`}>{hasIncome ? money(s.realAvailable) : '—'}</dd>
             {!hasIncome && !setupMode && (
               <dd className="mt-0.5 text-[11px]">
@@ -176,124 +148,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </dl>
       </section>
 
-      {(!setupMode || monthIncome != null) && <IncomeCard month={month} budget={budget} income={monthIncome} incomes={incomes} profile={profile} salaryTotal={s.salary} t={t} locale={locale} />}
+      {show.incomeCard && <IncomeCard month={month} budget={budget} income={monthIncome} incomes={incomes} profile={profile} salaryTotal={s.salary} t={t} locale={locale} />}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {/* 2 — balances per account, with inline balance updates and quick transfers */}
-        <AccountsPanel rows={accountRows} recentTransfers={recentTransfers} today={todayISO()} accounts={visible} wide={setupMode} />
-
-        {/* 3 — goals */}
-        {!(setupMode && goals.length === 0) && (
-        <Card title={t('dashboard.goals')} className="lg:col-span-2" actions={goals.length > 0 && <Link href="/goals" className="link">{t('dashboard.seeAll')}</Link>}>
-          {goals.length ? (
-            <ul className="space-y-5">
-              {goals.slice(0, 4).map((g) => {
-                const p = goalProgress(g, currentMonth());
-                return (
-                  <li key={g.id}>
-                    <div className="mb-1.5 flex items-baseline justify-between gap-2">
-                      <span className="truncate text-sm font-medium">{g.name}</span>
-                      <span className="text-xs tabular-nums text-subtle">{formatPercent(p.pct, locale, 0)}</span>
-                    </div>
-                    <ProgressBar value={p.pct} color={g.color} label={g.name} />
-                    <div className="muted mt-1.5 flex justify-between text-xs tabular-nums">
-                      <span>
-                        {money(g.current)} / {money(g.target)}
-                      </span>
-                      {p.remaining > 0 && p.projectedMonth && <span>{monthLabel(p.projectedMonth, locale, 'short')}</span>}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            <EmptyState compact title={t('goals.emptyTitle')} hint={t('goals.emptyHint')} action={{ href: '/setup?step=goals', label: t('goals.emptyAction') }} />
-          )}
-        </Card>
-        )}
-
-        {/* 4 — this month's budget */}
-        {!(setupMode && !hasIncome) && (
-        <Card title={t('dashboard.thisMonth')} className="lg:col-span-3" actions={<Link href={`/budget?m=${month}`} className="link">{t('nav.budget')}</Link>}>
-          {hasIncome ? (
-            <>
-              <div className="mb-2 flex items-baseline justify-between gap-2 text-sm">
-                <span className="muted">{t('dashboard.spentOf', { spent: money(s.variableSpent), total: money(spendable) })}</span>
-                <span className="font-medium tabular-nums">{spendable > 0 ? formatPercent(s.variableSpent / spendable, locale, 0) : '—'}</span>
-              </div>
-              <ProgressBar value={spendable > 0 ? s.variableSpent / spendable : 0} tone="auto" label={t('dashboard.thisMonth')} />
-              {s.byCategory.length > 0 ? (
-                <ul className="mt-5 space-y-3">
-                  {s.byCategory.slice(0, 5).map((r) => {
-                    const cat = r.categoryId != null ? catById.get(r.categoryId) : undefined;
-                    const limit = cat?.monthlyBudget ?? 0;
-                    return (
-                      <li key={String(r.categoryId)}>
-                        <div className="mb-1 flex items-center gap-2 text-sm">
-                          <Dot color={cat?.color ?? '#71717a'} />
-                          <span className="flex-1 truncate">{categoryName(cat, t)}</span>
-                          <span className="tabular-nums">
-                            {money(r.total)}
-                            {limit > 0 && <span className="muted"> / {money(limit)}</span>}
-                          </span>
-                        </div>
-                        {limit > 0 && <ProgressBar size="sm" value={r.total / limit} tone="auto" label={categoryName(cat, t)} />}
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="muted mt-5 text-sm">{t('dashboard.noSpendingYet')}</p>
-              )}
-            </>
-          ) : (
-            <EmptyState compact title={t('income.notDefined')} hint={t('income.notDefinedHint')} action={{ href: `/budget?m=${month}#income`, label: t('income.define') }} />
-          )}
-        </Card>
-        )}
-
-        {/* 5 — Trading 212 at a glance */}
-        {!(setupMode && etf.source === 'none') && (
-        <Card
-          title={<>{t('dashboard.investments')}<Hint text={t('glossary.etf')} /></>}
-          className="lg:col-span-2"
-          actions={
-            t212.connected ? (
-              <Badge tone={t212.lastError ? 'negative' : t212.stale ? 'caution' : 'positive'}>
-                {t212.lastError ? t('t212.status.error') : t212.stale ? t('t212.stale') : t('t212.status.connected')}
-              </Badge>
-            ) : undefined
-          }
-        >
-          {t212.connected && (
-            <T212LiveStatus lastSyncAt={t212.lastSyncAt} lastChangedAt={t212.lastChangedAt} retryAt={t212.retryAt} needsAction={t212.needsAction} rateLimit={t212.rateLimit} />
-          )}
-          {etf.source !== 'none' ? (
-            <>
-              <div className="eyebrow">Trading 212</div>
-              <div className="mt-1 text-2xl font-semibold tabular-nums tracking-tight">{money(etf.value)}</div>
-              <div className={`mt-0.5 text-sm tabular-nums ${etf.gain >= 0 ? 'text-positive' : 'text-negative'}`}>
-                {formatMoney(etf.gain, locale, { sign: true })}
-                {etf.invested > 0 && ` (${formatPercent(etf.growthPct, locale, 2)})`}
-              </div>
-              <div className="muted mt-1 text-xs">
-                {etf.source === 'api' && etf.asOf ? t('t212.statusLive', { when: formatRelative(etf.asOf, locale) }) : etf.asOf ? t('portfolio.statusManual', { date: formatDate(etf.asOf) }) : t('t212.manual')}
-              </div>
-              <div className="mt-3 text-brand-500">
-                <Sparkline values={t212Trend} />
-              </div>
-              <dl className="mt-3 border-t border-line pt-3 text-sm">
-                <div>
-                  <dt className="eyebrow">{t('t212.investedCapital')}</dt>
-                  <dd className="tabular-nums">{money(etf.invested)}</dd>
-                </div>
-              </dl>
-            </>
-          ) : (
-            <EmptyState compact title={t('dashboard.noInvestments')} hint={t('dashboard.noInvestmentsHint')} action={{ href: '/settings#trading212', label: t('t212.connect') }} />
-          )}
-        </Card>
-        )}
+        <AccountsPanel rows={accountRows} recentTransfers={recentTransfers} today={todayISO()} wide={setupMode} />
+        {/* 3 — goals, 4 — this month's budget, 5 — Trading 212 at a glance */}
+        {show.goals && <GoalsCard goals={goals} t={t} locale={locale} />}
+        {show.budget && <MonthBudgetCard month={month} summary={s} hasIncome={hasIncome} categories={categories} t={t} locale={locale} />}
+        {show.investments && <InvestmentsCard etf={etf} t212={t212} trend={t212Trend} t={t} locale={locale} />}
       </div>
 
       {/* 6 — recent activity */}

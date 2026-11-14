@@ -52,7 +52,10 @@ export default async function GoalsPage() {
                 {reached ? (
                   <Badge tone="positive">{t('goals.reached')}</Badge>
                 ) : g.targetDate && p.onTrack != null ? (
-                  <span className="flex items-center"><Badge tone={p.onTrack ? 'positive' : 'caution'}>{p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</Badge><Hint text={t('glossary.onTrack')} /></span>
+                  <span className="flex items-center">
+                  <Badge tone={p.onTrack ? 'positive' : 'caution'}>{p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</Badge>
+                  <Hint text={t('glossary.onTrack')} />
+                </span>
                 ) : null}
               </div>
 

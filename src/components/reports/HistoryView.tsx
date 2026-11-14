@@ -140,7 +140,7 @@ export async function HistoryView() {
                   <th className="pb-2 text-right font-medium">{t('history.spent')}</th>
                   <th className="pb-2 text-right font-medium">{t('history.saved')}</th>
                   <th className="pb-2 text-right font-medium">{t('history.rate')}</th>
-                  <th className="pb-2 text-right font-medium">{t('dashboard.realAvailable')}</th>
+                  <th className="pb-2 text-right font-medium">{t('dashboard.canSpend')}</th>
                 </tr>
               </thead>
               <tbody>

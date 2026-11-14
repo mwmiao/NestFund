@@ -6,7 +6,7 @@
  *
  * What it does, and deliberately does not do:
  *  - Static files (/_next/static, icons, manifest): cache-first. Their names carry a content hash, so they can never be stale.
- *  - A short allow-list of overview pages (dashboard, transactions, budget, goals, reports, history, simulators):
+ *  - A short allow-list of overview pages (dashboard, transactions, budget, goals, reports, reports/over-time, simulators):
  *    network-first; the last good copy is kept (max 24 pages, 7 days) and shown only when the network fails.
  *  - Everything else is NEVER touched or stored: /api/* (exports, backups, notifications), server actions (POST),
  *    React Server Component requests, settings, setup, backup/import, notifications, the portfolio page (Trading 212 data),
@@ -18,7 +18,7 @@ export function serviceWorkerMain(self: any, VERSION: string) {
   const STATIC_CACHE = 'nestfund-static-' + VERSION;
   const PAGE_CACHE = 'nestfund-pages-' + VERSION;
   const PRECACHE = ['/offline.html', '/icon.svg', '/apple-touch-icon.png', '/icons/icon-192.png', '/icons/icon-512.png', '/manifest.webmanifest'];
-  const PAGE_ALLOW = [/^\/$/, /^\/transactions\/?$/, /^\/transactions\/new\/?$/, /^\/budget\/?$/, /^\/goals\/?$/, /^\/reports\/?$/, /^\/history\/?$/, /^\/simulators\/?$/];
+  const PAGE_ALLOW = [/^\/$/, /^\/transactions\/?$/, /^\/transactions\/new\/?$/, /^\/budget\/?$/, /^\/goals\/?$/, /^\/reports\/?$/, /^\/reports\/over-time\/?$/, /^\/simulators\/?$/];
   const MAX_PAGES = 24;
   const PAGE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   const NETWORK_TIMEOUT_MS = 4000;

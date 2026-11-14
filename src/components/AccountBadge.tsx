@@ -11,7 +11,7 @@ export function AccountBadge({ id, label, size = 'sm' }: { id: AccountId; label:
   const color = ACCOUNTS[id].color;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full font-medium ${size === 'xs' ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-0.5 text-xs'}`}
+      className={`inline-flex items-center gap-1 rounded-full font-medium ${size === 'xs' ? 'px-1.5 py-0.5 text-xs' : 'px-2 py-0.5 text-xs'}`}
       style={{ background: `${color}1f`, color }}
     >
       {id === 'meal_card' ? (

@@ -245,7 +245,7 @@ export default async function PortfolioPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <AccountBadge id={s.account} label={accountName(s.account, t)} size="xs" />
-                    {s.notes === 'auto:trading212' && <span className="muted text-[11px]">API</span>}
+                    {s.notes === 'auto:trading212' && <span className="muted text-xs">API</span>}
                   </div>
                   <div className="muted mt-0.5 text-xs">{formatDate(s.date)}</div>
                 </div>

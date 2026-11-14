@@ -158,7 +158,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
               <div>
                 <dt className="eyebrow">{t('dashboard.availableToAssign')}</dt>
                 <dd className={`mt-1 text-lg font-semibold tabular-nums sm:text-xl ${s.plannedAvailable < 0 ? 'text-negative' : 'text-positive'}`}>{money(s.plannedAvailable)}</dd>
-                <dd className="muted mt-0.5 text-[11px]">{t('dashboard.availableToAssignHint')}</dd>
+                <dd className="muted mt-0.5 text-xs">{t('dashboard.availableToAssignHint')}</dd>
               </div>
             </dl>
             <div className="mt-5">

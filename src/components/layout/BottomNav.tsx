@@ -90,7 +90,7 @@ export function BottomNav() {
         <Link
           href="/transactions/new"
           aria-label={t('common.quickAdd')}
-          className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-pop transition active:scale-95 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:hidden"
+          className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-700 text-white shadow-pop transition active:scale-95 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] lg:hidden"
         >
           <Icon d={NAV_ICONS.plus} className="h-7 w-7" />
         </Link>

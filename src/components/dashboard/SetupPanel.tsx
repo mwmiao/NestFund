@@ -31,7 +31,7 @@ export function SetupPanel({ onboarding, t }: { onboarding: OnboardingState; t: 
           return (
             <li key={step}>
               <Link href={`/setup?step=${step}`} className="flex min-h-11 items-center gap-2 rounded-control border border-line bg-surface px-3 py-2 text-sm transition hover:border-brand-500/50">
-                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-600 text-white' : 'bg-raised'}`} aria-hidden>
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${done ? 'bg-brand-700 text-white' : 'bg-raised'}`} aria-hidden>
                   {done ? '✓' : i + 1}
                 </span>
                 <span className="truncate font-medium">{t(`setup.steps.${step}`)}</span>

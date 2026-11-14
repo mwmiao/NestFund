@@ -32,23 +32,32 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: '/portfolio', key: 'nav.portfolio', icon: I.portfolio },
 ];
 
-/** Occasional tools. */
-export const SECONDARY_NAV: NavItem[] = [
-  { href: '/simulators', key: 'nav.simulators', icon: I.calc },
+/** Analysis: reading the numbers. */
+export const ANALYSE_NAV: NavItem[] = [
   { href: '/reports', key: 'nav.reports', icon: I.reports },
-  { href: '/history', key: 'nav.history', icon: I.history },
+  { href: '/simulators', key: 'nav.simulators', icon: I.calc },
+];
+
+/** Setup: things you configure once and rarely revisit. */
+export const SETUP_NAV: NavItem[] = [
   { href: '/transactions/categories', key: 'nav.categories', icon: I.tags },
   { href: '/transactions/rules', key: 'nav.rules', icon: I.rules },
   { href: '/settings', key: 'nav.settings', icon: I.settings },
 ];
 
+/** Groups shown below the everyday destinations (sidebar sections and "More" sheet sections). */
+export const NAV_GROUPS: { labelKey: string; items: NavItem[] }[] = [
+  { labelKey: 'nav.groupAnalyse', items: ANALYSE_NAV },
+  { labelKey: 'nav.groupSetup', items: SETUP_NAV },
+];
+
 /** Mobile bottom bar: the five everyday destinations; the rest lives in the "More" sheet (header menu). */
 export const MOBILE_TABS: NavItem[] = PRIMARY_NAV;
-export const MOBILE_MORE: NavItem[] = SECONDARY_NAV;
 
 export function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   // "/transactions" must not light up on "/transactions/categories".
   if (href === '/transactions') return pathname === '/transactions' || /^\/transactions\/(new|\d+)/.test(pathname);
+  if (href === '/reports') return pathname.startsWith('/reports') || pathname.startsWith('/history');
   return pathname.startsWith(href);
 }

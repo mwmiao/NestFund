@@ -1,16 +1,18 @@
 import Link from 'next/link';
+import { AutoSubmitForm } from '@/components/AutoSubmitForm';
 import { ImportCsvForm } from '@/components/transactions/ImportCsvForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
-import { Alert, Card, PageHeader } from '@/components/ui';
+import { Alert, Card, PageHeader, Stat } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
-import { listCategories, listTransactionsPage, materializeRecurring, transactionTotals } from '@/lib/repo';
+import { listCategories, listTransactionsPage, materializeRecurring, transactionTotals, visibleAccounts } from '@/lib/repo';
 import { parseTxFilters } from '@/lib/tx-filters';
 import { ACCOUNTS, PAYMENT_METHODS, TX_TYPES, type AccountId } from '@/lib/types';
 
 const FILTER_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'meal_card', 'trading212', 'traderepublic', 'cash'];
+const TYPE_LABEL_KEYS = ['year', 'category', 'method', 'type', 'q'] as const;
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
@@ -41,6 +43,15 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     return qs ? `?${qs}` : '?month=';
   };
   const secondaryActive = !!(filters.year || filters.categoryId || filters.paymentMethod || filters.type);
+  const shownAccounts = visibleAccounts([filters.account as AccountId | undefined]).filter((a) => FILTER_ACCOUNTS.includes(a));
+  // Every active filter as a removable chip, so what is applied is always visible.
+  const activeChips: { key: (typeof TYPE_LABEL_KEYS)[number]; label: string }[] = [];
+  if (filters.q) activeChips.push({ key: 'q', label: `“${filters.q}”` });
+  if (filters.year) activeChips.push({ key: 'year', label: filters.year });
+  if (filters.categoryId) activeChips.push({ key: 'category', label: categoryName(categories.find((c) => c.id === filters.categoryId), t) });
+  if (filters.paymentMethod) activeChips.push({ key: 'method', label: t(`tx.methods.${filters.paymentMethod}`) });
+  if (filters.type) activeChips.push({ key: 'type', label: t(`tx.types.${filters.type}`) });
+  const chipOverride = { q: 'q', year: 'year', category: 'category', method: 'method', type: 'type' } as const;
 
   return (
     <>
@@ -49,12 +60,17 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         subtitle={filters.month ? `${monthLabel(filters.month, locale)} · ${t('tx.count', { n: total })}` : t('tx.count', { n: total })}
         actions={
           <>
-            <Link href="/transactions/categories" className="btn-ghost">
-              {t('tx.manageCategories')}
-            </Link>
-            <Link href="/transactions/rules" className="btn-ghost">
-              {t('rules.manage')}
-            </Link>
+            <details className="relative">
+              <summary className="btn-ghost cursor-pointer list-none select-none">{t('tx.manage')} ▾</summary>
+              <div className="absolute right-0 z-20 mt-1 w-56 rounded-card border border-line bg-surface p-1 shadow-pop">
+                <Link href="/transactions/categories" className="block rounded-control px-3 py-2.5 text-sm hover:bg-raised">
+                  {t('tx.manageCategories')}
+                </Link>
+                <Link href="/transactions/rules" className="block rounded-control px-3 py-2.5 text-sm hover:bg-raised">
+                  {t('rules.manage')}
+                </Link>
+              </div>
+            </details>
             <Link href="/transactions/new" className="btn-primary hidden sm:inline-flex">
               + {t('tx.new')}
             </Link>
@@ -68,7 +84,14 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         </div>
       )}
 
-      <form method="get" className="mb-4 space-y-3">
+      {/* The answer first: how much went out and came in for what is on screen. */}
+      <div className={`mb-4 grid gap-3 ${meal > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <Stat label={t('tx.outflow')} value={money(outflow)} />
+        <Stat label={t('tx.inflow')} value={money(inflow)} tone="positive" />
+        {meal > 0 && <Stat label={t('tx.mealCardTotal')} value={money(meal)} />}
+      </div>
+
+      <AutoSubmitForm method="get" searchAllMonths className="mb-4 space-y-3">
         {filters.account && <input type="hidden" name="account" value={filters.account} />}
         <div className="grid grid-cols-[1fr_auto] gap-2">
           <input type="search" name="q" defaultValue={filters.q ?? ''} placeholder={t('tx.search')} aria-label={t('tx.search')} className="input" />
@@ -80,7 +103,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           <Link href={query({ account: undefined })} className={`chip shrink-0 ${!filters.account ? 'chip-active' : ''}`} aria-current={!filters.account ? 'true' : undefined}>
             {t('tx.anyAccount')}
           </Link>
-          {FILTER_ACCOUNTS.map((a) => (
+          {shownAccounts.map((a) => (
             <Link key={a} href={query({ account: a })} className={`chip shrink-0 ${filters.account === a ? 'chip-active' : ''}`} aria-current={filters.account === a ? 'true' : undefined}>
               <span className="h-2 w-2 rounded-full" style={{ background: ACCOUNTS[a].color }} aria-hidden />
               {accountName(a, t)}
@@ -126,27 +149,20 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           <button className="btn-secondary">{t('common.apply')}</button>
         </div>
         </div>
-      </form>
+      </AutoSubmitForm>
+
+      {(activeChips.length > 0 || (filters.q && !filters.month)) && (
+        <div className="-mt-1 mb-4 flex flex-wrap items-center gap-1.5">
+          {filters.q && !filters.month && <span className="muted mr-1 text-xs">{t('tx.searchAll')}</span>}
+          {activeChips.map((c) => (
+            <Link key={c.key} href={query({ [chipOverride[c.key]]: undefined })} className="chip chip-active" aria-label={`${t('tx.clearFilter')}: ${c.label}`}>
+              {c.label} <span aria-hidden>✕</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <Card>
-        <dl className="-mt-1 mb-4 flex flex-wrap gap-x-6 gap-y-1 border-b border-line pb-3 text-sm">
-          <div className="flex gap-1.5">
-            <dt className="muted">{t('tx.outflow')}</dt>
-            <dd className="font-medium tabular-nums">{money(outflow)}</dd>
-          </div>
-          <div className="flex gap-1.5">
-            <dt className="muted">{t('tx.inflow')}</dt>
-            <dd className="font-medium tabular-nums text-positive">{money(inflow)}</dd>
-          </div>
-          {meal > 0 && (
-            <div className="flex gap-1.5">
-              <dt className="muted">{t('tx.mealCardTotal')}</dt>
-              <dd className="font-medium tabular-nums" style={{ color: ACCOUNTS.meal_card.color }}>
-                {money(meal)}
-              </dd>
-            </div>
-          )}
-        </dl>
         <TransactionList transactions={txs} categories={categories} locale={locale} />
         {pages > 1 && (
           <nav className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3" aria-label={t('tx.pageOf', { page, pages })}>

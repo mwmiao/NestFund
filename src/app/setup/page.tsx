@@ -7,7 +7,7 @@ import { Alert, Card, Field, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { formatMoney, toInputDecimal } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
-import { ONBOARDING_STEPS, accountBalances, getOnboarding, getProfile, hasSampleData, listBudgetItems, listCategories, listGoals, type OnboardingStep } from '@/lib/repo';
+import { ONBOARDING_STEPS, accountBalances, getOnboarding, getProfile, hasSampleData, listBudgetItems, listCategories, listGoals, visibleAccounts, type OnboardingStep } from '@/lib/repo';
 
 type Step = OnboardingStep | 'done';
 
@@ -79,7 +79,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
         <Card title={t('setup.steps.balances')}>
           <p className="muted mb-4 text-sm">{t('setup.balancesHint')}</p>
           <form action={setupBalancesAction} className="space-y-3">
-            {(['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'] as const).map((a) => (
+            {(['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'] as const).filter((a) => visibleAccounts().includes(a)).map((a) => (
               <div key={a} className="grid grid-cols-[1fr_9rem] items-center gap-3">
                 <div>
                   <AccountBadge id={a} label={accountName(a, t)} />

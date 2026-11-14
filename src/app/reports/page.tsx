@@ -1,20 +1,48 @@
 import Link from 'next/link';
 import { BarsChart, DonutChart, LinesChart } from '@/components/charts/LazyCharts';
-import { IncomeHistory } from '@/components/income/IncomeHistory';
+import { AutoSubmitForm } from '@/components/AutoSubmitForm';
+import { HistoryView } from '@/components/reports/HistoryView';
 import { Card, EmptyState, PageHeader, ProgressBar, Stat } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { currentMonth, formatDate, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
-import { listCategories, listMonthBudgets, listMonthIncomes } from '@/lib/repo';
+import { listCategories, visibleAccounts } from '@/lib/repo';
 import { changeRatio } from '@/lib/report-calc';
 import { buildReport, parseReportFilters } from '@/lib/reports';
-import { ACCOUNT_IDS } from '@/lib/types';
+import type { AccountId } from '@/lib/types';
 
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
+  const view = sp.view === 'time' ? 'time' : 'month';
+
+  const tabs = (
+    <nav className="mb-4 inline-flex gap-1 rounded-control bg-raised p-1" aria-label={t('reports.title')}>
+      {(['month', 'time'] as const).map((v) => (
+        <Link
+          key={v}
+          href={v === 'time' ? '/reports?view=time' : '/reports'}
+          aria-current={view === v ? 'page' : undefined}
+          className={`min-h-10 rounded-[0.6rem] px-4 py-2 text-sm font-medium transition ${view === v ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
+        >
+          {t(`reports.view.${v}`)}
+        </Link>
+      ))}
+    </nav>
+  );
+
+  if (view === 'time') {
+    return (
+      <>
+        <PageHeader title={t('reports.title')} subtitle={t('reports.viewTimeHint')} />
+        {tabs}
+        <HistoryView />
+      </>
+    );
+  }
+
   const filters = parseReportFilters(sp);
   const r = buildReport(filters);
   const categories = listCategories();
@@ -39,12 +67,17 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   const hasContrib = r.contributions.some((c) => c.trading212 > 0 || c.traderepublic > 0);
   const spentTotal = r.totals.spent || 1;
   const maxTop = r.topCategories[0]?.total || 1;
+  const period = isYear ? (filters.year as string) : monthLabel(filters.month as string, locale);
+  // One plain sentence first: the answer before the details.
+  const summary = hasSpending
+    ? t('reports.summary', { period, spent: money(r.totals.spent), n: r.totals.count, income: money(r.totals.income), top: nameOf(r.topCategories[0]?.categoryId ?? null) })
+    : period;
 
   return (
     <>
       <PageHeader
         title={t('reports.title')}
-        subtitle={isYear ? filters.year : monthLabel(filters.month as string, locale)}
+        subtitle={summary}
         actions={
           <a href={`/api/reports/export${qs ? `?${qs}` : ''}`} className="btn-secondary" download>
             {t('reports.exportCsv')}
@@ -52,8 +85,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         }
       />
 
+      {tabs}
+
       <Card className="mb-4">
-        <form method="get" className="grid grid-cols-2 gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
+        <AutoSubmitForm method="get" className="grid grid-cols-2 gap-3 lg:grid-cols-[1fr_1fr_1fr_1fr_auto] lg:items-end">
           <label className="block">
             <span className="label">{t('reports.month')}</span>
             <input type="month" name="month" defaultValue={filters.month ?? currentMonth()} className="input" />
@@ -73,7 +108,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             <span className="label">{t('reports.account')}</span>
             <select name="account" defaultValue={filters.account ?? ''} className="input">
               <option value="">{t('reports.allAccounts')}</option>
-              {ACCOUNT_IDS.map((a) => (
+              {visibleAccounts([filters.account as AccountId | undefined]).map((a) => (
                 <option key={a} value={a}>
                   {accountName(a, t)}
                 </option>
@@ -97,7 +132,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
               {t('reports.reset')}
             </Link>
           </div>
-        </form>
+        </AutoSubmitForm>
       </Card>
 
       <div className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -227,8 +262,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           {r.traderepublic.length >= 2 ? <LinesChart data={curve(r.traderepublic)} xKey="label" series={[{ key: 'value', name: accountName('traderepublic', t), color: '#0ea5e9' }]} /> : portfolioEmpty}
         </Card>
       </div>
-
-      <IncomeHistory budgets={listMonthBudgets()} incomes={listMonthIncomes()} months={r.window} t={t} locale={locale} title={t('income.compareTitle')} />
     </>
   );
 }

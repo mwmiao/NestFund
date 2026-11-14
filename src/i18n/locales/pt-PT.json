@@ -18,7 +18,9 @@
     "settings": "Definições",
     "tools": "Ferramentas",
     "rules": "Regras",
-    "reports": "Relatórios"
+    "reports": "Relatórios",
+    "groupAnalyse": "Analisar",
+    "groupSetup": "Personalizar"
   },
   "common": {
     "save": "Guardar",
@@ -72,9 +74,9 @@
     "fixedExpenses": "Despesas fixas",
     "manualExpenses": "Despesas registadas",
     "manualExpensesHint": "Pagas com dinheiro do salário (sem cartão de refeição)",
-    "availableToAssign": "Disponível para atribuir",
+    "availableToAssign": "Rendimento por planear",
     "availableToAssignHint": "Rendimento − todas as rubricas planeadas",
-    "realAvailable": "Disponível real",
+    "realAvailable": "Resta para gastar",
     "realAvailableHint": "Rendimento − fixas − ETF − poupança − despesas variáveis registadas",
     "totalSavings": "Poupança do mês",
     "totalSavingsHint": "ETF {etf} + poupança {savings}",
@@ -88,15 +90,15 @@
     "seeAll": "Ver todas",
     "goals": "Objetivos",
     "netWorth": "Património registado",
-    "netWorthHint": "Banco CTT, Revolut, Trading 212, Trade Republic e dinheiro",
+    "netWorthHint": "Todas as tuas contas e dinheiro, sem contar o cartão de refeição",
     "budget": "Orçamento",
     "spent": "Gasto",
     "salaryReceived": "Ordenado recebido",
     "salaryPlanned": "Ordenado previsto (ainda não registado)",
     "houseFund": "Para a entrada de casa",
     "etfValue": "ETF na Trading 212",
-    "canSpend": "Ainda podes gastar",
-    "canSpendHint": "Disponível real deste mês, depois de fixas, ETF e poupança",
+    "canSpend": "Resta para gastar",
+    "canSpendHint": "Rendimento − despesas fixas − ETF − poupança − o que já gastaste",
     "houseFundHint": "{pct} de {target}",
     "transferred": "Transferido este mês: {amount}",
     "actions": {
@@ -108,7 +110,7 @@
     "quickActions": "Ações rápidas",
     "thisMonth": "Este mês",
     "income": "Rendimento",
-    "spentOf": "{spent} em despesas variáveis, de {total} disponíveis",
+    "spentOf": "{spent} gastos de {total} para gastar",
     "leisureRevolut": "Lazer (Revolut)",
     "emptyBudgetTitle": "Orçamento por definir",
     "emptyBudgetHint": "Indica o teu salário e as despesas fixas para saberes quanto podes gastar.",
@@ -139,7 +141,7 @@
     "salary": "Salário líquido",
     "extraIncome": "Rendimento extra (ex.: bónus)",
     "mealCard": "Cartão de refeição",
-    "template": "Rubricas do orçamento",
+    "template": "Rubricas mensais do orçamento",
     "templateHint": "Alterações aplicam-se ao mês atual e aos meses futuros. Meses passados ficam guardados como histórico.",
     "pastMonthHint": "Este mês já passou: as rubricas abaixo são o registo histórico desse mês.",
     "addItem": "Nova rubrica",
@@ -183,7 +185,14 @@
     "noCategoryData": "Ainda sem despesas nem limites por categoria.",
     "rangeHint": "Disponível com salário entre {min} e {max}",
     "setLimits": "Definir limites",
-    "spentVsAvailable": "Gasto variável vs. disponível"
+    "spentVsAvailable": "Gasto vs. dinheiro para gastar",
+    "templateSub": "Despesas fixas, poupança, ETF e lazer que se repetem todos os meses.",
+    "jump": {
+      "summary": "Resumo",
+      "categories": "Categorias",
+      "items": "Rubricas mensais",
+      "income": "Rendimento"
+    }
   },
   "tx": {
     "title": "Transações",
@@ -263,7 +272,11 @@
     "suggestHistory": "já usaste para “{text}”",
     "suggestKeyword": "parece “{text}”",
     "suggestAccept": "Usar",
-    "pageOf": "Página {page} de {pages}"
+    "pageOf": "Página {page} de {pages}",
+    "manage": "Gerir",
+    "searchAll": "A pesquisar em todos os meses",
+    "net": "Saldo",
+    "clearFilter": "Remover filtro"
   },
   "categories": {
     "title": "Categorias",
@@ -327,7 +340,7 @@
     "emptyTitle": "Sem objetivos definidos",
     "emptyHint": "Define a reserva de emergência e a entrada para casa para acompanhares o progresso.",
     "emptyAction": "Definir objetivos",
-    "etaLabel": "Previsão",
+    "etaLabel": "Previsto para",
     "left": "Falta",
     "perMonth": "Por mês",
     "summary": "{saved} poupados de {target} no total",
@@ -346,9 +359,9 @@
     "monthlyContribution": "Contribuição mensal",
     "annualBonus": "Bónus anual",
     "initialBalance": "Saldo inicial",
-    "tier1Rate": "TANB até ao limite (%)",
+    "tier1Rate": "Taxa anual (TANB) até ao limite (%)",
     "tier1Limit": "Limite do 1.º escalão",
-    "tier2Rate": "TANB acima do limite (%)",
+    "tier2Rate": "Taxa anual (TANB) acima do limite (%)",
     "taxRate": "IRS sobre juros (%)",
     "horizon": "Horizonte (anos)",
     "downPayment": "Entrada",
@@ -363,7 +376,7 @@
     "balance": "Total",
     "netNote": "Os juros apresentados são líquidos de IRS (retenção de {tax} sobre os juros brutos). O bónus anual é somado no fim de cada 12.º mês.",
     "etf": "Simulador de ETF",
-    "etfHint": "Projeção nominal com capitalização mensal.",
+    "etfHint": "Projeção antes de inflação, comissões e impostos, com capitalização mensal.",
     "currentValue": "Valor atual",
     "annualReturn": "Retorno anual esperado (%)",
     "contributed": "Capital investido",
@@ -371,7 +384,8 @@
     "gain": "Ganho projetado",
     "etfWarning": "Aviso: o retorno não é garantido. Os mercados podem cair e podes perder dinheiro. Isto é uma simulação ilustrativa, sem inflação, comissões ou impostos, e não é aconselhamento financeiro.",
     "ratesAndTax": "Taxas de juro e IRS",
-    "enterPrice": "Introduz o preço da casa para veres a entrada e os custos necessários."
+    "enterPrice": "Introduz o preço da casa para veres a entrada e os custos necessários.",
+    "ratesHint": "TANB = taxa anual nominal bruta, antes de impostos. A taxa muda quando o saldo passa o limite do primeiro escalão."
   },
   "portfolio": {
     "title": "Carteira",
@@ -389,7 +403,8 @@
     "noBroker": "Valores introduzidos manualmente. Podes ligar a Trading 212 em Definições › Ligações.",
     "investedHint": "Na conta remunerada, o investido é o capital depositado.",
     "netOfTax": "líquido de IRS ({tax})",
-    "otherAccounts": "Contas do dia a dia"
+    "otherAccounts": "Contas do dia a dia",
+    "statusManual": "Introduzido por ti · {date}"
   },
   "history": {
     "title": "Histórico",
@@ -403,7 +418,12 @@
     "fixed": "Fixas",
     "spent": "Registadas",
     "saved": "Poupado",
-    "rate": "Taxa"
+    "rate": "Taxa",
+    "headSaved": "Total poupado",
+    "headSavedHint": "ETF + poupança, todos os meses",
+    "headRate": "Taxa média de poupança",
+    "headRateHint": "Parte do rendimento poupada, em média nos meses com rendimento",
+    "headMonths": "Meses registados"
   },
   "accounts": {
     "title": "Contas",
@@ -429,10 +449,10 @@
     "thisMonth": "Este mês: {movements}",
     "planned": "Planeado {planned} · transferido {done}",
     "leisureLeft": "Lazer gasto {spent} de {budget}",
-    "since": "Desde o registo de {date}",
+    "since": "Desde que atualizaste a {date}",
     "noCheckIn": "Ainda sem saldo",
-    "checkIn": "Registar saldo",
-    "checkInHint": "Regista o saldo real de uma conta numa data. Os movimentos posteriores são somados automaticamente.",
+    "checkIn": "Atualizar saldo",
+    "checkInHint": "Indica o saldo real de uma conta numa data. Os movimentos seguintes são somados automaticamente.",
     "estimatedInterest": "Juros líquidos estimados/mês"
   },
   "setup": {
@@ -469,13 +489,20 @@
     "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas, anexos e a ligação à Trading 212. Antes de apagar é guardada automaticamente uma cópia completa em /data/backups. As categorias predefinidas e as preferências mantêm-se.",
     "resetConfirm": "Compreendo que todos os dados serão apagados",
     "resetButton": "Começar do zero",
-    "resetDone": "Dados apagados. A app está pronta para os teus valores reais."
+    "resetDone": "Dados apagados. A app está pronta para os teus valores reais.",
+    "progress": "{done} de {total} concluídos"
   },
   "settings": {
     "title": "Definições",
     "connections": "Ligações",
     "general": "Geral",
-    "noAuth": "A NestFund não pede palavra-passe. Isso é aceitável numa rede privada ou atrás do Cloudflare Access; se estiver acessível pela Internet, protege-a (BASIC_AUTH_USER e BASIC_AUTH_PASSWORD no teu .env)."
+    "noAuth": "A NestFund não pede palavra-passe. Isso é aceitável numa rede privada ou atrás do Cloudflare Access; se estiver acessível pela Internet, protege-a (BASIC_AUTH_USER e BASIC_AUTH_PASSWORD no teu .env).",
+    "dataSection": "Backup e dados",
+    "dataHint": "Exporta, restaura ou importa os teus dados e escolhe que avisos queres ver.",
+    "accountsTitle": "As tuas contas",
+    "accountsHint": "Esconde as contas que não usas. As contas escondidas desaparecem do painel, dos formulários e dos filtros. Os dados mantêm-se.",
+    "accountHidden": "Escondida",
+    "accountsKeepOne": "Pelo menos uma conta tem de ficar visível."
   },
   "t212": {
     "description": "Atualiza automaticamente o valor, o capital investido e as posições do teu ETF.",
@@ -564,7 +591,8 @@
         "background": "a cada 6 horas em segundo plano"
       },
       "rateLimit": "Limite de pedidos: restam {remaining}/{limit}"
-    }
+    },
+    "statusLive": "Em direto da Trading 212 · {when}"
   },
   "rules": {
     "title": "Regras",
@@ -653,7 +681,13 @@
     "noContributionsTitle": "Sem transferências para investimento ou poupança neste período",
     "noContributionsHint": "Regista uma transferência para o Trading 212 ou Trade Republic e aparece aqui.",
     "share": "Peso",
-    "last12": "Últimos 12 meses"
+    "last12": "Últimos 12 meses",
+    "view": {
+      "month": "Mês ou ano",
+      "time": "Ao longo do tempo"
+    },
+    "viewTimeHint": "Como a poupança, os investimentos e as despesas evoluíram mês a mês.",
+    "summary": "Em {period} gastaste {spent} em {n} compras e recebeste {income}. Maior categoria: {top}."
   },
   "notifications": {
     "title": "Notificações",
@@ -912,5 +946,16 @@
     "historyEmpty": "Ainda não há rendimento registado.",
     "historyNote": "Valores introduzidos por ti. Os meses «previstos» ainda não foram confirmados; não há médias automáticas.",
     "paidDateShort": "Pagamento efetivo"
+  },
+  "charts": {
+    "notEnough": "Ainda sem dados suficientes — atualiza o saldo em pelo menos 2 datas diferentes para ver o gráfico.",
+    "noMonths": "Ainda não há meses com dados."
+  },
+  "glossary": {
+    "savingsRate": "Parte do teu rendimento que foi para ETF e poupança este mês.",
+    "onTrack": "Compara a tua contribuição mensal com a necessária para chegar à data-alvo.",
+    "expectedBy": "Mês em que a meta é atingida se mantiveres a contribuição mensal atual.",
+    "etf": "ETF = fundo cotado em bolsa: uma só compra que reparte o dinheiro por muitas empresas.",
+    "unrealized": "Ganho ou perda no papel. Só se torna real se vender."
   }
 }

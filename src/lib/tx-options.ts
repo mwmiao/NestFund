@@ -2,12 +2,12 @@ import 'server-only';
 import type { TFunction } from '@/i18n/config';
 import { getDb } from './db';
 import { categoryName } from './labels';
-import { listCategories } from './repo';
+import { listCategories, visibleAccounts } from './repo';
 import { historyHints, listRules } from './rules-repo';
 import { ACCOUNT_IDS, type AccountId } from './types';
 
 /** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
-export function transactionFormOptions(t: TFunction) {
+export function transactionFormOptions(t: TFunction, keep: (AccountId | null | undefined)[] = []) {
   const db = getDb();
   const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }));
   const column = (col: 'merchant' | 'subcategory') =>
@@ -17,7 +17,9 @@ export function transactionFormOptions(t: TFunction) {
   const recent = db
     .prepare("SELECT account FROM transactions WHERE type IN ('purchase','expense','payment') AND date >= date('now', '-30 days') GROUP BY account ORDER BY COUNT(*) DESC LIMIT 1")
     .get() as { account: string } | undefined;
-  const defaultAccount: AccountId = recent && ACCOUNT_IDS.includes(recent.account as AccountId) ? (recent.account as AccountId) : 'ctt';
+  const accounts = visibleAccounts(keep);
+  const wanted = recent && ACCOUNT_IDS.includes(recent.account as AccountId) ? (recent.account as AccountId) : 'ctt';
+  const defaultAccount: AccountId = accounts.includes(wanted) ? wanted : (accounts[0] ?? 'ctt');
   // One-tap chips: the six categories used most for spending in the last 90 days.
   const topCategoryIds = (
     db
@@ -29,5 +31,5 @@ export function transactionFormOptions(t: TFunction) {
       .all() as { id: number }[]
   ).map((r) => r.id);
   const suggest = { rules: listRules().map((r) => ({ id: r.id, enabled: r.enabled, text: r.text, account: r.account, categoryId: r.categoryId })), history: historyHints() };
-  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds };
+  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds, accounts };
 }

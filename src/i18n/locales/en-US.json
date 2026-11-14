@@ -18,7 +18,9 @@
     "settings": "Settings",
     "tools": "Tools",
     "rules": "Rules",
-    "reports": "Reports"
+    "reports": "Reports",
+    "groupAnalyse": "Analyse",
+    "groupSetup": "Customise"
   },
   "common": {
     "save": "Save",
@@ -72,9 +74,9 @@
     "fixedExpenses": "Fixed expenses",
     "manualExpenses": "Logged expenses",
     "manualExpensesHint": "Paid with salary money (excluding meal card)",
-    "availableToAssign": "Available to assign",
+    "availableToAssign": "Unplanned income",
     "availableToAssignHint": "Income − every planned budget line",
-    "realAvailable": "Actually available",
+    "realAvailable": "Left to spend",
     "realAvailableHint": "Income − fixed − ETF − savings − logged variable spending",
     "totalSavings": "Saved this month",
     "totalSavingsHint": "ETF {etf} + savings {savings}",
@@ -88,15 +90,15 @@
     "seeAll": "See all",
     "goals": "Goals",
     "netWorth": "Tracked net worth",
-    "netWorthHint": "Banco CTT, Revolut, Trading 212, Trade Republic and cash",
+    "netWorthHint": "All your accounts and cash, not counting the meal card",
     "budget": "Budget",
     "spent": "Spent",
     "salaryReceived": "Salary received",
     "salaryPlanned": "Planned salary (not logged yet)",
     "houseFund": "For the house down payment",
     "etfValue": "ETF at Trading 212",
-    "canSpend": "You can still spend",
-    "canSpendHint": "This month's actual available amount, after fixed costs, ETF and savings",
+    "canSpend": "Left to spend",
+    "canSpendHint": "Income − fixed costs − ETF − savings − what you have spent",
     "houseFundHint": "{pct} of {target}",
     "transferred": "Transferred this month: {amount}",
     "actions": {
@@ -108,7 +110,7 @@
     "quickActions": "Quick actions",
     "thisMonth": "This month",
     "income": "Income",
-    "spentOf": "{spent} variable spending, of {total} available",
+    "spentOf": "{spent} spent of {total} spending money",
     "leisureRevolut": "Leisure (Revolut)",
     "emptyBudgetTitle": "No budget yet",
     "emptyBudgetHint": "Add your salary and fixed costs to see how much you can spend.",
@@ -139,7 +141,7 @@
     "salary": "Net salary",
     "extraIncome": "Extra income (e.g. bonus)",
     "mealCard": "Meal card",
-    "template": "Budget lines",
+    "template": "Monthly budget items",
     "templateHint": "Changes apply to the current and future months. Past months are kept as history.",
     "pastMonthHint": "This month is in the past: the lines below are that month's historical record.",
     "addItem": "New line",
@@ -183,7 +185,14 @@
     "noCategoryData": "No category spending or limits yet.",
     "rangeHint": "Available with a salary between {min} and {max}",
     "setLimits": "Set limits",
-    "spentVsAvailable": "Variable spending vs. available"
+    "spentVsAvailable": "Spent vs. spending money",
+    "templateSub": "Fixed costs, savings, ETF and leisure that repeat every month.",
+    "jump": {
+      "summary": "Summary",
+      "categories": "Categories",
+      "items": "Monthly items",
+      "income": "Income"
+    }
   },
   "tx": {
     "title": "Transactions",
@@ -263,7 +272,11 @@
     "suggestHistory": "you used it for “{text}” before",
     "suggestKeyword": "looks like “{text}”",
     "suggestAccept": "Use",
-    "pageOf": "Page {page} of {pages}"
+    "pageOf": "Page {page} of {pages}",
+    "manage": "Manage",
+    "searchAll": "Searching all months",
+    "net": "Net",
+    "clearFilter": "Remove filter"
   },
   "categories": {
     "title": "Categories",
@@ -327,7 +340,7 @@
     "emptyTitle": "No goals yet",
     "emptyHint": "Set your emergency fund and house down payment to track progress.",
     "emptyAction": "Set goals",
-    "etaLabel": "Projected",
+    "etaLabel": "Expected by",
     "left": "Left",
     "perMonth": "Per month",
     "summary": "{saved} saved of {target} in total",
@@ -346,9 +359,9 @@
     "monthlyContribution": "Monthly contribution",
     "annualBonus": "Annual bonus",
     "initialBalance": "Starting balance",
-    "tier1Rate": "Rate up to the limit (%)",
+    "tier1Rate": "Annual rate up to the limit (%)",
     "tier1Limit": "First tier limit",
-    "tier2Rate": "Rate above the limit (%)",
+    "tier2Rate": "Annual rate above the limit (%)",
     "taxRate": "Tax on interest (%)",
     "horizon": "Horizon (years)",
     "downPayment": "Down payment",
@@ -363,7 +376,7 @@
     "balance": "Total",
     "netNote": "Interest shown is net of Portuguese income tax (IRS, {tax} withheld on gross interest). The annual bonus is added at the end of every 12th month.",
     "etf": "ETF simulator",
-    "etfHint": "Nominal projection with monthly compounding.",
+    "etfHint": "Projection before inflation, fees and tax, with monthly compounding.",
     "currentValue": "Current value",
     "annualReturn": "Expected annual return (%)",
     "contributed": "Invested capital",
@@ -371,7 +384,8 @@
     "gain": "Projected gain",
     "etfWarning": "Warning: returns are not guaranteed. Markets can fall and you may lose money. This is an illustrative simulation without inflation, fees or taxes, and it is not financial advice.",
     "ratesAndTax": "Interest rates and tax",
-    "enterPrice": "Enter the house price to see the down payment and costs you need."
+    "enterPrice": "Enter the house price to see the down payment and costs you need.",
+    "ratesHint": "Rates are annual and before tax. The rate changes once the balance passes the first-tier limit."
   },
   "portfolio": {
     "title": "Portfolio",
@@ -389,7 +403,8 @@
     "noBroker": "Values are entered manually. You can connect Trading 212 in Settings › Connections.",
     "investedHint": "For the savings account, invested means deposited capital.",
     "netOfTax": "net of tax ({tax})",
-    "otherAccounts": "Everyday accounts"
+    "otherAccounts": "Everyday accounts",
+    "statusManual": "Entered by you · {date}"
   },
   "history": {
     "title": "History",
@@ -403,7 +418,12 @@
     "fixed": "Fixed",
     "spent": "Logged",
     "saved": "Saved",
-    "rate": "Rate"
+    "rate": "Rate",
+    "headSaved": "Saved in total",
+    "headSavedHint": "ETF + savings, all months",
+    "headRate": "Average savings rate",
+    "headRateHint": "Share of income saved, averaged over months with income",
+    "headMonths": "Months tracked"
   },
   "accounts": {
     "title": "Accounts",
@@ -429,10 +449,10 @@
     "thisMonth": "This month: {movements}",
     "planned": "Planned {planned} · transferred {done}",
     "leisureLeft": "Leisure spent {spent} of {budget}",
-    "since": "Since the check-in on {date}",
+    "since": "Since you updated it on {date}",
     "noCheckIn": "No balance yet",
-    "checkIn": "Record balance",
-    "checkInHint": "Record an account's real balance on a date. Later movements are added automatically.",
+    "checkIn": "Update balance",
+    "checkInHint": "Enter an account's real balance on a date. Later movements are added automatically.",
     "estimatedInterest": "Estimated net interest/month"
   },
   "setup": {
@@ -469,13 +489,20 @@
     "resetHint": "Removes transactions, balances, budgets, goals, custom categories, attachments and the Trading 212 connection. A full copy is saved to /data/backups automatically before anything is deleted. Built-in categories and preferences are kept.",
     "resetConfirm": "I understand all data will be deleted",
     "resetButton": "Start from scratch",
-    "resetDone": "Data deleted. The app is ready for your real numbers."
+    "resetDone": "Data deleted. The app is ready for your real numbers.",
+    "progress": "{done} of {total} done"
   },
   "settings": {
     "title": "Settings",
     "connections": "Connections",
     "general": "General",
-    "noAuth": "NestFund is not asking for a password. That is fine on a private network or behind Cloudflare Access; if it is reachable from the Internet, protect it (BASIC_AUTH_USER and BASIC_AUTH_PASSWORD in your .env)."
+    "noAuth": "NestFund is not asking for a password. That is fine on a private network or behind Cloudflare Access; if it is reachable from the Internet, protect it (BASIC_AUTH_USER and BASIC_AUTH_PASSWORD in your .env).",
+    "dataSection": "Backup & data",
+    "dataHint": "Export, restore or import your data, and choose which notices you see.",
+    "accountsTitle": "Your accounts",
+    "accountsHint": "Hide accounts you do not use. Hidden accounts disappear from the dashboard, forms and filters. Their data is kept.",
+    "accountHidden": "Hidden",
+    "accountsKeepOne": "At least one account must stay visible."
   },
   "t212": {
     "description": "Automatically updates your ETF value, invested capital and positions.",
@@ -564,7 +591,8 @@
         "background": "every 6 hours in the background"
       },
       "rateLimit": "Rate limit: {remaining}/{limit} requests left"
-    }
+    },
+    "statusLive": "Live from Trading 212 · {when}"
   },
   "rules": {
     "title": "Rules",
@@ -653,7 +681,13 @@
     "noContributionsTitle": "No transfers to investing or savings in this period",
     "noContributionsHint": "Log a transfer into Trading 212 or Trade Republic and it will show here.",
     "share": "Share",
-    "last12": "Last 12 months"
+    "last12": "Last 12 months",
+    "view": {
+      "month": "Month or year",
+      "time": "Over time"
+    },
+    "viewTimeHint": "How your savings, investments and spending changed month by month.",
+    "summary": "In {period} you spent {spent} on {n} purchases and received {income}. Biggest category: {top}."
   },
   "notifications": {
     "title": "Notifications",
@@ -912,5 +946,16 @@
     "historyEmpty": "No income recorded yet.",
     "historyNote": "Amounts you entered. \"Expected\" months are not confirmed yet; there are no automatic averages.",
     "paidDateShort": "Actual payment"
+  },
+  "charts": {
+    "notEnough": "Not enough data yet — record a balance on at least 2 different dates to see this chart.",
+    "noMonths": "No months with data yet."
+  },
+  "glossary": {
+    "savingsRate": "Share of your income that went into ETF and savings this month.",
+    "onTrack": "Compares your monthly contribution with what is needed to reach the target date.",
+    "expectedBy": "Month the goal is reached if you keep your current monthly contribution.",
+    "etf": "ETF = exchange-traded fund: one purchase that spreads your money across many companies.",
+    "unrealized": "Gain or loss on paper. It only becomes real if you sell."
   }
 }

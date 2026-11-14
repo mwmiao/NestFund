@@ -1,5 +1,5 @@
 import { GoalForm } from '@/components/goals/GoalForm';
-import { Badge, Card, EmptyState, PageHeader, ProgressBar } from '@/components/ui';
+import { Badge, Card, EmptyState, Hint, PageHeader, ProgressBar } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { goalProgress, goalsSavedTotal } from '@/lib/calc';
 import { currentMonth, monthLabel } from '@/lib/dates';
@@ -52,7 +52,7 @@ export default async function GoalsPage() {
                 {reached ? (
                   <Badge tone="positive">{t('goals.reached')}</Badge>
                 ) : g.targetDate && p.onTrack != null ? (
-                  <Badge tone={p.onTrack ? 'positive' : 'caution'}>{p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</Badge>
+                  <span className="flex items-center"><Badge tone={p.onTrack ? 'positive' : 'caution'}>{p.onTrack ? t('goals.onTrack') : t('goals.offTrack')}</Badge><Hint text={t('glossary.onTrack')} /></span>
                 ) : null}
               </div>
 
@@ -75,7 +75,10 @@ export default async function GoalsPage() {
                   <dd className="mt-0.5 tabular-nums">{g.monthly > 0 ? money(g.monthly) : '—'}</dd>
                 </div>
                 <div>
-                  <dt className="eyebrow">{t('goals.etaLabel')}</dt>
+                  <dt className="eyebrow">
+                    {t('goals.etaLabel')}
+                    <Hint text={t('glossary.expectedBy')} />
+                  </dt>
                   <dd className="mt-0.5">{reached ? '✓' : p.projectedMonth ? monthLabel(p.projectedMonth, locale, 'short') : '—'}</dd>
                 </div>
               </dl>

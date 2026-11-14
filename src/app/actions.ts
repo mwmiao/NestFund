@@ -415,6 +415,15 @@ export async function setupGoalsAction(fd: FormData) {
   redirect(nextStep('goals'));
 }
 
+export async function saveAccountVisibilityAction(fd: FormData) {
+  const shown = new Set(fd.getAll('show').map(String));
+  // At least one account must stay visible.
+  if (!ACCOUNT_IDS.some((a) => shown.has(a))) redirect('/settings?accounts=none#accounts');
+  repo.saveHiddenAccounts(ACCOUNT_IDS.filter((a) => !shown.has(a)));
+  refresh();
+  redirect('/settings?accounts=saved#accounts');
+}
+
 export async function dismissOnboardingAction() {
   repo.updateOnboarding({ dismissed: true });
   refresh();

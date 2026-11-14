@@ -26,7 +26,7 @@ NestFund is a self-hosted personal finance dashboard. Plan your salary, log ever
 - **Goals** — emergency fund, house down payment and financial independence, with automatic progress.
 - **Automatic Trading 212** — value, invested capital and positions synced every 6 hours (read-only).
 - **Simulators** — house down payment with tiered interest, net of Portuguese tax; ETF projection.
-- **History and CSV** — month-by-month evolution, export and import.
+- **Reports, history and CSV** — month or year summary, evolution over time, export and import.
 - **Portuguese / English**, dark mode, built for mobile.
 
 <div align="center">

@@ -4,7 +4,7 @@ import { AccountBadge } from '@/components/AccountBadge';
 import { LinesChart } from '@/components/charts/LazyCharts';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { InterestSection } from '@/components/portfolio/InterestSection';
-import { Alert, Badge, Card, Empty, Field, PageHeader } from '@/components/ui';
+import { Alert, Badge, Card, Empty, Field, Hint, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { formatDate, formatDateTime, formatRelative, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
@@ -66,9 +66,9 @@ export default async function PortfolioPage() {
             {syncBadge}
             <div className="muted mt-1.5">
               {etf.source === 'api' && etf.asOf
-                ? t('t212.updatedRelative', { when: formatRelative(etf.asOf, locale) })
+                ? t('t212.statusLive', { when: formatRelative(etf.asOf, locale) })
                 : etf.asOf
-                  ? t('portfolio.lastUpdate', { date: formatDate(etf.asOf) })
+                  ? t('portfolio.statusManual', { date: formatDate(etf.asOf) })
                   : t('accounts.noCheckIn')}
             </div>
             <Link href="/settings" className="link mt-1 inline-block !text-xs">
@@ -95,7 +95,10 @@ export default async function PortfolioPage() {
             <dd className="mt-0.5 font-medium tabular-nums">{money(etf.invested)}</dd>
           </div>
           <div>
-            <dt className="eyebrow">{t('portfolio.unrealized')}</dt>
+            <dt className="eyebrow">
+              {t('portfolio.unrealized')}
+              <Hint text={t('glossary.unrealized')} />
+            </dt>
             <dd className={`mt-0.5 font-medium tabular-nums ${etf.gain >= 0 ? 'text-positive' : 'text-negative'}`}>{formatMoney(etf.gain, locale, { sign: true })}</dd>
           </div>
           <div>
@@ -147,7 +150,7 @@ export default async function PortfolioPage() {
         {/* Trade Republic */}
         <Card title="Trade Republic" subtitle={t('accounts.purpose.traderepublic')}>
           <div className="text-2xl font-semibold tabular-nums tracking-tight">{money(tr.balance)}</div>
-          <div className="muted mt-1 text-xs">{tr.since ? t('portfolio.lastUpdate', { date: formatDate(tr.since) }) : t('accounts.noCheckIn')}</div>
+          <div className="muted mt-1 text-xs">{tr.since ? t('portfolio.statusManual', { date: formatDate(tr.since) }) : t('accounts.noCheckIn')}</div>
           <InterestSection />
           <div className="mt-4">
             <LinesChart data={trChart} xKey="label" height={160} series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />

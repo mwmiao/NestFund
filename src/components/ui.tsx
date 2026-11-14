@@ -143,6 +143,21 @@ export function Field({ label, children, className = '' }: { label: string; chil
   );
 }
 
+/** Small "i" next to a term. The explanation shows on hover or focus and is read out by screen readers. */
+export function Hint({ text }: { text: string }) {
+  return (
+    <span
+      tabIndex={0}
+      role="note"
+      title={text}
+      aria-label={text}
+      className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line align-middle text-[10px] font-semibold normal-case leading-none text-subtle outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      i
+    </span>
+  );
+}
+
 export function Dot({ color }: { color: string }) {
   return <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: color }} aria-hidden />;
 }

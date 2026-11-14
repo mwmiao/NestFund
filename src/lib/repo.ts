@@ -42,6 +42,31 @@ export function saveProfile(p: Profile) {
   getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('profile', ?)").run(JSON.stringify(p));
 }
 
+// ---------------------------------------------------------------- hidden accounts
+
+/** Accounts the user switched off in Settings: they disappear from the dashboard, forms and filters, but keep their data. */
+export function getHiddenAccounts(): AccountId[] {
+  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'hidden_accounts'").get() as Row | undefined;
+  let parsed: unknown = [];
+  try {
+    parsed = row ? JSON.parse(row.value) : [];
+  } catch {
+    parsed = [];
+  }
+  return Array.isArray(parsed) ? (parsed.filter((a) => ACCOUNT_IDS.includes(a as AccountId)) as AccountId[]) : [];
+}
+
+export function saveHiddenAccounts(ids: AccountId[]) {
+  const clean = [...new Set(ids)].filter((a) => ACCOUNT_IDS.includes(a));
+  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('hidden_accounts', ?)").run(JSON.stringify(clean));
+}
+
+/** Every account that is not hidden, in the standard order. Pass `keep` to force some in (e.g. those an existing transaction uses). */
+export function visibleAccounts(keep: (AccountId | null | undefined)[] = []): AccountId[] {
+  const hidden = new Set(getHiddenAccounts());
+  return ACCOUNT_IDS.filter((a) => !hidden.has(a) || keep.includes(a));
+}
+
 // ---------------------------------------------------------------- onboarding / fresh start
 
 export const ONBOARDING_STEPS = ['balances', 'income', 'fixed', 'goals'] as const;

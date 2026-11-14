@@ -50,12 +50,12 @@ function SubmitButton({ label }: { label: string }) {
   );
 }
 
-function AccountChips({ name, value, onChange, exclude }: { name: string; value: AccountId | ''; onChange: (a: AccountId) => void; exclude?: AccountId }) {
+function AccountChips({ name, value, onChange, exclude, accounts }: { name: string; value: AccountId | ''; onChange: (a: AccountId) => void; exclude?: AccountId; accounts: readonly AccountId[] }) {
   const { t } = useI18n();
   return (
     <div className="flex flex-wrap gap-2" role="radiogroup">
       <input type="hidden" name={name} value={value} />
-      {ACCOUNT_IDS.filter((a) => a !== exclude).map((a) => {
+      {accounts.filter((a) => a !== exclude).map((a) => {
         const active = a === value;
         const color = ACCOUNTS[a].color;
         return (
@@ -84,6 +84,7 @@ export function TransactionForm({
   merchants = [],
   subcategories = [],
   defaultAccount = 'ctt',
+  accounts = ACCOUNT_IDS,
   initialType,
   topCategoryIds = [],
   suggest,
@@ -96,6 +97,8 @@ export function TransactionForm({
   merchants?: string[];
   subcategories?: string[];
   defaultAccount?: AccountId;
+  /** Accounts offered as chips (the ones not hidden in Settings). */
+  accounts?: readonly AccountId[];
   initialType?: string;
   topCategoryIds?: number[];
   /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
@@ -133,7 +136,7 @@ export function TransactionForm({
   );
   const suggested = suggestion ? categories.find((c) => c.id === suggestion.categoryId) : undefined;
   const yesterday = shiftDay(today, -1);
-  const hasDetails = !!(transaction && (transaction.subcategory || transaction.notes || transaction.attachment || transaction.recurring));
+  const hasDetails = !!(transaction && (transaction.merchant || transaction.subcategory || transaction.notes || transaction.attachment || transaction.recurring));
 
   return (
     <form
@@ -244,6 +247,7 @@ export function TransactionForm({
         <span className="label">{isTransfer ? t('tx.fromAccount') : t('tx.account')}</span>
         <AccountChips
           name="account"
+          accounts={accounts}
           value={account}
           onChange={(a) => {
             setAccount(a);
@@ -255,7 +259,7 @@ export function TransactionForm({
       {isTransfer && (
         <div>
           <span className="label">{t('tx.toAccount')}</span>
-          <AccountChips name="toAccount" value={toAccount} onChange={setToAccount} exclude={account} />
+          <AccountChips name="toAccount" accounts={accounts} value={toAccount} onChange={setToAccount} exclude={account} />
           <p className="muted mt-1 text-xs">{t('tx.transferNote')}</p>
         </div>
       )}
@@ -275,18 +279,17 @@ export function TransactionForm({
         </div>
       </div>
 
-      <Field label={`${t('tx.merchant')} (${t('common.optional')})`}>
-        <input name="merchant" list="merchants" enterKeyHint="done" value={merchant} onChange={(e) => setMerchant(e.target.value)} className="input" />
-        <datalist id="merchants">
-          {merchants.map((s) => (
-            <option key={s} value={s} />
-          ))}
-        </datalist>
-      </Field>
-
       <details open={hasDetails} className="rounded-control border border-line px-3 py-2">
         <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('tx.moreDetails')}</summary>
         <div className="mt-3 space-y-4 pb-2">
+          <Field label={`${t('tx.merchant')} (${t('common.optional')})`}>
+            <input name="merchant" list="merchants" enterKeyHint="done" value={merchant} onChange={(e) => setMerchant(e.target.value)} className="input" />
+            <datalist id="merchants">
+              {merchants.map((s) => (
+                <option key={s} value={s} />
+              ))}
+            </datalist>
+          </Field>
           {kind === 'spending' && (
             <Field label={t('tx.spendType')}>
               <select value={spendType} onChange={(e) => setSpendType(e.target.value as TxType)} className="input">

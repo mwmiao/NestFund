@@ -59,6 +59,7 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
       </div>
       <details className="rounded-xl border border-line px-3 py-2">
         <summary className="cursor-pointer select-none py-1 text-sm font-medium">{t('sim.ratesAndTax')}</summary>
+        <p className="muted mt-3 text-xs">{t('sim.ratesHint')}</p>
         <div className="mt-3 grid grid-cols-2 gap-3 pb-2 md:grid-cols-4">
           <NumberField label={t('sim.tier1Rate')} value={v.tier1Rate} onChange={set('tier1Rate')} suffix="%" />
           <NumberField label={t('sim.tier1Limit')} value={v.tier1Limit} onChange={set('tier1Limit')} suffix="€" />

@@ -26,7 +26,7 @@ O NestFund é um painel de finanças pessoais self-hosted. Planeia o salário, r
 - **Objetivos** — reserva de emergência, entrada para casa e independência financeira, com progresso automático.
 - **Trading 212 automática** — valor, capital investido e posições sincronizados a cada 6 horas (só leitura).
 - **Simuladores** — entrada para casa com TANB escalonada e juros líquidos de IRS; projeção de ETF.
-- **Histórico e CSV** — evolução mês a mês, exportação e importação.
+- **Relatórios, histórico e CSV** — resumo do mês ou do ano, evolução ao longo do tempo, exportação e importação.
 - **PT / EN**, modo escuro e pensado para telemóvel.
 
 <div align="center">

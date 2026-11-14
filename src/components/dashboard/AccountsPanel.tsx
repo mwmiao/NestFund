@@ -43,16 +43,17 @@ function Save({ label }: { label: string }) {
 }
 
 /** Dashboard account list: inline "update balance" per account and a quick transfer form. */
-export function AccountsPanel({ rows, recentTransfers, today }: { rows: AccountRow[]; recentTransfers: RecentTransfer[]; today: string }) {
+export function AccountsPanel({ rows, recentTransfers, today, accounts = ACCOUNT_IDS, wide = false }: { rows: AccountRow[]; recentTransfers: RecentTransfer[]; today: string; accounts?: readonly AccountId[]; wide?: boolean }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<AccountId | null>(null);
   const [transferOpen, setTransferOpen] = useState(false);
-  const [from, setFrom] = useState<AccountId>('ctt');
-  const [to, setTo] = useState<AccountId>('revolut');
+  const [from, setFrom] = useState<AccountId>(accounts[0] ?? 'ctt');
+  const [to, setTo] = useState<AccountId>(accounts[1] ?? accounts[0] ?? 'revolut');
+  const otherThan = (a: AccountId) => accounts.find((x) => x !== a) ?? a;
   const [note, setNote] = useState('');
 
   return (
-    <section className="card lg:col-span-3">
+    <section className={`card ${wide ? 'lg:col-span-5' : 'lg:col-span-3'}`}>
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="section-title">{t('accounts.title')}</h2>
         <div className="flex items-center gap-1">
@@ -83,11 +84,11 @@ export function AccountsPanel({ rows, recentTransfers, today }: { rows: AccountR
                 onChange={(e) => {
                   const v = e.target.value as AccountId;
                   setFrom(v);
-                  if (v === to) setTo(ACCOUNT_IDS.find((a) => a !== v) ?? 'ctt');
+                  if (v === to) setTo(otherThan(v));
                 }}
                 className="input"
               >
-                {ACCOUNT_IDS.map((a) => (
+                {accounts.map((a) => (
                   <option key={a} value={a}>
                     {accountName(a, t)}
                   </option>
@@ -97,7 +98,7 @@ export function AccountsPanel({ rows, recentTransfers, today }: { rows: AccountR
             <label className="block">
               <span className="label">{t('tx.toAccount')}</span>
               <select value={to} onChange={(e) => setTo(e.target.value as AccountId)} className="input">
-                {ACCOUNT_IDS.filter((a) => a !== from).map((a) => (
+                {accounts.filter((a) => a !== from).map((a) => (
                   <option key={a} value={a}>
                     {accountName(a, t)}
                   </option>
@@ -217,7 +218,7 @@ export function AccountsPanel({ rows, recentTransfers, today }: { rows: AccountR
                       className="link !text-xs"
                       onClick={() => {
                         setFrom(row.id);
-                        setTo(row.id === 'ctt' ? 'revolut' : 'ctt');
+                        setTo(otherThan(row.id));
                         setTransferOpen(true);
                         setEditing(null);
                       }}

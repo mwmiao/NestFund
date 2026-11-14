@@ -1,14 +1,19 @@
 import Link from 'next/link';
+import { saveAccountVisibilityAction } from '@/app/actions';
 import { OfflineDataCard } from '@/components/pwa/OfflineDataCard';
 import { T212Actions, T212ConnectForm } from '@/components/settings/T212Connection';
 import { Alert, Badge, Card, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { formatDateTime } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
+import { accountName } from '@/lib/labels';
+import { getHiddenAccounts } from '@/lib/repo';
 import { getT212Status } from '@/lib/t212';
-import { ACCOUNTS } from '@/lib/types';
+import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ accounts?: string }> }) {
+  const sp = await searchParams;
+  const hidden = new Set(getHiddenAccounts());
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
   const s = getT212Status();
@@ -17,19 +22,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader
-        title={t('settings.title')}
-        actions={
-          <>
-            <Link href="/settings/backup" className="btn-secondary">
-              {t('backup.openPage')}
-            </Link>
-            <Link href="/settings/notifications" className="btn-secondary">
-              {t('notifications.settingsTitle')}
-            </Link>
-          </>
-        }
-      />
+      <PageHeader title={t('settings.title')} />
 
       {!process.env.BASIC_AUTH_USER && (
         <div className="mb-6">
@@ -37,13 +30,8 @@ export default async function SettingsPage() {
         </div>
       )}
 
-      <h2 className="section-title mb-3">{t('pwa.title')}</h2>
-      <Card className="mb-6">
-        <OfflineDataCard />
-      </Card>
-
       <h2 className="section-title mb-3">{t('settings.connections')}</h2>
-      <Card className="mb-6">
+      <Card id="trading212" className="mb-6">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 className="flex items-center gap-2 text-lg font-semibold">
@@ -123,8 +111,52 @@ export default async function SettingsPage() {
         </ul>
       </Card>
 
+      <h2 className="section-title mb-3">{t('settings.dataSection')}</h2>
+      <Card className="mb-6">
+        <p className="muted mb-4 text-sm">{t('settings.dataHint')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/settings/backup" className="btn-secondary">
+            {t('backup.openPage')}
+          </Link>
+          <Link href="/settings/notifications" className="btn-secondary">
+            {t('notifications.settingsTitle')}
+          </Link>
+        </div>
+      </Card>
+
+      <h2 id="accounts" className="section-title mb-3 scroll-mt-20">
+        {t('settings.accountsTitle')}
+      </h2>
+      <Card className="mb-6">
+        <p className="muted mb-4 text-sm">{t('settings.accountsHint')}</p>
+        {sp.accounts === 'saved' && (
+          <div className="mb-4">
+            <Alert tone="success">{t('common.saved')}</Alert>
+          </div>
+        )}
+        {sp.accounts === 'none' && (
+          <div className="mb-4">
+            <Alert tone="warning">{t('settings.accountsKeepOne')}</Alert>
+          </div>
+        )}
+        <form action={saveAccountVisibilityAction} className="space-y-3">
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {ACCOUNT_IDS.map((a) => (
+              <li key={a}>
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 py-2 text-sm">
+                  <input type="checkbox" name="show" value={a} defaultChecked={!hidden.has(a)} className="h-4 w-4 accent-emerald-600" />
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ background: ACCOUNTS[a].color }} aria-hidden />
+                  <span className="flex-1">{accountName(a, t)}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <button className="btn-primary">{t('common.save')}</button>
+        </form>
+      </Card>
+
       <h2 className="section-title mb-3">{t('settings.general')}</h2>
-      <Card>
+      <Card className="mb-6">
         <ul className="divide-y divide-line/70 text-sm">
           <li>
             <Link href="/setup" className="flex items-center justify-between py-3 hover:text-brand-500">
@@ -142,6 +174,11 @@ export default async function SettingsPage() {
             </Link>
           </li>
         </ul>
+      </Card>
+
+      <h2 className="section-title mb-3">{t('pwa.title')}</h2>
+      <Card>
+        <OfflineDataCard />
       </Card>
     </div>
   );

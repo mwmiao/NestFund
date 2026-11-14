@@ -3,7 +3,7 @@ import { IncomeForm } from '@/components/income/IncomeForm';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { MonthPicker } from '@/components/MonthPicker';
 import Link from 'next/link';
-import { Alert, Card, Dot, Empty, EmptyState, Field, PageHeader, ProgressBar, budgetTone, toneText } from '@/components/ui';
+import { Alert, Card, Dot, Empty, EmptyState, Field, Hint, PageHeader, ProgressBar, budgetTone, toneText } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import type { TFunction } from '@/i18n/config';
 import { computeMonthSummary } from '@/lib/calc';
@@ -124,8 +124,24 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
         </div>
       )}
 
+      {/* Jump links: the page is long, so say what is on it and let people go straight there. */}
+      <nav aria-label={t('budget.title')} className="-mx-4 mb-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+        {(
+          [
+            ['summary', 'budget.jump.summary'],
+            ['by-category', 'budget.jump.categories'],
+            ['items', 'budget.jump.items'],
+            ['income', 'budget.jump.income'],
+          ] as const
+        ).map(([id, key]) => (
+          <a key={id} href={`#${id}`} className="chip shrink-0">
+            {t(key)}
+          </a>
+        ))}
+      </nav>
+
       {/* 1 — the month at a glance */}
-      <section className="card mb-4">
+      <section id="summary" className="card mb-4 scroll-mt-20">
         {hasIncome ? (
           <>
             <dl className="grid grid-cols-3 gap-3">
@@ -140,6 +156,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
               <div>
                 <dt className="eyebrow">{t('dashboard.availableToAssign')}</dt>
                 <dd className={`mt-1 text-lg font-semibold tabular-nums sm:text-xl ${s.plannedAvailable < 0 ? 'text-negative' : 'text-positive'}`}>{money(s.plannedAvailable)}</dd>
+                <dd className="muted mt-0.5 text-[11px]">{t('dashboard.availableToAssignHint')}</dd>
               </div>
             </dl>
             <div className="mt-5">
@@ -163,7 +180,10 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
                     </div>
                   ))}
                 <div className="flex justify-between">
-                  <dt className="muted">{t('dashboard.savingsRate')}</dt>
+                  <dt className="muted">
+                    {t('dashboard.savingsRate')}
+                    <Hint text={t('glossary.savingsRate')} />
+                  </dt>
                   <dd className="tabular-nums">{formatPercent(s.savingsRate, locale)}</dd>
                 </div>
               </dl>
@@ -176,6 +196,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
 
       {/* 2 — planned vs spent, per category */}
       <Card
+        id="by-category"
         title={t('budget.byCategory')}
         subtitle={t('budget.byCategoryHint')}
         className="mb-4"
@@ -220,7 +241,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
       </Card>
 
       {/* 3 — budget lines */}
-      <Card title={t('budget.template')} subtitle={isPast ? t('budget.pastMonthHint') : t('budget.templateHint')} className="mb-4">
+      <Card id="items" title={t('budget.template')} subtitle={isPast ? t('budget.pastMonthHint') : `${t('budget.templateSub')} ${t('budget.templateHint')}`} className="mb-4">
         {isPast ? (
           <ul className="divide-y divide-line/70 text-sm">
             {budget.items.map((i) => (

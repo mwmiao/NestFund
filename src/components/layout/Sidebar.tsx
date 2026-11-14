@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useI18n } from '@/i18n/client';
 import { Icon } from './Icon';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { NAV_ICONS, PRIMARY_NAV, SECONDARY_NAV, isActive, type NavItem } from './nav';
+import { NAV_ICONS, NAV_GROUPS, PRIMARY_NAV, isActive, type NavItem } from './nav';
 import { NotificationBell } from './NotificationBell';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -44,10 +44,14 @@ export function Sidebar({ theme }: { theme: 'dark' | 'light' }) {
       <nav aria-label="Main" className="space-y-0.5">
         {PRIMARY_NAV.map(link)}
       </nav>
-      <div className="eyebrow mb-1 mt-6 px-3">{t('nav.tools')}</div>
-      <nav aria-label="Tools" className="space-y-0.5">
-        {SECONDARY_NAV.map(link)}
-      </nav>
+      {NAV_GROUPS.map((g) => (
+        <div key={g.labelKey}>
+          <div className="eyebrow mb-1 mt-6 px-3">{t(g.labelKey)}</div>
+          <nav aria-label={t(g.labelKey)} className="space-y-0.5">
+            {g.items.map(link)}
+          </nav>
+        </div>
+      ))}
       <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-4">
         <LanguageSwitcher />
         <div className="flex items-center">

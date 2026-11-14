@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/i18n/client';
 import { Icon } from './Icon';
-import { MOBILE_MORE, MOBILE_TABS, NAV_ICONS, isActive } from './nav';
+import { MOBILE_TABS, NAV_GROUPS, NAV_ICONS, isActive } from './nav';
 
 export const MORE_EVENT = 'nestfund:more';
 
@@ -29,21 +29,26 @@ export function BottomNav() {
         <>
           <button type="button" aria-label={t('common.close')} className="fixed inset-0 z-40 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />
           <div className="fixed inset-x-3 top-16 z-50 rounded-card border border-line bg-surface p-2 shadow-pop lg:hidden" role="menu">
-            <div className="grid grid-cols-2 gap-1">
-              {MOBILE_MORE.map((i) => (
-                <Link
-                  key={i.href}
-                  href={i.href}
-                  role="menuitem"
-                  className={`flex min-h-12 items-center gap-2.5 rounded-control px-3 py-2 text-sm font-medium transition hover:bg-raised ${
-                    isActive(pathname, i.href) ? 'bg-raised text-ink' : 'text-subtle'
-                  }`}
-                >
-                  <Icon d={i.icon} className="h-5 w-5 shrink-0" />
-                  <span className="truncate">{t(i.key)}</span>
-                </Link>
-              ))}
-            </div>
+            {NAV_GROUPS.map((g) => (
+              <div key={g.labelKey} className="mb-1">
+                <div className="eyebrow px-3 pb-1 pt-2">{t(g.labelKey)}</div>
+                <div className="grid grid-cols-2 gap-1">
+                  {g.items.map((i) => (
+                    <Link
+                      key={i.href}
+                      href={i.href}
+                      role="menuitem"
+                      className={`flex min-h-12 items-center gap-2.5 rounded-control px-3 py-2 text-sm font-medium transition hover:bg-raised ${
+                        isActive(pathname, i.href) ? 'bg-raised text-ink' : 'text-subtle'
+                      }`}
+                    >
+                      <Icon d={i.icon} className="h-5 w-5 shrink-0" />
+                      <span className="truncate">{t(i.key)}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </>
       )}

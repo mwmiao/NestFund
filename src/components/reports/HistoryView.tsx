@@ -91,6 +91,7 @@ export async function HistoryView() {
             <BarsChart
               data={savingsChart}
               xKey="label"
+              label={t('history.savingsEvolution')}
               stacked
               series={[
                 { key: 'etf', name: t('budget.kinds.etf'), color: '#10b981' },
@@ -102,13 +103,14 @@ export async function HistoryView() {
           )}
         </Card>
         <Card title={t('history.cumulativeSavings')}>
-          {savingsChart.length >= 2 ? <LinesChart data={savingsChart} xKey="label" series={[{ key: 'cumulative', name: t('history.cumulativeSavings'), color: '#10b981' }]} /> : emptyMonths}
+          {savingsChart.length >= 2 ? <LinesChart data={savingsChart} xKey="label" label={t('history.cumulativeSavings')} series={[{ key: 'cumulative', name: t('history.cumulativeSavings'), color: '#10b981' }]} /> : emptyMonths}
         </Card>
         <Card title={t('history.etfEvolution')}>
           {etfChart.length >= 2 ? (
             <LinesChart
               data={etfChart}
               xKey="label"
+              label={t('history.etfEvolution')}
               series={[
                 { key: 'value', name: t('portfolio.value'), color: '#10b981' },
                 { key: 'invested', name: t('portfolio.invested'), color: '#6366f1' },
@@ -119,10 +121,10 @@ export async function HistoryView() {
           )}
         </Card>
         <Card title={t('history.houseEvolution')}>
-          {cashChart.length >= 2 ? <LinesChart data={cashChart} xKey="label" series={[{ key: 'value', name: 'Trade Republic', color: '#a855f7' }]} /> : emptyBalances}
+          {cashChart.length >= 2 ? <LinesChart data={cashChart} xKey="label" label={t('history.houseEvolution')} series={[{ key: 'value', name: 'Trade Republic', color: '#a855f7' }]} /> : emptyBalances}
         </Card>
         <Card title={t('history.spendingByCategory')} className="lg:col-span-2">
-          {byMonth.size >= 1 ? <BarsChart data={[...byMonth.values()]} xKey="label" stacked series={spendSeries} height={300} /> : emptyMonths}
+          {byMonth.size >= 1 ? <BarsChart data={[...byMonth.values()]} xKey="label" label={t('history.spendingByCategory')} stacked series={spendSeries} height={300} /> : emptyMonths}
         </Card>
       </div>
 

@@ -119,6 +119,7 @@ export function HouseSimulator({ defaults }: { defaults: HouseDefaults }) {
       <GrowthChart
         data={chart}
         xKey="label"
+        label={t('sim.projection')}
         series={[
           { key: 'deposited', name: t('sim.deposited'), color: '#6366f1' },
           { key: 'balance', name: t('sim.balance'), color: '#10b981' },

@@ -52,7 +52,7 @@ export function EtfSimulator({ defaults }: { defaults: { monthlyContribution: nu
           </div>
         ))}
       </div>
-      <GrowthChart data={yearly} xKey="label" series={series} />
+      <GrowthChart data={yearly} xKey="label" label={t('sim.projectedValue')} series={series} />
     </div>
   );
 }

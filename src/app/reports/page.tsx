@@ -123,7 +123,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       ) : (
         <div className="mb-4 grid gap-4 lg:grid-cols-2">
           <Card title={t('reports.byCategory')}>
-            <DonutChart data={r.byCategory.map((c) => ({ name: nameOf(c.categoryId), value: c.total, color: colorOf(c.categoryId) }))} />
+            <DonutChart data={r.byCategory.map((c) => ({ name: nameOf(c.categoryId), value: c.total, color: colorOf(c.categoryId) }))} label={t('reports.byCategory')} />
             <ul className="mt-2 divide-y divide-line/70">
               {r.byCategory.map((c) => (
                 <li key={String(c.categoryId)} className="flex items-center gap-2 py-2 text-sm">
@@ -207,6 +207,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             <BarsChart
               data={r.contributions.map((c) => ({ label: monthLabel(c.month, locale, 'short'), trading212: c.trading212, traderepublic: c.traderepublic }))}
               xKey="label"
+              label={t('reports.contributions')}
               stacked
               series={[
                 { key: 'trading212', name: accountName('trading212', t), color: '#10b981' },
@@ -222,6 +223,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             <LinesChart
               data={curve(r.trading212)}
               xKey="label"
+              label={t('reports.t212Value')}
               series={[
                 { key: 'value', name: t('portfolio.value'), color: '#10b981' },
                 { key: 'invested', name: t('portfolio.invested'), color: '#6366f1' },
@@ -232,7 +234,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           )}
         </Card>
         <Card title={t('reports.trValue')} className="lg:col-span-2">
-          {r.traderepublic.length >= 2 ? <LinesChart data={curve(r.traderepublic)} xKey="label" series={[{ key: 'value', name: accountName('traderepublic', t), color: '#0ea5e9' }]} /> : portfolioEmpty}
+          {r.traderepublic.length >= 2 ? <LinesChart data={curve(r.traderepublic)} xKey="label" label={t('reports.trValue')} series={[{ key: 'value', name: accountName('traderepublic', t), color: '#0ea5e9' }]} /> : portfolioEmpty}
         </Card>
       </div>
     </>

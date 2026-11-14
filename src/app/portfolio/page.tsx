@@ -115,6 +115,7 @@ export default async function PortfolioPage() {
           <LinesChart
             data={etfChart}
             xKey="label"
+            label={t('portfolio.evolution')}
             height={220}
             series={[
               { key: 'value', name: t('t212.totalValue'), color: ACCOUNTS.trading212.color },
@@ -152,7 +153,7 @@ export default async function PortfolioPage() {
           <div className="muted mt-1 text-xs">{tr.since ? t('portfolio.statusManual', { date: formatDate(tr.since) }) : t('accounts.noCheckIn')}</div>
           <InterestSection />
           <div className="mt-4">
-            <LinesChart data={trChart} xKey="label" height={160} series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />
+            <LinesChart data={trChart} xKey="label" label="Trade Republic" height={160} series={[{ key: 'value', name: t('portfolio.value'), color: ACCOUNTS.traderepublic.color }]} />
           </div>
         </Card>
 

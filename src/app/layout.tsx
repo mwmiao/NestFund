@@ -10,6 +10,7 @@ import { PwaClient } from '@/components/pwa/PwaClient';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n } from '@/i18n/server';
 import { visibleAccounts } from '@/lib/repo';
+import { ACCOUNT_IDS } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,18 @@ export const viewport: Viewport = {
   ],
 };
 
+/**
+ * The accounts list only personalises the pickers. If the database is unreachable the shell must still render, so the
+ * page's own error boundary (error.tsx) can explain the problem with the navigation intact.
+ */
+function accountsOrAll() {
+  try {
+    return visibleAccounts();
+  } catch {
+    return [...ACCOUNT_IDS];
+  }
+}
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { locale, t } = await getI18n();
   const theme = (await cookies()).get('theme')?.value === 'light' ? 'light' : 'dark';
@@ -49,15 +62,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {t('nav.skipToContent')}
         </a>
         <I18nProvider locale={locale}>
-          <AccountsProvider visible={visibleAccounts()}>
-          <Sidebar theme={theme} />
-          <Header theme={theme} />
-          <div className="lg:pl-60">
-            <main id="main-content" tabIndex={-1} className="mx-auto max-w-5xl px-4 pb-32 pt-5 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8 outline-none focus-visible:ring-0 focus-visible:ring-offset-0">{children}</main>
-            <footer className="muted mx-auto hidden max-w-5xl px-10 pb-8 text-xs lg:block">{t('app.disclaimer')}</footer>
-          </div>
-          <BottomNav />
-          <PwaClient />
+          <AccountsProvider visible={accountsOrAll()}>
+            <Sidebar theme={theme} />
+            <Header theme={theme} />
+            <div className="lg:pl-60">
+              <main
+                id="main-content"
+                tabIndex={-1}
+                className="mx-auto max-w-5xl px-4 pb-32 pt-5 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 sm:px-6 lg:px-10 lg:pb-12 lg:pt-8"
+              >
+                {children}
+              </main>
+              <footer className="muted mx-auto hidden max-w-5xl px-10 pb-8 text-xs lg:block">{t('app.disclaimer')}</footer>
+            </div>
+            <BottomNav />
+            <PwaClient />
           </AccountsProvider>
         </I18nProvider>
       </body>

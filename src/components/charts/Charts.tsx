@@ -27,6 +27,8 @@ export interface Series {
   color: string;
 }
 
+type Row = Record<string, string | number>;
+
 const AXIS = { stroke: '#71717a', fontSize: 11, tickLine: false, axisLine: false } as const;
 const GRID = <CartesianGrid strokeDasharray="3 3" stroke="#71717a" strokeOpacity={0.2} vertical={false} />;
 
@@ -50,7 +52,7 @@ const tooltipStyle = {
 // Animations are off: with React 19 Recharts 2 can leave shapes unrendered, and instant charts feel snappier.
 
 /** Empty or all-zero series render a calm placeholder instead of a broken, axis-only chart. */
-function hasValues(data: Record<string, string | number>[], keys: string[]) {
+function hasValues(data: Row[], keys: string[]) {
   return data.some((row) => keys.some((k) => typeof row[k] === 'number' && Number.isFinite(row[k] as number) && row[k] !== 0));
 }
 
@@ -75,7 +77,7 @@ function ChartFrame({ label, summary, children }: { label: string; summary: stri
 }
 
 /** Exact values under a collapsed disclosure, for keyboard and screen-reader users. */
-function DataTable({ data, xKey, series, format }: { data: Record<string, string | number>[]; xKey: string; series: Series[]; format: (v: number) => string }) {
+function DataTable({ data, xKey, series, format }: { data: Row[]; xKey: string; series: Series[]; format: (v: number) => string }) {
   const { t } = useI18n();
   const rows = data.slice(-MAX_TABLE_ROWS);
   return (
@@ -108,13 +110,27 @@ function DataTable({ data, xKey, series, format }: { data: Record<string, string
   );
 }
 
-/** One sentence per series: start, end, lowest and highest. */
-function useSummary(data: Record<string, string | number>[], xKey: string, series: Series[]) {
+/**
+ * What the series charts (bars, lines, areas) share: the empty state, an accessible name with a one-sentence summary per series
+ * (start, end, lowest, highest), the chart itself, and the exact values in a collapsed table.
+ */
+function ChartShell({ label, data, xKey, series, height, children }: { label: string; data: Row[]; xKey: string; series: Series[]; height: number; children: React.ReactElement }) {
   const { t } = useI18n();
   const m = useMoney();
-  return seriesStats(data, xKey, series)
+  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
+  const summary = seriesStats(data, xKey, series)
     .map((s) => t('charts.summary', { name: s.name, first: m.full(s.first.value), from: s.first.x, last: m.full(s.last.value), to: s.last.x, min: m.full(s.min.value), max: m.full(s.max.value) }))
     .join(' ');
+  return (
+    <>
+      <ChartFrame label={label} summary={summary}>
+        <ResponsiveContainer width="100%" height={height}>
+          {children}
+        </ResponsiveContainer>
+      </ChartFrame>
+      <DataTable data={data} xKey={xKey} series={series} format={m.full} />
+    </>
+  );
 }
 
 export function DonutChart({ data, label, height = 220 }: { data: { name: string; value: number; color: string }[]; label: string; height?: number }) {
@@ -146,7 +162,7 @@ export function BarsChart({
   stacked = false,
   height = 260,
 }: {
-  data: Record<string, string | number>[];
+  data: Row[];
   xKey: string;
   series: Series[];
   label: string;
@@ -154,94 +170,72 @@ export function BarsChart({
   height?: number;
 }) {
   const m = useMoney();
-  const summary = useSummary(data, xKey, series);
-  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
-    <>
-      <ChartFrame label={label} summary={summary}>
-        <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-            {GRID}
-            <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" />
-            <YAxis {...AXIS} width={56} tickFormatter={m.compact} />
-            <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} cursor={{ fill: '#71717a', fillOpacity: 0.1 }} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {series.map((s, i) => (
-              <Bar
-                key={s.key}
-                isAnimationActive={false}
-                dataKey={s.key}
-                name={s.name}
-                fill={s.color}
-                stackId={stacked ? 'a' : undefined}
-                radius={stacked ? (i === series.length - 1 ? [4, 4, 0, 0] : 0) : [4, 4, 0, 0]}
-                maxBarSize={36}
-              />
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
-      </ChartFrame>
-      <DataTable data={data} xKey={xKey} series={series} format={m.full} />
-    </>
+    <ChartShell label={label} data={data} xKey={xKey} series={series} height={height}>
+      <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
+        {GRID}
+        <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" />
+        <YAxis {...AXIS} width={56} tickFormatter={m.compact} />
+        <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} cursor={{ fill: '#71717a', fillOpacity: 0.1 }} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        {series.map((s, i) => (
+          <Bar
+            key={s.key}
+            isAnimationActive={false}
+            dataKey={s.key}
+            name={s.name}
+            fill={s.color}
+            stackId={stacked ? 'a' : undefined}
+            radius={stacked ? (i === series.length - 1 ? [4, 4, 0, 0] : 0) : [4, 4, 0, 0]}
+            maxBarSize={36}
+          />
+        ))}
+      </BarChart>
+    </ChartShell>
   );
 }
 
-export function LinesChart({ data, xKey, series, label, height = 260 }: { data: Record<string, string | number>[]; xKey: string; series: Series[]; label: string; height?: number }) {
+export function LinesChart({ data, xKey, series, label, height = 260 }: { data: Row[]; xKey: string; series: Series[]; label: string; height?: number }) {
   const m = useMoney();
-  const summary = useSummary(data, xKey, series);
-  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
-    <>
-      <ChartFrame label={label} summary={summary}>
-        <ResponsiveContainer width="100%" height={height}>
-          <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            {GRID}
-            <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" minTickGap={24} />
-            {/* Balances: scale to the data range so movement is visible (not anchored at 0 €). */}
-            <YAxis {...AXIS} width={60} tickFormatter={m.compact} domain={['auto', 'auto']} />
-            <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {series.map((s) => (
-              <Line key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} dot={data.length < 16} />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
-      </ChartFrame>
-      <DataTable data={data} xKey={xKey} series={series} format={m.full} />
-    </>
+    <ChartShell label={label} data={data} xKey={xKey} series={series} height={height}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        {GRID}
+        <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" minTickGap={24} />
+        {/* Balances: scale to the data range so movement is visible (not anchored at 0 €). */}
+        <YAxis {...AXIS} width={60} tickFormatter={m.compact} domain={['auto', 'auto']} />
+        <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        {series.map((s) => (
+          <Line key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} dot={data.length < 16} />
+        ))}
+      </LineChart>
+    </ChartShell>
   );
 }
 
-export function GrowthChart({ data, xKey, series, label, height = 280 }: { data: Record<string, string | number>[]; xKey: string; series: Series[]; label: string; height?: number }) {
+export function GrowthChart({ data, xKey, series, label, height = 280 }: { data: Row[]; xKey: string; series: Series[]; label: string; height?: number }) {
   const m = useMoney();
-  const summary = useSummary(data, xKey, series);
-  if (!hasValues(data, series.map((s) => s.key))) return <ChartEmpty height={height} />;
   return (
-    <>
-      <ChartFrame label={label} summary={summary}>
-        <ResponsiveContainer width="100%" height={height}>
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-            <defs>
-              {series.map((s) => (
-                <linearGradient key={s.key} id={`g-${s.key}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={s.color} stopOpacity={0.35} />
-                  <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
-                </linearGradient>
-              ))}
-            </defs>
-            {GRID}
-            <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" minTickGap={24} />
-            <YAxis {...AXIS} width={60} tickFormatter={m.compact} />
-            <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
-            <Legend wrapperStyle={{ fontSize: 12 }} />
-            {series.map((s) => (
-              <Area key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} fill={`url(#g-${s.key})`} />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
-      </ChartFrame>
-      <DataTable data={data} xKey={xKey} series={series} format={m.full} />
-    </>
+    <ChartShell label={label} data={data} xKey={xKey} series={series} height={height}>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <defs>
+          {series.map((s) => (
+            <linearGradient key={s.key} id={`g-${s.key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={s.color} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
+            </linearGradient>
+          ))}
+        </defs>
+        {GRID}
+        <XAxis dataKey={xKey} {...AXIS} interval="preserveStartEnd" minTickGap={24} />
+        <YAxis {...AXIS} width={60} tickFormatter={m.compact} />
+        <Tooltip {...tooltipStyle} formatter={(v: number) => m.full(v)} />
+        <Legend wrapperStyle={{ fontSize: 12 }} />
+        {series.map((s) => (
+          <Area key={s.key} isAnimationActive={false} type="monotone" dataKey={s.key} name={s.name} stroke={s.color} strokeWidth={2} fill={`url(#g-${s.key})`} />
+        ))}
+      </AreaChart>
+    </ChartShell>
   );
 }
-

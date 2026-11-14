@@ -30,7 +30,7 @@ describe('amounts', () => {
     expect(parseDecimal('-5')).toBe(-5);
   });
   it('rejects text, exponents and anything that is not a plain number', () => {
-    for (const bad of ['abc', '1e5', '0x10', '1,2,3,4', '--5', '5-', '1 000 x', '', '   ', 'NaN', 'Infinity']) expect(parseDecimal(bad)).toBeNull();
+    for (const bad of ['abc', '1e5', '0x10', '1,2,3', '1,2,3,4', '--5', '5-', '1 000 x', '', '   ', 'NaN', 'Infinity']) expect(parseDecimal(bad)).toBeNull();
     expect(parseDecimal(NaN)).toBeNull();
     expect(parseDecimal(Infinity)).toBeNull();
     expect(parseDecimal({})).toBeNull();

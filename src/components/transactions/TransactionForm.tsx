@@ -9,6 +9,7 @@ import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
+import { TX_FORM_ERROR_MESSAGE, type TxFormError } from '@/lib/tx-form-error';
 import { ACCOUNTS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
 
 type Kind = 'spending' | 'income' | 'transfer';
@@ -93,7 +94,7 @@ export function TransactionForm({
   topCategoryIds?: number[];
   /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
   suggest?: { rules: RuleLike[]; history: HistoryHints };
-  error?: string | null;
+  error?: TxFormError | null;
 }) {
   const { t } = useI18n();
   const accounts = useAccounts([transaction?.account, transaction?.toAccount].filter((a): a is AccountId => !!a));
@@ -147,9 +148,9 @@ export function TransactionForm({
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="type" value={type} />
 
-      {(error === 'transfer' || error === 'amount') && (
+      {error && (
         <p role="alert" className="rounded-control border border-negative/30 bg-negative/10 px-3 py-2 text-sm">
-          {t(error === 'transfer' ? 'tx.transferError' : 'tx.amountError')}
+          {t(TX_FORM_ERROR_MESSAGE[error])}
         </p>
       )}
 

@@ -2,6 +2,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { Card, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
 import { todayISO } from '@/lib/dates';
+import { asTxFormError } from '@/lib/tx-form-error';
 import { transactionFormOptions } from '@/lib/tx-options';
 
 export const generateMetadata = pageTitle('tx.new');
@@ -12,7 +13,7 @@ export default async function NewTransactionPage({ searchParams }: { searchParam
     <div className="mx-auto max-w-2xl">
       <PageHeader title={t('tx.new')} />
       <Card>
-        <TransactionForm {...transactionFormOptions(t)} today={todayISO()} back="/transactions" error={error} initialType={type} />
+        <TransactionForm {...transactionFormOptions(t)} today={todayISO()} back="/transactions" error={asTxFormError(error)} initialType={type} />
       </Card>
     </div>
   );

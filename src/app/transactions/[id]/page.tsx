@@ -6,6 +6,7 @@ import { Card, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
 import { todayISO } from '@/lib/dates';
 import { getTransaction } from '@/lib/repo';
+import { asTxFormError } from '@/lib/tx-form-error';
 import { transactionFormOptions } from '@/lib/tx-options';
 
 export const generateMetadata = pageTitle('tx.editTitle');
@@ -30,7 +31,7 @@ export default async function EditTransactionPage({ params, searchParams }: { pa
         }
       />
       <Card>
-        <TransactionForm {...transactionFormOptions(t)} transaction={tx} today={todayISO()} back={back} error={error} />
+        <TransactionForm {...transactionFormOptions(t)} transaction={tx} today={todayISO()} back={back} error={asTxFormError(error)} />
       </Card>
     </div>
   );

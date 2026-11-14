@@ -15,6 +15,7 @@ import { parseDecimal } from '@/lib/format';
 import { tooMany } from '@/lib/rate-limit';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
+import { txFormErrorUrl } from '@/lib/tx-form-error';
 import { connectT212, disconnectT212, pollT212, syncT212 } from '@/lib/t212';
 import type { PollResult } from '@/lib/t212-polling';
 import {
@@ -118,7 +119,7 @@ export async function saveTransactionAction(fd: FormData) {
   const amount = Math.abs(num(fd, 'amount'));
   const description = text(fd, 'description', MAX_TEXT.description);
   // An amount that cannot be read (or is zero) goes back to the form with a message instead of vanishing silently.
-  if (!amount) redirect(`/transactions/${id ?? 'new'}?error=amount`);
+  if (!amount) redirect(txFormErrorUrl(id, 'amount'));
   if (!description) redirect(safeBack(fd, '/transactions'));
 
   let attachment = existing?.attachment ?? null;
@@ -138,7 +139,7 @@ export async function saveTransactionAction(fd: FormData) {
   const account = optAccount(fd, 'account') ?? 'ctt';
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
   // A transfer needs a different destination; otherwise fall back to the form so the user can fix it.
-  if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(`/transactions/${id ?? 'new'}?error=transfer`);
+  if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(txFormErrorUrl(id, 'transfer'));
   repo.upsertTransaction({
     id: id ?? undefined,
     date: isISODate(date) ? date : todayISO(),

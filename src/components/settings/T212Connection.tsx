@@ -1,19 +1,10 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { connectT212Action, disconnectT212Action, syncT212Action } from '@/app/actions';
+import { SubmitButton } from '@/components/SubmitButton';
 import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
-
-function Submit({ label, className = 'btn-primary' }: { label: string; className?: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <button className={className} disabled={pending}>
-      {pending ? '…' : label}
-    </button>
-  );
-}
 
 function Message({ state, okKey }: { state: { ok: boolean; code?: string } | null; okKey: string }) {
   const { t } = useI18n();
@@ -46,7 +37,7 @@ export function T212ConnectForm({ env, replacing = false }: { env: string; repla
         <input name="apiSecret" type="password" autoComplete="off" spellCheck={false} className="input font-mono" />
       </Field>
       <div className="flex flex-wrap items-center gap-3">
-        <Submit label={replacing ? t('t212.replace') : t('t212.connect')} />
+        <SubmitButton>{replacing ? t('t212.replace') : t('t212.connect')}</SubmitButton>
         <Message state={state} okKey="t212.connected" />
       </div>
     </form>
@@ -59,7 +50,7 @@ export function T212Actions() {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <form action={action}>
-        <Submit label={`↻ ${t('t212.syncNow')}`} />
+        <SubmitButton>{`↻ ${t('t212.syncNow')}`}</SubmitButton>
       </form>
       <form action={disconnectT212Action}>
         <button

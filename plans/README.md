@@ -18,6 +18,9 @@ and update your row when done.
 | [008](008-accessible-labelled-more-menu.md) | Replace the hidden mobile hamburger with a labelled, keyboard-accessible "More" tab | P1 | M | MED | — | DONE (reviewed in a browser at 375px; one focus bug found and fixed; merged to main) |
 | [009](009-chart-text-alternatives.md) | Give every chart a text summary and a data table | P2 | M | LOW | — | DONE (reviewed in a browser with seeded data; merged to main) |
 | [010](010-accessibility-quick-fixes.md) | Accessibility quick fixes: contrast, placeholders, reduced motion, progress bars, hints, small text | P2 | S–M | LOW | 007, 008 | DONE (reviewed in a browser; two Hint bugs found and fixed; merged to main) |
+| [011](011-error-pages.md) | Friendly translated error pages with a retry button (`error.tsx`, `global-error.tsx`) | P2 | S | LOW | — | DONE (reviewed against a production build; retry bug found and fixed; merged to main) |
+| [012](012-amount-field-errors.md) | Explain a mistyped amount in the app's language and show an error when the server cannot read it | P2 | S | LOW | — | DONE (reviewed in a browser; merged to main) |
+| [013](013-skip-to-content-link.md) | Add a "Skip to main content" link | P3 | S | LOW | — | DONE (reviewed in a browser; padding fix; merged to main) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -44,6 +47,9 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
   008 rewrites `BottomNav.tsx` and 010 later changes one colour class in it, hence 010 after 008. 009 touches no file
   that 006–008 or 010 edit apart from the chart call sites and one-line imports.
 
+- **011–013 (written against `ed4209c`, 2026-11-14)** are logically independent. All three add keys to `src/i18n/locales/*.json` (groups `error`, `common`/`tx`, `nav`),
+  so run them in the order 011, 012, 013 to avoid trivial merge conflicts. Only 012 touches `src/app/actions.ts`, `TransactionForm.tsx` and `AccountsPanel.tsx`; only 013 touches `layout.tsx`.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -51,10 +57,7 @@ Plans are numbered in execution order, so audit #2 is plan 003, audit #3 is plan
 
 ## Findings not planned yet
 
-From the UX and accessibility audit (3ca9a94), not selected for a plan:
-- No `error.tsx` / `global-error.tsx`: a failed database read shows Next.js's default error page with no retry (S).
-- Amount fields use `pattern` without a custom message, so mistyped amounts show the browser's generic wording (S).
-- No skip-to-content link; keyboard users pass about 14 sidebar links on every page (S).
+From the UX and accessibility audit (3ca9a94): all three remaining findings are now plans 011, 012 and 013.
 
 - Next 15 → 16 upgrade for the bundled PostCSS advisory (build-time only; documented in `SECURITY.md`).
 - Remaining items 5–8 of the Trading 212 code review (props duplication, `t212Get` callback, `T212LiveStatus` hook, minor cleanups).

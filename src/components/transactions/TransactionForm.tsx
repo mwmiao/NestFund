@@ -1,10 +1,10 @@
 'use client';
 
 import { useDeferredValue, useMemo, useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { saveTransactionAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
-import { Field, Spinner } from '@/components/ui';
+import { SubmitButton } from '@/components/SubmitButton';
+import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
@@ -40,15 +40,6 @@ function shiftDay(iso: string, days: number) {
   const d = new Date(`${iso}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
-}
-
-function SubmitButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" className="btn-primary min-h-12 flex-[2] sm:flex-none" disabled={pending}>
-      {pending ? <Spinner /> : label}
-    </button>
-  );
 }
 
 function AccountChips({ name, value, onChange, exclude, accounts }: { name: string; value: AccountId | ''; onChange: (a: AccountId) => void; exclude?: AccountId; accounts: readonly AccountId[] }) {
@@ -372,7 +363,7 @@ export function TransactionForm({
         <a href={back} className="btn-ghost flex-1 sm:flex-none">
           {t('common.cancel')}
         </a>
-        <SubmitButton label={t('common.save')} />
+        <SubmitButton className="btn-primary min-h-12 flex-[2] sm:flex-none">{t('common.save')}</SubmitButton>
       </div>
     </form>
   );

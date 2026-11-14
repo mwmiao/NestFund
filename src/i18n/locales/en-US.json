@@ -64,6 +64,12 @@
     "noDataYet": "No data yet",
     "yesterday": "Yesterday"
   },
+  "error": {
+    "title": "Something went wrong",
+    "hint": "This page could not be loaded. Your data is not affected. Try again, and if it keeps happening check that the server and its storage are running.",
+    "retry": "Try again",
+    "reference": "Reference: {id}"
+  },
   "dashboard": {
     "title": "Overview",
     "netIncome": "Net income",

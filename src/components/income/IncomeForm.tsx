@@ -5,6 +5,7 @@ import { saveMonthIncomeAction } from '@/app/actions';
 import { useI18n } from '@/i18n/client';
 import { formatMoney, parseDecimal, toInputDecimal } from '@/lib/format';
 import { estimateFromDays, paidDayEquivalents } from '@/lib/payday';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export interface IncomeFormInitial {
   month: string;
@@ -125,7 +126,7 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
           <input name="notes" defaultValue={init.notes} className="input" />
         </label>
       </div>
-      <button className="btn-primary">{t('common.save')}</button>
+      <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
     </form>
   );
 }

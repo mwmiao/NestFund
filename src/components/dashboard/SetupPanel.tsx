@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { dismissOnboardingAction } from '@/app/actions';
 import type { TFunction } from '@/i18n/config';
 import { ONBOARDING_STEPS, type OnboardingState } from '@/lib/repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 /** "Start here" checklist shown on the dashboard until setup is finished or dismissed. */
 export function SetupPanel({ onboarding, t }: { onboarding: OnboardingState; t: TFunction }) {
@@ -17,7 +18,7 @@ export function SetupPanel({ onboarding, t }: { onboarding: OnboardingState; t: 
         </div>
         <div className="flex gap-2">
           <form action={dismissOnboardingAction}>
-            <button className="btn-ghost">{t('setup.notNow')}</button>
+            <SubmitButton className="btn-ghost">{t('setup.notNow')}</SubmitButton>
           </form>
           <Link href="/setup" className="btn-primary">
             {doneCount ? t('setup.resume') : t('setup.start')}

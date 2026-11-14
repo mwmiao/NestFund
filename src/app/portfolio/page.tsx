@@ -14,6 +14,7 @@ import { accountBalances, listSnapshots, materializeRecurring, visibleAccounts }
 import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
 import { ACCOUNTS } from '@/lib/types';
+import { SubmitButton } from '@/components/SubmitButton';
 
 const dayMonth = (iso: string) => formatDate(iso).slice(0, 5);
 
@@ -198,7 +199,7 @@ export default async function PortfolioPage() {
           </Field>
           <p className="muted text-xs sm:col-span-2">{t('portfolio.investedHint')}</p>
           <div className="sm:col-span-2">
-            <button className="btn-primary">{t('common.save')}</button>
+            <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
           </div>
         </form>
       </details>

@@ -7,6 +7,7 @@ import { accountName, categoryName } from '@/lib/labels';
 import { listCategories, visibleAccounts } from '@/lib/repo';
 import { ACCOUNT_IDS, type AccountId } from '@/lib/types';
 import { listRules } from '@/lib/rules-repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export const generateMetadata = pageTitle('rules.title');
 export default async function RulesPage({ searchParams }: { searchParams: Promise<{ applied?: string }> }) {
@@ -60,7 +61,7 @@ export default async function RulesPage({ searchParams }: { searchParams: Promis
             <input type="checkbox" name="applyAfter" value="1" className="h-4 w-4 accent-emerald-600" />
             {t('rules.applyAfter')}
           </label>
-          <button className="btn-primary sm:col-span-2 sm:justify-self-start">{t('rules.add')}</button>
+          <SubmitButton className="btn-primary sm:col-span-2 sm:justify-self-start">{t('rules.add')}</SubmitButton>
         </form>
       </Card>
 
@@ -101,23 +102,23 @@ export default async function RulesPage({ searchParams }: { searchParams: Promis
                   <form action={toggleRuleAction}>
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="enabled" value={r.enabled ? '0' : '1'} />
-                    <button className="btn-secondary" aria-pressed={r.enabled}>
+                    <SubmitButton className="btn-secondary" aria-pressed={r.enabled}>
                       {r.enabled ? t('rules.off') : t('rules.active')}
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={moveRuleAction}>
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="direction" value="up" />
-                    <button className="btn-secondary" disabled={i === 0} aria-label={t('rules.moveUp')} title={t('rules.moveUp')}>
+                    <SubmitButton className="btn-secondary" disabled={i === 0} aria-label={t('rules.moveUp')} title={t('rules.moveUp')}>
                       ↑
-                    </button>
+                    </SubmitButton>
                   </form>
                   <form action={moveRuleAction}>
                     <input type="hidden" name="id" value={r.id} />
                     <input type="hidden" name="direction" value="down" />
-                    <button className="btn-secondary" disabled={i === rules.length - 1} aria-label={t('rules.moveDown')} title={t('rules.moveDown')}>
+                    <SubmitButton className="btn-secondary" disabled={i === rules.length - 1} aria-label={t('rules.moveDown')} title={t('rules.moveDown')}>
                       ↓
-                    </button>
+                    </SubmitButton>
                   </form>
                   <a href={`/transactions/rules/apply?rule=${r.id}`} className="btn-secondary">
                     {t('rules.apply')}
@@ -137,7 +138,7 @@ export default async function RulesPage({ searchParams }: { searchParams: Promis
                     </Field>
                     <Field label={t('rules.ifAccount')}>{accountSelect(r.account)}</Field>
                     <Field label={t('rules.thenCategory')}>{categorySelect(r.categoryId)}</Field>
-                    <button className="btn-primary sm:col-span-2 sm:justify-self-start">{t('rules.save')}</button>
+                    <SubmitButton className="btn-primary sm:col-span-2 sm:justify-self-start">{t('rules.save')}</SubmitButton>
                   </form>
                 </details>
               </li>

@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { useFormStatus } from 'react-dom';
 import { saveSnapshotAction, saveTransactionAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
 import { Icon } from '@/components/layout/Icon';
-import { Spinner } from '@/components/ui';
+import { SubmitButton } from '@/components/SubmitButton';
 import { useI18n } from '@/i18n/client';
 import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
@@ -33,15 +32,6 @@ export interface RecentTransfer {
 const PENCIL = 'M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4';
 const TRANSFER = 'M7 7h13l-3-3M17 17H4l3 3';
 const toneClass = { positive: 'text-positive', negative: 'text-negative', muted: 'text-subtle' };
-
-function Save({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <button className="btn-primary !px-3 !py-2" disabled={pending}>
-      {pending ? <Spinner /> : label}
-    </button>
-  );
-}
 
 /** Dashboard account list: inline "update balance" per account and a quick transfer form. */
 export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { rows: AccountRow[]; recentTransfers: RecentTransfer[]; today: string; wide?: boolean }) {
@@ -121,7 +111,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
               <button type="button" className="btn-ghost !px-3 !py-2" onClick={() => setTransferOpen(false)}>
                 {t('common.cancel')}
               </button>
-              <Save label={t('dashboard.saveTransfer')} />
+              <SubmitButton className="btn-primary !px-3 !py-2">{t('dashboard.saveTransfer')}</SubmitButton>
             </div>
           </form>
 
@@ -209,7 +199,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
                         <button type="button" className="btn-ghost !px-3 !py-2" onClick={() => setEditing(null)}>
                           {t('common.cancel')}
                         </button>
-                        <Save label={t('common.save')} />
+                        <SubmitButton className="btn-primary !px-3 !py-2">{t('common.save')}</SubmitButton>
                       </div>
                       <p className="muted basis-full text-[11px]">{t('dashboard.updateBalanceHint')}</p>
                     </form>

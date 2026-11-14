@@ -8,6 +8,7 @@ import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { getRule, previewRule } from '@/lib/rules-repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 /** Read-only preview: lists what a rule WOULD change. Nothing is written until the user confirms with the form below. */
 export const generateMetadata = pageTitle('rules.previewTitle');
@@ -77,7 +78,7 @@ export default async function ApplyRulePage({ searchParams }: { searchParams: Pr
               ))}
             </ul>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button className="btn-primary min-h-12 flex-1 sm:flex-none">{t('rules.confirm')}</button>
+              <SubmitButton className="btn-primary min-h-12 flex-1 sm:flex-none">{t('rules.confirm')}</SubmitButton>
               <Link href="/transactions/rules" className="btn-ghost flex-1 sm:flex-none">
                 {t('common.cancel')}
               </Link>

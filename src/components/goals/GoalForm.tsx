@@ -9,6 +9,7 @@ import { useI18n } from '@/i18n/client';
 import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
 import { GOAL_KINDS, type AccountId, type Goal } from '@/lib/types';
+import { SubmitButton } from '@/components/SubmitButton';
 
 /**
  * Create/edit a goal. A goal linked to an account takes its progress from that account's
@@ -71,7 +72,7 @@ export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?:
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3 sm:col-span-2">
         {goal && <ConfirmButton formAction={deleteGoalAction}>{t('common.delete')}</ConfirmButton>}
-        <button className="btn-primary">{goal ? t('common.save') : t('common.add')}</button>
+        <SubmitButton className="btn-primary">{goal ? t('common.save') : t('common.add')}</SubmitButton>
       </div>
     </form>
   );

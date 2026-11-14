@@ -6,6 +6,7 @@ import { readStaged } from '@/lib/backup';
 import { SECTIONS, planTotals, type SectionName } from '@/lib/backup-format';
 import { buildImportPlan } from '@/lib/import-plan';
 import { formatMoney } from '@/lib/format';
+import { SubmitButton } from '@/components/SubmitButton';
 
 const SAMPLE = 8;
 
@@ -139,12 +140,12 @@ export default async function ImportPreviewPage({ searchParams }: { searchParams
         {!nothing && (
           <form action={confirmImportAction} className="flex-1 sm:flex-none">
             <input type="hidden" name="token" value={token} />
-            <button className="btn-primary min-h-12 w-full">{t('backup.confirm', { n: totals.create + totals.update })}</button>
+            <SubmitButton className="btn-primary min-h-12 w-full">{t('backup.confirm', { n: totals.create + totals.update })}</SubmitButton>
           </form>
         )}
         <form action={cancelImportAction} className="flex-1 sm:flex-none">
           <input type="hidden" name="token" value={token} />
-          <button className="btn-ghost w-full">{nothing ? t('backup.back') : t('common.cancel')}</button>
+          <SubmitButton className="btn-ghost w-full">{nothing ? t('backup.back') : t('common.cancel')}</SubmitButton>
         </form>
       </div>
     </div>

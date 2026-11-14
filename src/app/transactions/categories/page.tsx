@@ -1,11 +1,12 @@
 import { deleteCategoryAction, saveCategoryAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Card, Field, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { categoryName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { CATEGORY_KINDS } from '@/lib/types';
 
+export const generateMetadata = pageTitle('categories.title');
 export default async function CategoriesPage() {
   const { t } = await getI18n();
   const categories = listCategories();

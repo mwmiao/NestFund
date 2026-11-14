@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { dismissAllNotificationsAction, dismissNotificationAction } from '@/app/notifications-actions';
 import { Alert, Card, EmptyState, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { categoryName } from '@/lib/labels';
 import { getNotificationPrefs, loadNotifications } from '@/lib/notifications';
 import { PREF_KEYS } from '@/lib/notifications-calc';
 import { listCategories } from '@/lib/repo';
 
+export const generateMetadata = pageTitle('notifications.title');
 export default async function NotificationsPage() {
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);

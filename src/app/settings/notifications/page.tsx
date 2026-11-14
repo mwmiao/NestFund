@@ -2,10 +2,11 @@ import Link from 'next/link';
 import { saveNotificationPrefsAction } from '@/app/notifications-actions';
 import { ToggleRow } from '@/components/settings/ToggleRow';
 import { Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { getNotificationPrefs } from '@/lib/notifications';
 import { PREF_KEYS } from '@/lib/notifications-calc';
 
+export const generateMetadata = pageTitle('notifications.settingsTitle');
 export default async function NotificationSettingsPage() {
   const { t } = await getI18n();
   const prefs = getNotificationPrefs();

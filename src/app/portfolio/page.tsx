@@ -5,7 +5,7 @@ import { LinesChart } from '@/components/charts/LazyCharts';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { InterestSection } from '@/components/portfolio/InterestSection';
 import { Alert, Badge, Card, Empty, Field, Hint, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { formatDate, formatDateTime, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
@@ -17,6 +17,7 @@ import { ACCOUNTS } from '@/lib/types';
 
 const dayMonth = (iso: string) => formatDate(iso).slice(0, 5);
 
+export const generateMetadata = pageTitle('portfolio.title');
 export default async function PortfolioPage() {
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);

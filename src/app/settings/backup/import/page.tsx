@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cancelImportAction, confirmImportAction } from '@/app/backup-actions';
 import { Alert, Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { readStaged } from '@/lib/backup';
 import { SECTIONS, planTotals, type SectionName } from '@/lib/backup-format';
 import { buildImportPlan } from '@/lib/import-plan';
@@ -10,6 +10,7 @@ import { formatMoney } from '@/lib/format';
 const SAMPLE = 8;
 
 /** Read-only: shows what the file would create, update and ignore. Nothing is written until "Confirm". */
+export const generateMetadata = pageTitle('backup.previewTitle');
 export default async function ImportPreviewPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token = '' } = await searchParams;
   const { t, locale } = await getI18n();

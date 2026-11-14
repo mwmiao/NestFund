@@ -4,13 +4,14 @@ import { AccountBadge } from '@/components/AccountBadge';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { FixedExpensesForm } from '@/components/setup/FixedExpensesForm';
 import { Alert, Card, Field, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { formatMoney, toInputDecimal } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { ONBOARDING_STEPS, accountBalances, getOnboarding, getProfile, hasSampleData, listBudgetItems, listCategories, listGoals, visibleAccounts, type OnboardingStep } from '@/lib/repo';
 
 type Step = OnboardingStep | 'done';
 
+export const generateMetadata = pageTitle('setup.title');
 export default async function SetupPage({ searchParams }: { searchParams: Promise<{ step?: string; reset?: string }> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();

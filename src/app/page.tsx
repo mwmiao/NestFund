@@ -8,7 +8,7 @@ import { IncomeCard } from '@/components/income/IncomeCard';
 import { MonthPicker } from '@/components/MonthPicker';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Alert, Card, Hint } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { computeMonthSummary } from '@/lib/calc';
 import { currentMonth, formatDate, isMonth, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
@@ -35,6 +35,7 @@ import type { AccountId } from '@/lib/types';
 const ACCOUNT_ROWS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepublic', 'meal_card'];
 const NET_WORTH_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepublic', 'cash', 'other'];
 
+export const generateMetadata = pageTitle('dashboard.title');
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ m?: string; saved?: string }> }) {
   const { m, saved: justSaved } = await searchParams;
   const month = isMonth(m) ? m : currentMonth();

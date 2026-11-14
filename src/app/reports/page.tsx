@@ -3,7 +3,7 @@ import { BarsChart, DonutChart, LinesChart } from '@/components/charts/LazyChart
 import { AutoSubmitForm } from '@/components/AutoSubmitForm';
 import { ReportTabs } from '@/components/reports/ReportTabs';
 import { Card, EmptyState, PageHeader, ProgressBar, Stat } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { currentMonth, formatDate, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
@@ -11,6 +11,7 @@ import { listCategories, visibleAccounts } from '@/lib/repo';
 import { changeRatio } from '@/lib/report-calc';
 import { buildReport, parseReportFilters } from '@/lib/reports';
 
+export const generateMetadata = pageTitle('reports.title');
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();

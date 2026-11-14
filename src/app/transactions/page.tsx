@@ -3,7 +3,7 @@ import { AutoSubmitForm } from '@/components/AutoSubmitForm';
 import { ImportCsvForm } from '@/components/transactions/ImportCsvForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
 import { Alert, Card, PageHeader, Stat } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
@@ -13,6 +13,7 @@ import { ACCOUNTS, PAYMENT_METHODS, TX_TYPES, type AccountId } from '@/lib/types
 
 const FILTER_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'meal_card', 'trading212', 'traderepublic', 'cash'];
 
+export const generateMetadata = pageTitle('tx.title');
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();

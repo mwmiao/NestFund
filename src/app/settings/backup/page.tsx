@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { createBackupAction, stageImportAction } from '@/app/backup-actions';
 import { Alert, Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { listBackups } from '@/lib/backup';
 import { formatDateTime } from '@/lib/dates';
 
 const DATASETS = ['transactions', 'accounts', 'snapshots', 'categories', 'budgets', 'goals', 't212'] as const;
 const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
+export const generateMetadata = pageTitle('backup.title');
 export default async function BackupPage({ searchParams }: { searchParams: Promise<{ created?: string; imported?: string; importError?: string }> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();

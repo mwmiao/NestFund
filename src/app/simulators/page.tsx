@@ -1,10 +1,11 @@
 import { EtfSimulator } from '@/components/simulators/EtfSimulator';
 import { HouseSimulator } from '@/components/simulators/HouseSimulator';
 import { Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { currentMonth } from '@/lib/dates';
 import { accountBalances, ensureMonthBudget, getProfile } from '@/lib/repo';
 
+export const generateMetadata = pageTitle('sim.title');
 export default async function SimulatorsPage() {
   const { t } = await getI18n();
   const profile = getProfile();

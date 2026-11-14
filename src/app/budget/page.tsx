@@ -4,7 +4,7 @@ import { ConfirmButton } from '@/components/ConfirmButton';
 import { MonthPicker } from '@/components/MonthPicker';
 import Link from 'next/link';
 import { Alert, Card, Dot, Empty, EmptyState, Field, Hint, PageHeader, ProgressBar, budgetTone, toneText } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import type { TFunction } from '@/i18n/config';
 import { computeMonthSummary } from '@/lib/calc';
 import { incomeDifference, payNote } from '@/lib/income-view';
@@ -69,6 +69,7 @@ function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Cate
   );
 }
 
+export const generateMetadata = pageTitle('budget.title');
 export default async function BudgetPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
   const { m } = await searchParams;
   const month = isMonth(m) ? m : currentMonth();

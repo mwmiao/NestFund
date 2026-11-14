@@ -3,7 +3,7 @@ import { saveAccountVisibilityAction } from '@/app/actions';
 import { OfflineDataCard } from '@/components/pwa/OfflineDataCard';
 import { T212Actions, T212ConnectForm } from '@/components/settings/T212Connection';
 import { Alert, Badge, Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { formatDateTime } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
 import { accountName } from '@/lib/labels';
@@ -11,6 +11,7 @@ import { getHiddenAccounts } from '@/lib/repo';
 import { getT212Status } from '@/lib/t212';
 import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
 
+export const generateMetadata = pageTitle('settings.title');
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ accounts?: string }> }) {
   const sp = await searchParams;
   const hidden = new Set(getHiddenAccounts());

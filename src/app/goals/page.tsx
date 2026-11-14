@@ -1,6 +1,6 @@
 import { GoalForm } from '@/components/goals/GoalForm';
 import { Badge, Card, EmptyState, Hint, PageHeader, ProgressBar } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { goalProgress, goalsSavedTotal } from '@/lib/calc';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney, formatPercent } from '@/lib/format';
@@ -8,6 +8,7 @@ import { AccountBadge } from '@/components/AccountBadge';
 import { accountName } from '@/lib/labels';
 import { listGoals, listGoalsStored } from '@/lib/repo';
 
+export const generateMetadata = pageTitle('goals.title');
 export default async function GoalsPage() {
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);

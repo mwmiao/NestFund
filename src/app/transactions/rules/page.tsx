@@ -2,12 +2,13 @@ import { deleteRuleAction, moveRuleAction, saveRuleAction, toggleRuleAction } fr
 import { AccountBadge } from '@/components/AccountBadge';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Badge, Card, EmptyState, Field, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { accountName, categoryName } from '@/lib/labels';
 import { listCategories, visibleAccounts } from '@/lib/repo';
 import { ACCOUNT_IDS, type AccountId } from '@/lib/types';
 import { listRules } from '@/lib/rules-repo';
 
+export const generateMetadata = pageTitle('rules.title');
 export default async function RulesPage({ searchParams }: { searchParams: Promise<{ applied?: string }> }) {
   const { applied } = await searchParams;
   const { t } = await getI18n();

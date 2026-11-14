@@ -3,11 +3,12 @@ import { deleteTransactionAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { TransactionForm } from '@/components/transactions/TransactionForm';
 import { Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { todayISO } from '@/lib/dates';
 import { getTransaction } from '@/lib/repo';
 import { transactionFormOptions } from '@/lib/tx-options';
 
+export const generateMetadata = pageTitle('tx.editTitle');
 export default async function EditTransactionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
   const { id } = await params;
   const { error } = await searchParams;

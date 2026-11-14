@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation';
 import { applyRuleAction } from '@/app/rules-actions';
 import { AccountBadge } from '@/components/AccountBadge';
 import { Card, PageHeader } from '@/components/ui';
-import { getI18n } from '@/i18n/server';
+import { getI18n, pageTitle } from '@/i18n/server';
 import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { getRule, previewRule } from '@/lib/rules-repo';
 
 /** Read-only preview: lists what a rule WOULD change. Nothing is written until the user confirms with the form below. */
+export const generateMetadata = pageTitle('rules.previewTitle');
 export default async function ApplyRulePage({ searchParams }: { searchParams: Promise<{ rule?: string; scope?: string }> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();

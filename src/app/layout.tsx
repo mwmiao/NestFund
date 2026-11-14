@@ -14,7 +14,8 @@ import { visibleAccounts } from '@/lib/repo';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'NestFund',
+  // Pages set their own title; the template appends the app name ("Orçamento mensal · NestFund").
+  title: { default: 'NestFund', template: '%s · NestFund' },
   description: 'Personal finance dashboard for budgeting, expense tracking, savings goals and long-term investing.',
   icons: { icon: '/icon.svg', apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }] },
   manifest: '/manifest.webmanifest',

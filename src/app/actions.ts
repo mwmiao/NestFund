@@ -117,7 +117,9 @@ export async function saveTransactionAction(fd: FormData) {
   const existing = id ? repo.getTransaction(id) : null;
   const amount = Math.abs(num(fd, 'amount'));
   const description = text(fd, 'description', MAX_TEXT.description);
-  if (!amount || !description) redirect(safeBack(fd, '/transactions'));
+  // An amount that cannot be read (or is zero) goes back to the form with a message instead of vanishing silently.
+  if (!amount) redirect(`/transactions/${id ?? 'new'}?error=amount`);
+  if (!description) redirect(safeBack(fd, '/transactions'));
 
   let attachment = existing?.attachment ?? null;
   const file = fd.get('attachment');

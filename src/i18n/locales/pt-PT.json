@@ -64,6 +64,12 @@
     "noDataYet": "Ainda sem dados",
     "yesterday": "Ontem"
   },
+  "error": {
+    "title": "Algo correu mal",
+    "hint": "Não foi possível carregar esta página. Os teus dados não foram afetados. Tenta outra vez e, se continuar, verifica se o servidor e o armazenamento estão a funcionar.",
+    "retry": "Tentar outra vez",
+    "reference": "Referência: {id}"
+  },
   "dashboard": {
     "title": "Painel",
     "netIncome": "Rendimento líquido",

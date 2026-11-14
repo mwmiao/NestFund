@@ -44,7 +44,8 @@ export const viewport: Viewport = {
 function accountsOrAll() {
   try {
     return visibleAccounts();
-  } catch {
+  } catch (error) {
+    console.error('Could not read the hidden accounts; showing every account.', error);
     return [...ACCOUNT_IDS];
   }
 }

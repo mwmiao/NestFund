@@ -50,9 +50,6 @@ export const NAV_GROUPS: { labelKey: string; items: NavItem[] }[] = [
   { labelKey: 'nav.groupSetup', items: SETUP_NAV },
 ];
 
-/** Mobile bottom bar: the five everyday destinations; the rest lives in the "More" sheet (sixth tab). */
-export const MOBILE_TABS: NavItem[] = PRIMARY_NAV;
-
 export function isActive(pathname: string, href: string) {
   if (href === '/') return pathname === '/';
   // "/transactions" must not light up on "/transactions/categories".

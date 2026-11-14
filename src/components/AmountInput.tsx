@@ -2,6 +2,7 @@
 
 import type { InputHTMLAttributes } from 'react';
 import { useI18n } from '@/i18n/client';
+import { AMOUNT_PATTERN } from '@/lib/format';
 
 /**
  * Amount text field ("12,50"): digits with a comma or dot for the cents. When the browser rejects the value it says why in the
@@ -14,7 +15,7 @@ export function AmountInput({ onInvalid, onInput, ...rest }: Omit<InputHTMLAttri
       {...rest}
       type="text"
       inputMode="decimal"
-      pattern="[0-9.,\s]*[0-9][0-9.,\s]*"
+      pattern={AMOUNT_PATTERN}
       onInvalid={(e) => {
         onInvalid?.(e);
         e.currentTarget.setCustomValidity(t(e.currentTarget.validity.valueMissing ? 'common.amountRequired' : 'common.amountInvalid'));

@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { connectT212Action, disconnectT212Action, syncT212Action } from '@/app/actions';
+import { ConfirmButton } from '@/components/ConfirmButton';
 import { SubmitButton } from '@/components/SubmitButton';
 import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
@@ -53,14 +54,7 @@ export function T212Actions() {
         <SubmitButton>{`↻ ${t('t212.syncNow')}`}</SubmitButton>
       </form>
       <form action={disconnectT212Action}>
-        <button
-          className="btn-danger"
-          onClick={(e) => {
-            if (!window.confirm(t('t212.disconnectConfirm'))) e.preventDefault();
-          }}
-        >
-          {t('t212.disconnect')}
-        </button>
+        <ConfirmButton message={t('t212.disconnectConfirm')}>{t('t212.disconnect')}</ConfirmButton>
       </form>
       <Message state={state} okKey="t212.synced" />
     </div>

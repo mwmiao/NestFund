@@ -3,15 +3,17 @@
 import { useFormStatus } from 'react-dom';
 import { useI18n } from '@/i18n/client';
 
-/** Submit button that asks for confirmation before a destructive server action. */
+/** Submit button that asks for confirmation (the generic delete question unless `message` says otherwise) before a destructive server action. */
 export function ConfirmButton({
   children,
   className = 'btn-danger',
   formAction,
+  message,
 }: {
   children: React.ReactNode;
   className?: string;
   formAction?: (fd: FormData) => void | Promise<void>;
+  message?: string;
 }) {
   const { t } = useI18n();
   const { pending } = useFormStatus();
@@ -24,7 +26,7 @@ export function ConfirmButton({
       formNoValidate
       className={className}
       onClick={(e) => {
-        if (!window.confirm(t('common.confirmDelete'))) e.preventDefault();
+        if (!window.confirm(message ?? t('common.confirmDelete'))) e.preventDefault();
       }}
     >
       {children}

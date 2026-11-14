@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fromCents, toCents } from '@/lib/db';
-import { parseDecimal, round2 } from '@/lib/format';
+import { AMOUNT_PATTERN, parseDecimal, round2 } from '@/lib/format';
 import { MAX_AMOUNT, RateLimiter, clampText, clientKey, constantTimeEqual, describeError, neutralizeFormula, parseBasicAuth, redact, safeLocalPath } from '@/lib/security';
 import { T212_BASE_URLS, T212Error, t212Get } from '@/lib/t212-core';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from '@/lib/secret-box';
@@ -20,6 +20,24 @@ describe('redirect targets stay inside the app', () => {
     '',
     '/' + 'a'.repeat(600),
   ])('rejects %j', (p) => expect(safeLocalPath(p, '/fallback')).toBe('/fallback'));
+});
+
+describe('amount field pattern', () => {
+  const field = new RegExp(`^(?:${AMOUNT_PATTERN})$`);
+  it('accepts what people type and parseDecimal reads', () => {
+    for (const ok of ['12', '12,50', '12.50', '0,5', ' 7 ', '1.234,56', '1,234.56', '1.234.567,89']) {
+      expect(field.test(ok), ok).toBe(true);
+      expect(parseDecimal(ok), ok).not.toBeNull();
+    }
+  });
+  it('rejects the shapes the server would not read', () => {
+    for (const bad of ['', 'abc', '1,2,3', '1.2.3', '12,', ',5', '.5', '1.234.567', '1,234,567', '12,50 x', '-5']) expect(field.test(bad), bad).toBe(false);
+  });
+  it('never accepts a string parseDecimal rejects (checked over generated candidates)', () => {
+    const alphabet = ['0', '1', '5', ',', '.', ' '];
+    const build = (len: number): string[] => (len === 0 ? [''] : build(len - 1).flatMap((s) => alphabet.map((c) => s + c)));
+    for (let len = 1; len <= 6; len++) for (const s of build(len)) if (field.test(s)) expect(parseDecimal(s), JSON.stringify(s)).not.toBeNull();
+  });
 });
 
 describe('amounts', () => {

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/i18n/client';
 import { Icon } from './Icon';
-import { MOBILE_TABS, NAV_GROUPS, NAV_ICONS, isActive, isMoreActive } from './nav';
+import { NAV_GROUPS, PRIMARY_NAV, NAV_ICONS, isActive, isMoreActive } from './nav';
 
 const TAB = 'flex min-h-14 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium min-[380px]:text-[11px]';
 
@@ -65,7 +65,7 @@ export function BottomNav() {
       )}
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-xl">
-          {MOBILE_TABS.map((i) => {
+          {PRIMARY_NAV.map((i) => {
             const active = isActive(pathname, i.href);
             return (
               <Link key={i.href} href={i.href} aria-current={active ? 'page' : undefined} className={`${TAB} ${active ? 'text-brand-500' : 'text-subtle'}`}>

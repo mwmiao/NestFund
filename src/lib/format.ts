@@ -59,6 +59,13 @@ export function parseDecimal(input: unknown): number | null {
   return Number.isFinite(n) && Math.abs(n) <= MAX_AMOUNT ? n : null;
 }
 
+/**
+ * HTML `pattern` for an amount field: the (unsigned) numbers `parseDecimal` accepts, written out so the browser rejects what the
+ * server would. Plain digits with one `,` or `.` for the cents, or digit groups with the other symbol as thousands separator
+ * ("1.234,56" / "1,234.56"). Anything it matches, `parseDecimal` reads.
+ */
+export const AMOUNT_PATTERN = String.raw`\s*(?:\d+(?:[.,]\d+)?|\d{1,3}(?:\.\d{3})+,\d+|\d{1,3}(?:,\d{3})+\.\d+)\s*`;
+
 /** Default value for a decimal text input, in Portuguese style ("39,9"). */
 export const toInputDecimal = (v: number) => String(v).replace('.', ',');
 

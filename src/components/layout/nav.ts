@@ -50,7 +50,7 @@ export const NAV_GROUPS: { labelKey: string; items: NavItem[] }[] = [
   { labelKey: 'nav.groupSetup', items: SETUP_NAV },
 ];
 
-/** Mobile bottom bar: the five everyday destinations; the rest lives in the "More" sheet (header menu). */
+/** Mobile bottom bar: the five everyday destinations; the rest lives in the "More" sheet (sixth tab). */
 export const MOBILE_TABS: NavItem[] = PRIMARY_NAV;
 
 export function isActive(pathname: string, href: string) {
@@ -58,4 +58,9 @@ export function isActive(pathname: string, href: string) {
   // "/transactions" must not light up on "/transactions/categories".
   if (href === '/transactions') return pathname === '/transactions' || /^\/transactions\/(new|\d+)/.test(pathname);
   return pathname.startsWith(href);
+}
+
+/** True on pages that live in the "More" sheet (Reports, Simulators, Categories, Rules, Settings). */
+export function isMoreActive(pathname: string) {
+  return NAV_GROUPS.some((g) => g.items.some((i) => isActive(pathname, i.href)));
 }

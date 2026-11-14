@@ -22,6 +22,8 @@
     "groupSetup": "Personalizar"
   },
   "common": {
+    "amountRequired": "Indica um valor.",
+    "amountInvalid": "Usa algarismos e vírgula para os cêntimos, por exemplo 12,50.",
     "moreInfo": "Mais informação",
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -199,6 +201,7 @@
     }
   },
   "tx": {
+    "amountError": "Não foi possível ler o valor. Usa algarismos e vírgula, por exemplo 12,50.",
     "title": "Transações",
     "new": "Nova transação",
     "editTitle": "Editar transação",

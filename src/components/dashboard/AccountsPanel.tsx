@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { saveSnapshotAction, saveTransactionAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
+import { AmountInput } from '@/components/AmountInput';
 import { Icon } from '@/components/layout/Icon';
 import { SubmitButton } from '@/components/SubmitButton';
 import { useI18n } from '@/i18n/client';
@@ -99,7 +100,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
             </label>
             <label className="col-span-2 block sm:col-span-1">
               <span className="label">{t('common.amount')} (€)</span>
-              <input name="amount" required inputMode="decimal" placeholder="0,00" pattern="[0-9.,\s]*[0-9][0-9.,\s]*" className="input tabular-nums" />
+              <AmountInput name="amount" required placeholder="0,00" className="input tabular-nums" />
             </label>
             <label className="col-span-2 block sm:col-span-3">
               <span className="label">

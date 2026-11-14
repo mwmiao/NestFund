@@ -3,6 +3,7 @@
 import { useDeferredValue, useMemo, useState } from 'react';
 import { saveTransactionAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
+import { AmountInput } from '@/components/AmountInput';
 import { SubmitButton } from '@/components/SubmitButton';
 import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
@@ -146,9 +147,9 @@ export function TransactionForm({
       <input type="hidden" name="back" value={back} />
       <input type="hidden" name="type" value={type} />
 
-      {error === 'transfer' && (
+      {(error === 'transfer' || error === 'amount') && (
         <p role="alert" className="rounded-control border border-negative/30 bg-negative/10 px-3 py-2 text-sm">
-          {t('tx.transferError')}
+          {t(error === 'transfer' ? 'tx.transferError' : 'tx.amountError')}
         </p>
       )}
 
@@ -169,13 +170,11 @@ export function TransactionForm({
 
       <div>
         <Field label={`${t('common.amount')} (€)`}>
-          <input
+          <AmountInput
             name="amount"
             required
-            inputMode="decimal"
             autoComplete="off"
             placeholder="0,00"
-            pattern="[0-9.,\s]*[0-9][0-9.,\s]*"
             defaultValue={transaction ? String(transaction.amount).replace('.', ',') : ''}
             className="input !py-3 text-3xl font-semibold tabular-nums tracking-tight sm:text-2xl"
             autoFocus={!transaction}

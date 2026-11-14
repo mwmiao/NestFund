@@ -22,6 +22,8 @@
     "groupSetup": "Customise"
   },
   "common": {
+    "amountRequired": "Enter an amount.",
+    "amountInvalid": "Use digits and a comma for the cents, for example 12,50.",
     "moreInfo": "More information",
     "save": "Save",
     "cancel": "Cancel",
@@ -199,6 +201,7 @@
     }
   },
   "tx": {
+    "amountError": "That amount could not be read. Use digits and a comma, for example 12,50.",
     "title": "Transactions",
     "new": "New transaction",
     "editTitle": "Edit transaction",

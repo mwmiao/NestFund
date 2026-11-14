@@ -942,7 +942,12 @@
   },
   "charts": {
     "notEnough": "Ainda sem dados suficientes — atualiza o saldo em pelo menos 2 datas diferentes para ver o gráfico.",
-    "noMonths": "Ainda não há meses com dados."
+    "noMonths": "Ainda não há meses com dados.",
+    "summary": "{name}: {first} ({from}) até {last} ({to}); mínimo {min}, máximo {max}.",
+    "donutSummary": "Maiores parcelas: {items}.",
+    "showTable": "Mostrar tabela de dados",
+    "tableCapped": "A mostrar os últimos {n} de {total} pontos.",
+    "period": "Período"
   },
   "glossary": {
     "savingsRate": "Parte do teu rendimento que foi para ETF e poupança este mês.",

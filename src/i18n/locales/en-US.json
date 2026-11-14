@@ -942,7 +942,12 @@
   },
   "charts": {
     "notEnough": "Not enough data yet — record a balance on at least 2 different dates to see this chart.",
-    "noMonths": "No months with data yet."
+    "noMonths": "No months with data yet.",
+    "summary": "{name}: {first} ({from}) to {last} ({to}); lowest {min}, highest {max}.",
+    "donutSummary": "Largest shares: {items}.",
+    "showTable": "Show data table",
+    "tableCapped": "Showing the latest {n} of {total} points.",
+    "period": "Period"
   },
   "glossary": {
     "savingsRate": "Share of your income that went into ETF and savings this month.",

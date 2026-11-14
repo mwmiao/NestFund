@@ -21,7 +21,7 @@ describe('seriesStats', () => {
   });
 
   it('ignores rows missing the series only for that series', () => {
-    const rows = [{ label: 'Jan', a: 1 }, { label: 'Feb', b: 7 }, { label: 'Mar', a: 3, b: 2 }];
+    const rows: Record<string, string | number>[] = [{ label: 'Jan', a: 1 }, { label: 'Feb', b: 7 }, { label: 'Mar', a: 3, b: 2 }];
     const [a, b] = seriesStats(rows, 'label', [{ key: 'a', name: 'A' }, { key: 'b', name: 'B' }]);
     expect(a.first.x).toBe('Jan');
     expect(a.last.x).toBe('Mar');

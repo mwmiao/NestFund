@@ -5,6 +5,7 @@ import { setupFixedAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
 import { useI18n } from '@/i18n/client';
 import { accountName } from '@/lib/labels';
+import { SubmitButton } from '@/components/SubmitButton';
 
 /** Editable list of fixed monthly costs; empty rows are ignored on save. */
 export function FixedExpensesForm({ categories, skipHref }: { categories: { id: number; label: string }[]; skipHref: string }) {
@@ -41,7 +42,7 @@ export function FixedExpensesForm({ categories, skipHref }: { categories: { id: 
         <a href={skipHref} className="btn-secondary">
           {t('setup.skip')}
         </a>
-        <button className="btn-primary">{t('setup.saveContinue')}</button>
+        <SubmitButton className="btn-primary">{t('setup.saveContinue')}</SubmitButton>
       </div>
     </form>
   );

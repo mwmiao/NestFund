@@ -3,6 +3,7 @@ import { getI18n } from '@/i18n/server';
 import { formatDate, monthLabel, todayISO } from '@/lib/dates';
 import { formatMoney, formatPercent, toInputDecimal } from '@/lib/format';
 import { interestView } from '@/lib/interest-repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 /** Trade Republic interest: daily accrual, credited once a month, net of IRS. Estimates; the bank's own figures win. */
 export async function InterestSection() {
@@ -144,7 +145,7 @@ export async function InterestSection() {
             </select>
           </label>
           <p className="muted col-span-2 text-xs">{t('interest.configureHint')}</p>
-          <button className="btn-secondary col-span-2 sm:col-span-1 sm:justify-self-start">{t('common.save')}</button>
+          <SubmitButton className="btn-secondary col-span-2 sm:col-span-1 sm:justify-self-start">{t('common.save')}</SubmitButton>
         </form>
       </details>
     </div>

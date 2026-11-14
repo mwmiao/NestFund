@@ -7,6 +7,7 @@ import { categoryName } from '@/lib/labels';
 import { getNotificationPrefs, loadNotifications } from '@/lib/notifications';
 import { PREF_KEYS } from '@/lib/notifications-calc';
 import { listCategories } from '@/lib/repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export default async function NotificationsPage() {
   const { t, locale } = await getI18n();
@@ -82,7 +83,7 @@ export default async function NotificationsPage() {
                     ))}
                     <form action={dismissNotificationAction} className="ml-auto">
                       <input type="hidden" name="id" value={n.id} />
-                      <button className="btn-ghost !px-3 !py-1.5 text-xs">{t('notifications.dismiss')}</button>
+                      <SubmitButton className="btn-ghost !px-3 !py-1.5 text-xs">{t('notifications.dismiss')}</SubmitButton>
                     </form>
                   </div>
                 </Alert>
@@ -91,7 +92,7 @@ export default async function NotificationsPage() {
           </ul>
           {list.length > 1 && (
             <form action={dismissAllNotificationsAction} className="mt-4">
-              <button className="btn-secondary">{t('notifications.dismissAll')}</button>
+              <SubmitButton className="btn-secondary">{t('notifications.dismissAll')}</SubmitButton>
             </form>
           )}
         </>

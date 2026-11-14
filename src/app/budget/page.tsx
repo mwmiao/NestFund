@@ -15,6 +15,7 @@ import { AccountBadge } from '@/components/AccountBadge';
 import { accountName, categoryName } from '@/lib/labels';
 import { ensureMonthBudget, getMonthIncome, getProfile, lastDailyRates, listBudgetItems, listCategories, listTransactions, visibleAccounts } from '@/lib/repo';
 import { BUDGET_ITEM_KINDS, type BudgetItem, type Category } from '@/lib/types';
+import { SubmitButton } from '@/components/SubmitButton';
 
 function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Category[]; t: TFunction }) {
   return (
@@ -62,7 +63,7 @@ function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Cate
         <input type="month" name="endMonth" defaultValue={item?.endMonth ?? ''} className="input" />
       </Field>
       <div className="col-span-2 flex gap-2 sm:col-span-4">
-        <button className={item ? 'btn-secondary' : 'btn-primary'}>{item ? t('common.save') : t('common.add')}</button>
+        <SubmitButton className={item ? 'btn-secondary' : 'btn-primary'}>{item ? t('common.save') : t('common.add')}</SubmitButton>
         {item && <ConfirmButton formAction={deleteBudgetItemAction}>{t('common.delete')}</ConfirmButton>}
       </div>
     </form>
@@ -363,7 +364,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
             </Field>
           ))}
           <div className="col-span-2 md:col-span-3">
-            <button className="btn-primary">{t('common.save')}</button>
+            <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
           </div>
         </form>
       </details>

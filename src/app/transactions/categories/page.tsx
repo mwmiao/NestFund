@@ -5,6 +5,7 @@ import { getI18n } from '@/i18n/server';
 import { categoryName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { CATEGORY_KINDS } from '@/lib/types';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export default async function CategoriesPage() {
   const { t } = await getI18n();
@@ -36,7 +37,7 @@ export default async function CategoriesPage() {
           <Field label={`${t('categories.monthlyBudget')} (€)`}>
             <input name="monthlyBudget" inputMode="decimal" className="input" />
           </Field>
-          <button className="btn-primary col-span-2 sm:col-span-1">{t('common.add')}</button>
+          <SubmitButton className="btn-primary col-span-2 sm:col-span-1">{t('common.add')}</SubmitButton>
         </form>
       </Card>
 
@@ -57,7 +58,7 @@ export default async function CategoriesPage() {
                 <Field label={`${t('categories.monthlyBudget')} (€)`}>
                   <input name="monthlyBudget" inputMode="decimal" defaultValue={c.monthlyBudget ?? ''} className="input" />
                 </Field>
-                <button className="btn-secondary">{t('common.save')}</button>
+                <SubmitButton className="btn-secondary">{t('common.save')}</SubmitButton>
                 {!c.builtin ? (
                   <ConfirmButton formAction={deleteCategoryAction}>{t('common.delete')}</ConfirmButton>
                 ) : (

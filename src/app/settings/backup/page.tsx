@@ -4,6 +4,7 @@ import { Alert, Card, PageHeader } from '@/components/ui';
 import { getI18n } from '@/i18n/server';
 import { listBackups } from '@/lib/backup';
 import { formatDateTime } from '@/lib/dates';
+import { SubmitButton } from '@/components/SubmitButton';
 
 const DATASETS = ['transactions', 'accounts', 'snapshots', 'categories', 'budgets', 'goals', 't212'] as const;
 const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
@@ -33,7 +34,7 @@ export default async function BackupPage({ searchParams }: { searchParams: Promi
 
       <Card title={t('backup.nowTitle')} subtitle={t('backup.nowHint')} className="mb-4">
         <form action={createBackupAction}>
-          <button className="btn-primary w-full sm:w-auto">{t('backup.now')}</button>
+          <SubmitButton className="btn-primary w-full sm:w-auto">{t('backup.now')}</SubmitButton>
         </form>
         {backups.length > 0 && (
           <ul className="mt-4 divide-y divide-line/70 border-t border-line/70">
@@ -102,7 +103,7 @@ export default async function BackupPage({ searchParams }: { searchParams: Promi
             required
             className="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-raised file:px-3 file:py-2 file:text-sm file:text-ink"
           />
-          <button className="btn-secondary w-full sm:w-auto">⬆ {t('backup.preview')}</button>
+          <SubmitButton className="btn-secondary w-full sm:w-auto">⬆ {t('backup.preview')}</SubmitButton>
         </form>
         <p className="muted mt-3 text-xs">{t('backup.previewFirst')}</p>
       </Card>

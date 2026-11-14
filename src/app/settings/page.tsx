@@ -10,6 +10,7 @@ import { accountName } from '@/lib/labels';
 import { getHiddenAccounts } from '@/lib/repo';
 import { getT212Status } from '@/lib/t212';
 import { ACCOUNTS, ACCOUNT_IDS } from '@/lib/types';
+import { SubmitButton } from '@/components/SubmitButton';
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ accounts?: string }> }) {
   const sp = await searchParams;
@@ -151,7 +152,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
               </li>
             ))}
           </ul>
-          <button className="btn-primary">{t('common.save')}</button>
+          <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
         </form>
       </Card>
 

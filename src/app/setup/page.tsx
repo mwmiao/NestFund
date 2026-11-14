@@ -8,6 +8,7 @@ import { getI18n } from '@/i18n/server';
 import { formatMoney, toInputDecimal } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { ONBOARDING_STEPS, accountBalances, getOnboarding, getProfile, hasSampleData, listBudgetItems, listCategories, listGoals, visibleAccounts, type OnboardingStep } from '@/lib/repo';
+import { SubmitButton } from '@/components/SubmitButton';
 
 type Step = OnboardingStep | 'done';
 
@@ -37,7 +38,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
       <Link href={nextHref(s)} className="btn-secondary">
         {t('setup.skip')}
       </Link>
-      <button className="btn-primary">{t('setup.saveContinue')}</button>
+      <SubmitButton className="btn-primary">{t('setup.saveContinue')}</SubmitButton>
     </div>
   );
   const amountInput = (name: string, value?: number) => (
@@ -172,7 +173,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
 
       {step !== 'done' && (
         <form action={dismissOnboardingAction} className="mt-3 text-center">
-          <button className="btn-ghost text-sm">{t('setup.later')}</button>
+          <SubmitButton className="btn-ghost text-sm">{t('setup.later')}</SubmitButton>
         </form>
       )}
 

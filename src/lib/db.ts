@@ -30,5 +30,20 @@ export function getDb(): Database.Database {
   return db;
 }
 
+/** A JSON value from the settings table, or null when the key is missing or unreadable. Callers validate the shape. */
+export function getSetting(key: string): unknown {
+  const row = getDb().prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;
+  if (!row) return null;
+  try {
+    return JSON.parse(row.value);
+  } catch {
+    return null;
+  }
+}
+
+export function setSetting(key: string, value: unknown) {
+  getDb().prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, JSON.stringify(value));
+}
+
 export const toCents = (euros: number) => Math.round(euros * 100);
 export const fromCents = (cents: number) => cents / 100;

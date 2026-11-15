@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { createBackupAction, saveBackupScheduleAction, stageImportAction } from '@/app/backup-actions';
 import { Alert, Card, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
-import { listBackups } from '@/lib/backup';
-import { SCHEDULE_MODES, getBackupSchedule, lastAutomaticBackupMs } from '@/lib/backup-schedule';
+import { listBackups, newestBackupMs } from '@/lib/backup';
+import { SCHEDULE_MODES, getBackupSchedule } from '@/lib/backup-schedule';
 import { formatDateTime } from '@/lib/dates';
 import { SubmitButton } from '@/components/SubmitButton';
 
@@ -15,7 +15,7 @@ export default async function BackupPage({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const { t, locale } = await getI18n();
   const backups = listBackups();
-  const lastAuto = lastAutomaticBackupMs();
+  const lastAuto = newestBackupMs('auto');
   const [created, updated] = (sp.imported ?? '').split('-').map(Number);
 
   return (

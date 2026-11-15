@@ -40,12 +40,11 @@ describe('isBackupDue', () => {
 });
 
 describe('schedule setting', () => {
-  it('defaults to weekly, stores a valid mode and ignores an invalid one', () => {
+  it('defaults to weekly, stores a mode and rejects an unknown one', () => {
     expect(sched.getBackupSchedule()).toBe('weekly');
-    expect(sched.saveBackupSchedule('daily')).toBe(true);
+    sched.saveBackupSchedule('daily');
     expect(sched.getBackupSchedule()).toBe('daily');
-    expect(sched.saveBackupSchedule('hourly')).toBe(false);
-    expect(sched.getBackupSchedule()).toBe('daily');
+    expect(sched.asScheduleMode('hourly')).toBeNull();
   });
 });
 

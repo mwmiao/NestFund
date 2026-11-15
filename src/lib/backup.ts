@@ -119,11 +119,14 @@ export interface BackupEntry {
 }
 
 const BACKUP_NAME = /^nestfund-[A-Za-z0-9._-]+\.(db|json)$/;
+export type BackupKind = 'manual' | 'auto';
+const PREFIX: Record<BackupKind, string> = { manual: 'nestfund-backup', auto: 'nestfund-auto' };
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-');
 
 /** A full copy of the database (exact, includes every setting) plus a portable JSON export, both inside the data volume. */
-export function createBackupNow(appVersion?: string, prefix: 'nestfund-backup' | 'nestfund-auto' = 'nestfund-backup'): { db: string; json: string } {
+export function createBackupNow(appVersion?: string, kind: BackupKind = 'manual'): { db: string; json: string } {
   fs.mkdirSync(BACKUP_DIR, { recursive: true, mode: 0o700 });
+  const prefix = PREFIX[kind];
   const s = stamp();
   const db = `${prefix}-${s}.db`;
   const json = `${prefix}-${s}.json`;
@@ -137,6 +140,16 @@ export function createBackupNow(appVersion?: string, prefix: 'nestfund-backup' |
   }
   try { pruneBackups(); } catch { /* pruning is housekeeping; a failure must not fail the backup */ }
   return { db, json };
+}
+
+/** Modification time of the newest database copy of this kind, or null. Read from disk, so it survives restarts. */
+export function newestBackupMs(kind: BackupKind, dir: string = BACKUP_DIR): number | null {
+  if (!fs.existsSync(dir)) return null;
+  const times = fs
+    .readdirSync(dir)
+    .filter((n) => BACKUP_NAME.test(n) && n.endsWith('.db') && n.startsWith(`${PREFIX[kind]}-`))
+    .map((n) => fs.statSync(path.join(dir, n)).mtimeMs);
+  return times.length ? Math.max(...times) : null;
 }
 
 export function listBackups(limit = 12): BackupEntry[] {

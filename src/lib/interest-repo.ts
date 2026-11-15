@@ -1,6 +1,6 @@
 import 'server-only';
 import { dataVersion } from './cache';
-import { fromCents as e, getDb, toCents as c } from './db';
+import { fromCents as e, getDb, getSetting, setSetting, toCents as c } from './db';
 import { todayISO } from './dates';
 import {
   DEFAULT_INTEREST_CONFIG,
@@ -28,13 +28,7 @@ export const INTEREST_ACCOUNT: AccountId = 'traderepublic';
 const clamp = (v: unknown, min: number, max: number, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(Math.max(v, min), max) : fallback);
 
 export function getInterestConfig(): InterestConfig {
-  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'interest'").get() as Row | undefined;
-  let raw: Record<string, unknown> = {};
-  try {
-    raw = row ? JSON.parse(row.value) : {};
-  } catch {
-    raw = {};
-  }
+  const raw = (getSetting('interest') ?? {}) as Record<string, unknown>;
   const d = DEFAULT_INTEREST_CONFIG;
   return {
     enabled: typeof raw.enabled === 'boolean' ? raw.enabled : d.enabled,
@@ -46,7 +40,7 @@ export function getInterestConfig(): InterestConfig {
 }
 
 export function saveInterestConfig(cfg: InterestConfig) {
-  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('interest', ?)").run(JSON.stringify(cfg));
+  setSetting('interest', cfg);
 }
 
 // ---------------------------------------------------------------- stored credits

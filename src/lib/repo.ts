@@ -2,7 +2,7 @@ import 'server-only';
 import { dictionaries } from '@/i18n/config';
 import fs from 'node:fs';
 import path from 'node:path';
-import { BACKUP_DIR, fromCents as e, getDb, toCents as c } from './db';
+import { BACKUP_DIR, fromCents as e, getDb, getSetting, setSetting, toCents as c } from './db';
 import { addMonthsToDate, currentMonth, isActiveInMonth, todayISO } from './dates';
 import { DEFAULT_PROFILE, hasLegacySampleData, resetAllData } from './seed';
 import { expectedPayDate } from './payday';
@@ -34,31 +34,24 @@ type Row = Record<string, any>;
 // ---------------------------------------------------------------- settings
 
 export function getProfile(): Profile {
-  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'profile'").get() as Row | undefined;
-  return { ...DEFAULT_PROFILE, ...(row ? JSON.parse(row.value) : {}) };
+  return { ...DEFAULT_PROFILE, ...(getSetting('profile') as Partial<Profile> | null) };
 }
 
 export function saveProfile(p: Profile) {
-  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('profile', ?)").run(JSON.stringify(p));
+  setSetting('profile', p);
 }
 
 // ---------------------------------------------------------------- hidden accounts
 
 /** Accounts the user switched off in Settings: they disappear from the dashboard, forms and filters, but keep their data. */
 export function getHiddenAccounts(): AccountId[] {
-  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'hidden_accounts'").get() as Row | undefined;
-  let parsed: unknown = [];
-  try {
-    parsed = row ? JSON.parse(row.value) : [];
-  } catch {
-    parsed = [];
-  }
+  const parsed = getSetting('hidden_accounts');
   return Array.isArray(parsed) ? (parsed.filter((a) => ACCOUNT_IDS.includes(a as AccountId)) as AccountId[]) : [];
 }
 
 export function saveHiddenAccounts(ids: AccountId[]) {
   const clean = [...new Set(ids)].filter((a) => ACCOUNT_IDS.includes(a));
-  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('hidden_accounts', ?)").run(JSON.stringify(clean));
+  setSetting('hidden_accounts', clean);
 }
 
 /** Every account that is not hidden, in the standard order. Pass `keep` to force some in (e.g. those an existing transaction uses). */
@@ -78,8 +71,7 @@ export interface OnboardingState {
 }
 
 export function getOnboarding(): OnboardingState {
-  const row = getDb().prepare("SELECT value FROM settings WHERE key = 'onboarding'").get() as Row | undefined;
-  const parsed = row ? (JSON.parse(row.value) as Partial<OnboardingState>) : {};
+  const parsed = (getSetting('onboarding') ?? {}) as Partial<OnboardingState>;
   return { done: (parsed.done ?? []).filter((s) => ONBOARDING_STEPS.includes(s)), dismissed: !!parsed.dismissed };
 }
 
@@ -87,7 +79,7 @@ export function updateOnboarding(patch: { complete?: OnboardingStep; dismissed?:
   const state = getOnboarding();
   if (patch.complete && !state.done.includes(patch.complete)) state.done.push(patch.complete);
   if (patch.dismissed !== undefined) state.dismissed = patch.dismissed;
-  getDb().prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('onboarding', ?)").run(JSON.stringify(state));
+  setSetting('onboarding', state);
 }
 
 /** Wipes every record and returns to the fresh-start state (schema and built-in categories are kept). */

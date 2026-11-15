@@ -2,7 +2,7 @@ import { deleteCategoryAction, saveCategoryAction } from '@/app/actions';
 import { ConfirmButton } from '@/components/ConfirmButton';
 import { Card, Field, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
-import { categoryName } from '@/lib/labels';
+import { categoryName, sortedByName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { CATEGORY_KINDS } from '@/lib/types';
 import { SubmitButton } from '@/components/SubmitButton';
@@ -10,7 +10,7 @@ import { SubmitButton } from '@/components/SubmitButton';
 export const generateMetadata = pageTitle('categories.title');
 export default async function CategoriesPage() {
   const { t } = await getI18n();
-  const categories = [...listCategories()].sort((a, b) => categoryName(a, t).localeCompare(categoryName(b, t), undefined, { sensitivity: 'base' }));
+  const categories = sortedByName(listCategories(), t);
 
   const kindSelect = (value: string) => (
     <select name="kind" defaultValue={value} className="input">

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { appVersion, applyRestore, createBackupNow, discardStaged, readStaged, stageImport } from '@/lib/backup';
-import { saveBackupSchedule } from '@/lib/backup-schedule';
+import { asScheduleMode, saveBackupSchedule } from '@/lib/backup-schedule';
 import { buildImportPlan } from '@/lib/import-plan';
 import { tooMany } from '@/lib/rate-limit';
 
@@ -18,7 +18,9 @@ export async function createBackupAction() {
 }
 
 export async function saveBackupScheduleAction(fd: FormData) {
-  saveBackupSchedule(String(fd.get('mode') ?? ''));
+  const mode = asScheduleMode(fd.get('mode'));
+  if (!mode) redirect('/settings/backup');
+  saveBackupSchedule(mode);
   revalidatePath('/settings/backup');
   redirect('/settings/backup?schedule=saved');
 }

@@ -1,7 +1,7 @@
 import 'server-only';
 import type { TFunction } from '@/i18n/config';
 import { getDb } from './db';
-import { categoryName } from './labels';
+import { categoryName, sortedByName } from './labels';
 import { listCategories, visibleAccounts } from './repo';
 import { historyHints, listRules } from './rules-repo';
 import { ACCOUNT_IDS, type AccountId } from './types';
@@ -9,8 +9,7 @@ import { ACCOUNT_IDS, type AccountId } from './types';
 /** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
 export function transactionFormOptions(t: TFunction) {
   const db = getDb();
-  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }))
-    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+  const categories = sortedByName(listCategories(), t).map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }));
   const column = (col: 'merchant' | 'subcategory') =>
     (db.prepare(`SELECT ${col} AS v FROM transactions WHERE ${col} IS NOT NULL AND ${col} != '' GROUP BY ${col} ORDER BY COUNT(*) DESC LIMIT 50`).all() as { v: string }[]).map(
       (r) => r.v,

@@ -6,7 +6,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 // moveUploadsTo imports ./db, so the data dir must point at a throwaway folder before the dynamic import.
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'nf-uploads-'));
 process.env.DATA_DIR = path.join(root, 'data');
-const { moveUploadsTo } = await import('@/lib/uploads');
+const { moveUploadsTo, snapshotUploadsTo } = await import('@/lib/uploads');
 
 let n = 0;
 const fresh = () => {
@@ -55,5 +55,47 @@ describe('moveUploadsTo', () => {
     fs.writeFileSync(path.join(uploads, 'sub', 'b.png'), 'receipt-b');
     expect(moveUploadsTo(dest, uploads)).toBe(true);
     expect(fs.readFileSync(path.join(dest, 'sub', 'b.png'), 'utf8')).toBe('receipt-b');
+  });
+});
+
+describe('snapshotUploadsTo', () => {
+  const seed = () => {
+    const c = fresh();
+    fs.mkdirSync(path.join(c.uploads, 'sub'), { recursive: true });
+    fs.writeFileSync(path.join(c.uploads, 'a.pdf'), 'receipt-a');
+    fs.writeFileSync(path.join(c.uploads, 'b.png'), 'receipt-b');
+    return c;
+  };
+
+  it('captures exactly the files, with identical contents, and skips sub-folders', () => {
+    const { uploads, dest } = seed();
+    expect(snapshotUploadsTo(dest, uploads)).toBe(2);
+    expect(fs.readdirSync(dest).sort()).toEqual(['a.pdf', 'b.png']);
+    expect(fs.readFileSync(path.join(dest, 'a.pdf'), 'utf8')).toBe('receipt-a');
+    expect(fs.readFileSync(path.join(dest, 'b.png'), 'utf8')).toBe('receipt-b');
+  });
+
+  it('survives deleting an original afterwards', () => {
+    const { uploads, dest } = seed();
+    snapshotUploadsTo(dest, uploads);
+    fs.unlinkSync(path.join(uploads, 'a.pdf'));
+    expect(fs.readFileSync(path.join(dest, 'a.pdf'), 'utf8')).toBe('receipt-a');
+  });
+
+  it('returns 0 and creates no destination for a missing or empty folder', () => {
+    const missing = fresh();
+    expect(snapshotUploadsTo(missing.dest, missing.uploads)).toBe(0);
+    expect(fs.existsSync(missing.dest)).toBe(false);
+    const empty = fresh();
+    fs.mkdirSync(empty.uploads);
+    expect(snapshotUploadsTo(empty.dest, empty.uploads)).toBe(0);
+    expect(fs.existsSync(empty.dest)).toBe(false);
+  });
+
+  it('is harmless when called twice into the same destination', () => {
+    const { uploads, dest } = seed();
+    snapshotUploadsTo(dest, uploads);
+    expect(() => snapshotUploadsTo(dest, uploads)).not.toThrow();
+    expect(fs.readdirSync(dest).sort()).toEqual(['a.pdf', 'b.png']);
   });
 });

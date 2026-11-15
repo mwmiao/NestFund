@@ -2,6 +2,7 @@ import 'server-only';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { snapshotUploadsTo } from './uploads';
 import { BACKUP_DIR, DATA_DIR, getDb, fromCents as e, toCents as c } from './db';
 import {
   BACKUP_FORMAT,
@@ -129,6 +130,11 @@ export function createBackupNow(appVersion?: string): { db: string; json: string
   getDb().prepare('VACUUM INTO ?').run(path.join(BACKUP_DIR, db));
   fs.writeFileSync(path.join(BACKUP_DIR, json), JSON.stringify(buildBackupFile(null, appVersion), null, 2), { encoding: 'utf8', mode: 0o600 });
   fs.chmodSync(path.join(BACKUP_DIR, db), 0o600);
+  try {
+    snapshotUploadsTo(path.join(BACKUP_DIR, `nestfund-backup-${s}-uploads`));
+  } catch {
+    // The database copy and JSON are already safe; a receipts problem must not fail the whole backup.
+  }
   return { db, json };
 }
 

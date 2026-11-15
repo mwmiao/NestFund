@@ -78,7 +78,7 @@ Everything is in **Settings › Backup and data**.
 
 | You want to… | Do this |
 |---|---|
-| A copy right now | **Create backup now**. Saves a full copy (`nestfund-backup-….db`) and a portable file (`nestfund-backup-….json`) in `/data/backups/`. Nothing is changed. |
+| A copy right now | **Create backup now**. Saves a full copy (`nestfund-backup-….db`) and a portable file (`nestfund-backup-….json`) in `/data/backups/`, plus the receipts in `nestfund-backup-…-uploads/` (hard links, almost no extra space). Nothing is changed. |
 | Export your data | **Export JSON** (complete backup, or just a period) or **Export CSV** (transactions, accounts, balance check-ins, categories, budgets, goals, Trading 212 history). |
 | Import | Upload a backup `.json` or a transactions `.csv`. You get a **preview** of what will be created, updated and ignored, and only then confirm. |
 
@@ -110,7 +110,7 @@ docker run --rm --volumes-from nestfund alpine sh -c \
 docker compose start nestfund
 ```
 
-Attachments live in `/data/uploads` and are not part of the `.db`; copy that folder separately if you want them. After "Delete all data", the receipts are in `/data/backups/nestfund-before-reset-…-uploads/`; to undo a reset, restore the matching `.db` and move that folder back to `/data/uploads`. To keep backups off the server, copy `/data/backups/` elsewhere (for example `docker cp nestfund:/data/backups ./backups`).
+Attachments live in `/data/uploads` and are not part of the `.db`. **Create backup now** also keeps a receipts folder (`nestfund-backup-…-uploads/`) next to the `.db`; to restore everything, put the `.db` back and copy that folder's files into `/data/uploads`. After "Delete all data", the receipts are in `/data/backups/nestfund-before-reset-…-uploads/`; to undo a reset, restore the matching `.db` and move that folder back to `/data/uploads`. To keep backups off the server, copy `/data/backups/` elsewhere (for example `docker cp nestfund:/data/backups ./backups`).
 
 > Anyone who can reach the app's address can download exports. If you expose it to the Internet, protect it (for example with Cloudflare Access).
 

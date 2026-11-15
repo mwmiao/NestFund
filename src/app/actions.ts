@@ -123,17 +123,6 @@ export async function saveTransactionAction(fd: FormData) {
   if (!amount) redirect(txFormErrorUrl(id, 'amount'));
   if (!description) redirect(safeBack(fd, '/transactions'));
 
-  let attachment = existing?.attachment ?? null;
-  const file = fd.get('attachment');
-  if (str(fd, 'removeAttachment') === '1') {
-    await removeAttachment(attachment);
-    attachment = null;
-  }
-  if (file instanceof File && isAllowedAttachment(file)) {
-    await removeAttachment(attachment);
-    attachment = await storeAttachment(file);
-  }
-
   const recurring = str(fd, 'recurring') === '1';
   const date = str(fd, 'date');
   const type = oneOf<TxType>(TX_TYPES, str(fd, 'type'), 'purchase');
@@ -141,23 +130,38 @@ export async function saveTransactionAction(fd: FormData) {
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
   // A transfer needs a different destination; otherwise fall back to the form so the user can fix it.
   if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(txFormErrorUrl(id, 'transfer'));
-  repo.upsertTransaction({
-    id: id ?? undefined,
-    date: isISODate(date) ? date : todayISO(),
-    amount,
-    type,
-    description,
-    categoryId: existingCategoryId(fd, 'categoryId'),
-    subcategory: optText(fd, 'subcategory', MAX_TEXT.subcategory),
-    account,
-    toAccount,
-    paymentMethod: oneOf<PaymentMethod>(PAYMENT_METHODS, str(fd, 'paymentMethod'), type === 'transfer' ? 'transfer' : 'card'),
-    merchant: optText(fd, 'merchant', MAX_TEXT.merchant),
-    notes: optText(fd, 'notes', MAX_TEXT.notes),
-    attachment,
-    recurring,
-    recurrence: recurring ? oneOf<Recurrence>(RECURRENCES, str(fd, 'recurrence'), 'monthly') : null,
-  });
+  const previousAttachment = existing?.attachment ?? null;
+  let attachment = previousAttachment;
+  if (str(fd, 'removeAttachment') === '1') attachment = null;
+  const upload = fd.get('attachment');
+  const newFile = upload instanceof File && isAllowedAttachment(upload) ? upload : null;
+  if (newFile) attachment = await storeAttachment(newFile);
+
+  try {
+    repo.upsertTransaction({
+      id: id ?? undefined,
+      date: isISODate(date) ? date : todayISO(),
+      amount,
+      type,
+      description,
+      categoryId: existingCategoryId(fd, 'categoryId'),
+      subcategory: optText(fd, 'subcategory', MAX_TEXT.subcategory),
+      account,
+      toAccount,
+      paymentMethod: oneOf<PaymentMethod>(PAYMENT_METHODS, str(fd, 'paymentMethod'), type === 'transfer' ? 'transfer' : 'card'),
+      merchant: optText(fd, 'merchant', MAX_TEXT.merchant),
+      notes: optText(fd, 'notes', MAX_TEXT.notes),
+      attachment,
+      recurring,
+      recurrence: recurring ? oneOf<Recurrence>(RECURRENCES, str(fd, 'recurrence'), 'monthly') : null,
+    });
+  } catch (err) {
+    // The row was not saved: do not leave the new upload behind, and keep the old receipt.
+    if (newFile) await removeAttachment(attachment);
+    throw err;
+  }
+  // Only now is the old receipt unreferenced.
+  if (previousAttachment && previousAttachment !== attachment) await removeAttachment(previousAttachment);
   repo.materializeRecurring();
   refresh();
   redirect(withParam(safeBack(fd, '/transactions'), 'saved', '1'));

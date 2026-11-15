@@ -41,7 +41,7 @@ export function Sidebar({ theme }: { theme: 'dark' | 'light' }) {
         <Icon d={NAV_ICONS.plus} className="h-4 w-4" />
         {t('common.quickAdd')}
       </Link>
-      <nav aria-label="Main" className="space-y-0.5">
+      <nav aria-label={t('nav.main')} className="space-y-0.5">
         {PRIMARY_NAV.map(link)}
       </nav>
       {NAV_GROUPS.map((g) => (

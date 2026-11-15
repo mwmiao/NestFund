@@ -493,7 +493,7 @@
     "notNow": "Agora não",
     "sampleDetected": "Esta base de dados ainda tem os dados de exemplo da primeira versão.",
     "resetTitle": "Apagar todos os dados",
-    "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas, anexos e a ligação à Trading 212. Antes de apagar é guardada automaticamente uma cópia completa em /data/backups. As categorias predefinidas e as preferências mantêm-se.",
+    "resetHint": "Remove transações, saldos, orçamentos, objetivos, categorias personalizadas e a ligação à Trading 212. Antes de apagar, é guardada uma cópia completa da base de dados em /data/backups e os teus recibos são movidos para uma pasta ao lado (não são apagados). As categorias predefinidas e as preferências mantêm-se.",
     "resetConfirm": "Compreendo que todos os dados serão apagados",
     "resetButton": "Começar do zero",
     "resetDone": "Dados apagados. A app está pronta para os teus valores reais.",

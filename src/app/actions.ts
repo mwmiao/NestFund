@@ -13,6 +13,7 @@ import { currentMonth, isISODate, isMonth, todayISO } from '@/lib/dates';
 import { expectedPayDate } from '@/lib/payday';
 import { parseDecimal } from '@/lib/format';
 import { tooMany } from '@/lib/rate-limit';
+import { moveUploadsTo } from '@/lib/uploads';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
 import { txFormErrorUrl } from '@/lib/tx-form-error';
@@ -435,9 +436,9 @@ export async function dismissOnboardingAction() {
 
 export async function resetDataAction(fd: FormData) {
   if (str(fd, 'confirm') !== '1' || (await tooMany('reset-data', 3, 60 * 60 * 1000))) redirect('/setup#reset');
-  repo.resetData();
-  await fs.rm(UPLOADS_DIR, { recursive: true, force: true });
-  await fs.mkdir(UPLOADS_DIR, { recursive: true });
+  const safetyCopy = repo.resetData();
+  // Receipts are moved next to the safety copy (not deleted), so restoring the .db plus moving the folder back is a full undo.
+  moveUploadsTo(safetyCopy.replace(/\.db$/, '-uploads'));
   refresh();
   redirect('/setup?reset=1');
 }

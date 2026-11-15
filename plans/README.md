@@ -21,6 +21,8 @@ and update your row when done.
 | [011](011-error-pages.md) | Friendly translated error pages with a retry button (`error.tsx`, `global-error.tsx`) | P2 | S | LOW | — | DONE (reviewed against a production build; retry bug found and fixed; merged to main) |
 | [012](012-amount-field-errors.md) | Explain a mistyped amount in the app's language and show an error when the server cannot read it | P2 | S | LOW | — | DONE (reviewed in a browser; merged to main) |
 | [013](013-skip-to-content-link.md) | Add a "Skip to main content" link | P3 | S | LOW | — | DONE (reviewed in a browser; padding fix; merged to main) |
+| [014](014-keep-receipts-on-reset.md) | "Delete all data" moves receipts next to the safety copy instead of erasing them | P2 | S | LOW | — | DONE (reviewed: typecheck + tests pass, scope clean; merged to main) |
+| [015](015-include-receipts-in-backup-now.md) | "Create backup now" also snapshots the receipts (hard links) | P3 | S–M | LOW | 014 (004 interacts, see notes) | DONE (reviewed: typecheck + 334 tests pass, scope clean; merged to main; plan 004 must also prune the `-uploads` folders) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -50,6 +52,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 - **011–013 (written against `ed4209c`, 2026-11-14)** are logically independent. All three add keys to `src/i18n/locales/*.json` (groups `error`, `common`/`tx`, `nav`),
   so run them in the order 011, 012, 013 to avoid trivial merge conflicts. Only 012 touches `src/app/actions.ts`, `TransactionForm.tsx` and `AccountsPanel.tsx`; only 013 touches `layout.tsx`.
 
+- **014–015 (written against `ef09949`, 2026-11-14, third audit)**: 015 reuses `src/lib/uploads.ts`, which 014 creates, so 014 goes first. 004 (pruning) and 015 both edit `src/lib/backup.ts`; whichever lands second must make pruning delete the `<stem>-uploads` folder together with its `.db` (015 Step 3 spells this out). 014 and 015 only touch receipts folders, never the database or the JSON format. The READMEs already say receipts are not in the `.db`; 014 and 015 reduce that gap but do not put receipts in the portable JSON (a format decision left to the maintainer).
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -65,6 +69,8 @@ From the UX and accessibility audit (3ca9a94): all three remaining findings are 
 - Service worker keeps the dashboard page (balances, ETF value) for 7 days and "reset data" does not clear it
   (`src/lib/sw-main.ts:21`); decide whether that is intended before planning a fix.
 - No lint step in CI although 7 `eslint-disable` comments exist.
+
+- Portable JSON export/import does not carry receipts (needs a format decision: zip vs embedded base64, `BACKUP_VERSION` bump).
 
 ## Findings considered and rejected
 

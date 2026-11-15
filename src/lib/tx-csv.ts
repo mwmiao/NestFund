@@ -1,7 +1,7 @@
 // Parses a transactions CSV into validated records. Pure: nothing is written; the import page shows the result first.
 import { parseCsv } from './csv';
 import { parseFlexibleDate } from './dates';
-import { parseDecimal } from './format';
+import { parseMoney } from './format';
 import { txKey, type BTransaction } from './backup-format';
 import { ACCOUNTS, ACCOUNT_IDS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, type AccountId } from './types';
 
@@ -69,7 +69,7 @@ export function parseTransactionsCsv(textInput: string, resolveCategory: (raw: s
     const line = i + 2;
     if (row.every((c) => !c.trim())) return; // blank line
     const date = parseFlexibleDate(col(row, 'date'));
-    const rawAmount = parseDecimal(col(row, 'amount'));
+    const rawAmount = parseMoney(col(row, 'amount'));
     const merchant = col(row, 'merchant');
     const description = col(row, 'description') || merchant;
     const fail = (reason: CsvInvalid['reason']) => out.invalid.push({ line, reason });

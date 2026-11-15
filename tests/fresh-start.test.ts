@@ -118,6 +118,14 @@ describe('migration of a v1.0.0 database', () => {
     migrate(db); // idempotent
     expect(db.pragma('user_version', { simple: true })).toBe(MIGRATIONS.length + 1);
   });
+
+  it('leaves the version of a newer database alone (rollback to an older release)', () => {
+    const db = new Database(':memory:');
+    db.exec(SCHEMA);
+    db.pragma(`user_version = ${MIGRATIONS.length + 4}`);
+    migrate(db);
+    expect(db.pragma('user_version', { simple: true })).toBe(MIGRATIONS.length + 4);
+  });
 });
 
 describe('backup before migration', () => {

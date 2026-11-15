@@ -79,6 +79,7 @@ Em **Definições › Backup e dados** encontras tudo num só sítio.
 | Queres… | Faz |
 |---|---|
 | Uma cópia agora | **Criar backup agora**. Guarda em `/data/backups/` uma cópia completa (`nestfund-backup-….db`) e um ficheiro portátil (`nestfund-backup-….json`), mais os recibos em `nestfund-backup-…-uploads/` (hard links, quase sem espaço extra). Nada é alterado. |
+| Backups automáticos | **Definições › Backup e dados › Backups automáticos** fazem a mesma cópia por ti, todos os dias ou todas as semanas (semanal por defeito), com o nome `nestfund-auto-….db/.json`; as 10 mais recentes são sempre mantidas e nada com menos de 30 dias é apagado. Ficam no mesmo volume da base de dados, por isso copia também `/data/backups/` para outro sítio. |
 | Exportar os dados | **Exportar JSON** (backup completo ou só de um período) ou **Exportar CSV** (transações, contas, saldos, categorias, orçamentos, objetivos, histórico Trading 212). |
 | Importar | Carrega um `.json` de backup ou um `.csv` de transações. Vês uma **pré-visualização** do que será criado, atualizado e ignorado, e só depois confirmas. |
 

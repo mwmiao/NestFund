@@ -6,5 +6,7 @@ export async function register() {
     startT212Scheduler();
     const { pruneBackups } = await import('./lib/backup');
     try { pruneBackups(); } catch (err) { console.error('[backup] prune failed:', (await import('./lib/security')).describeError(err)); }
+    const { startBackupScheduler } = await import('./lib/backup-schedule');
+    startBackupScheduler();
   }
 }

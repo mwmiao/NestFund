@@ -79,6 +79,7 @@ Everything is in **Settings › Backup and data**.
 | You want to… | Do this |
 |---|---|
 | A copy right now | **Create backup now**. Saves a full copy (`nestfund-backup-….db`) and a portable file (`nestfund-backup-….json`) in `/data/backups/`, plus the receipts in `nestfund-backup-…-uploads/` (hard links, almost no extra space). Nothing is changed. |
+| Automatic backups | **Settings › Backup and data › Automatic backups** make the same copy for you daily or weekly (weekly by default), named `nestfund-auto-….db/.json`; the newest 10 are always kept and nothing under 30 days is deleted. They live on the same volume as the database, so also copy `/data/backups/` elsewhere. |
 | Export your data | **Export JSON** (complete backup, or just a period) or **Export CSV** (transactions, accounts, balance check-ins, categories, budgets, goals, Trading 212 history). |
 | Import | Upload a backup `.json` or a transactions `.csv`. You get a **preview** of what will be created, updated and ignored, and only then confirm. |
 

@@ -122,16 +122,16 @@ const BACKUP_NAME = /^nestfund-[A-Za-z0-9._-]+\.(db|json)$/;
 const stamp = () => new Date().toISOString().replace(/[:.]/g, '-');
 
 /** A full copy of the database (exact, includes every setting) plus a portable JSON export, both inside the data volume. */
-export function createBackupNow(appVersion?: string): { db: string; json: string } {
+export function createBackupNow(appVersion?: string, prefix: 'nestfund-backup' | 'nestfund-auto' = 'nestfund-backup'): { db: string; json: string } {
   fs.mkdirSync(BACKUP_DIR, { recursive: true, mode: 0o700 });
   const s = stamp();
-  const db = `nestfund-backup-${s}.db`;
-  const json = `nestfund-backup-${s}.json`;
+  const db = `${prefix}-${s}.db`;
+  const json = `${prefix}-${s}.json`;
   getDb().prepare('VACUUM INTO ?').run(path.join(BACKUP_DIR, db));
   fs.writeFileSync(path.join(BACKUP_DIR, json), JSON.stringify(buildBackupFile(null, appVersion), null, 2), { encoding: 'utf8', mode: 0o600 });
   fs.chmodSync(path.join(BACKUP_DIR, db), 0o600);
   try {
-    snapshotUploadsTo(path.join(BACKUP_DIR, `nestfund-backup-${s}-uploads`));
+    snapshotUploadsTo(path.join(BACKUP_DIR, `${prefix}-${s}-uploads`));
   } catch {
     // The database copy and JSON are already safe; a receipts problem must not fail the whole backup.
   }

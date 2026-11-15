@@ -128,11 +128,18 @@ describe('rate limiting', () => {
     l.reset('a');
     expect(l.hit('a', 2).ok).toBe(true);
   });
-  it('identifies clients behind a proxy', () => {
-    const h = (o: Record<string, string>) => ({ get: (k: string) => o[k.toLowerCase()] ?? null });
-    expect(clientKey(h({ 'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': '9.9.9.9' }))).toBe('1.2.3.4');
-    expect(clientKey(h({ 'x-forwarded-for': '5.6.7.8, 10.0.0.1' }))).toBe('5.6.7.8');
-    expect(clientKey(h({}))).toBe('local');
+  const h = (o: Record<string, string>) => ({ get: (k: string) => o[k.toLowerCase()] ?? null });
+  it('identifies clients behind a trusted proxy', () => {
+    expect(clientKey(h({ 'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': '9.9.9.9' }), true)).toBe('1.2.3.4');
+    expect(clientKey(h({ 'x-forwarded-for': '5.6.7.8, 10.0.0.1' }), true)).toBe('5.6.7.8');
+    expect(clientKey(h({}), true)).toBe('local');
+  });
+  it('ignores address headers when the proxy is not trusted', () => {
+    expect(clientKey(h({ 'cf-connecting-ip': '1.2.3.4' }), false)).toBe('local');
+    expect(clientKey(h({ 'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': '9.9.9.9' }), false)).toBe('local');
+    expect(clientKey(h({ 'x-forwarded-for': '5.6.7.8, 10.0.0.1' }), false)).toBe('local');
+    expect(clientKey(h({ 'x-real-ip': '7.7.7.7' }), false)).toBe('local');
+    expect(clientKey(h({}), false)).toBe('local');
   });
 });
 

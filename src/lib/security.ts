@@ -111,8 +111,15 @@ export function limiter(name: string, max: number, windowMs: number): RateLimite
   return l;
 }
 
-/** Best-effort client identity behind a reverse proxy / Cloudflare Tunnel. Only used to tell clients apart for throttling. */
-export function clientKey(headers: { get(name: string): string | null }): string {
+/** True when the operator says a reverse proxy / tunnel in front of the app sets the client-address headers itself. */
+export const trustProxyHeaders = (): boolean => process.env.TRUST_PROXY === '1';
+
+/**
+ * Client identity used only to tell clients apart for throttling. The address headers are sent by the client
+ * unless a trusted proxy overwrites them, so they are read only when TRUST_PROXY=1; otherwise everyone shares one key.
+ */
+export function clientKey(headers: { get(name: string): string | null }, trustProxy: boolean = trustProxyHeaders()): string {
+  if (!trustProxy) return 'local';
   const raw = headers.get('cf-connecting-ip') || headers.get('x-forwarded-for')?.split(',')[0] || headers.get('x-real-ip') || 'local';
   return raw.trim().slice(0, 64) || 'local';
 }

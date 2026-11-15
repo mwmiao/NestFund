@@ -13,6 +13,7 @@ services:
       NESTFUND_SECRET: ${NESTFUND_SECRET:-}
       BASIC_AUTH_USER: ${BASIC_AUTH_USER:-}
       BASIC_AUTH_PASSWORD: ${BASIC_AUTH_PASSWORD:-}
+      TRUST_PROXY: ${TRUST_PROXY:-}
     volumes:
       # SQLite database and uploaded attachments.
       - nestfund-data:/data

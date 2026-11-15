@@ -25,6 +25,8 @@ and update your row when done.
 | [015](015-include-receipts-in-backup-now.md) | "Create backup now" also snapshots the receipts (hard links) | P3 | S–M | LOW | 014 (004 interacts, see notes) | DONE (reviewed: typecheck + 334 tests pass, scope clean; merged to main; plan 004 must also prune the `-uploads` folders) |
 | [016](016-read-thousands-separators-in-money-fields.md) | Read `1.500` / `1,500` as 1500 in money fields (not €1.50); percentages and days unchanged | P2 | S | LOW code / MED behavior | — | DONE (reviewed: typecheck + 338 tests pass, scope clean, diff matches plan; merged to main as dd1edef from branch `advisor/016-money-thousands`) |
 | [017](017-do-not-lower-schema-version-on-rollback.md) | Never lower `user_version` when an older app opens a newer database | P3 | S | LOW | — | DONE (reviewed: typecheck + 335 tests pass, scope clean, new test fails without the fix; merged to main as e26cf63 from branch `advisor/017-keep-newer-schema-version`) |
+| [018](018-history-chart-ignore-transfers.md) | History spending chart counted transfers as spending | P2 | S | LOW | — | DONE (typecheck + 386 tests pass, scope clean, 2 of 4 new tests fail without the fix; merged to main from branch `advisor/018-history-ignore-transfers`) |
+| [019](019-reject-unreadable-transaction-date.md) | Unreadable transaction date goes back to the form instead of being saved as today | P3 | S | LOW | — | DONE (typecheck + 384 tests pass, scope clean; the action itself is not unit-tested, see plan; merged to main from branch `advisor/019-reject-bad-date`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -60,6 +62,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **016–017 (written against `0a31f89`, 2026-11-15, fourth audit)** are independent of each other and of everything else. 016 edits `src/lib/format.ts`, `src/app/actions.ts`, `src/lib/tx-csv.ts`, `IncomeForm.tsx` and `tests/security.test.ts`; 017 edits `src/lib/schema.ts` and `tests/fresh-start.test.ts`. **Decision for 016**: it reads a lone separator followed by exactly three digits as thousands (confirm, or switch to "reject"; see the plan). Before running anything: plans 001 and 002 are DONE on unmerged branches (`advisor/001-attachment-loss` fixes a P1 receipt-loss bug); merge them first. Four stale `worktree-agent-*` branches and an untracked `.claude/worktrees/` folder can be cleaned up.
 
+- **018–019 (written against `e051a5d`, 2026-11-15, fifth audit)** are independent of each other and of everything else. 018 edits `src/lib/repo.ts` and adds `tests/history-spending.test.ts`; 019 edits `src/lib/tx-form-error.ts`, `saveTransactionAction` in `src/app/actions.ts`, both locale files and adds `tests/tx-form-error.test.ts`. No file overlaps, so they can run in parallel.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -79,6 +83,7 @@ From the UX and accessibility audit (3ca9a94): all three remaining findings are 
 - Portable JSON export/import does not carry receipts (needs a format decision: zip vs embedded base64, `BACKUP_VERSION` bump).
 
 - Direction (fourth audit): automatic scheduled backups (today only the manual "Create backup now"; do plan 004 first), receipts in the portable JSON, Next 16 upgrade.
+- Direction (fifth audit): see the earlier line; nothing new. Not audited this time: Trading 212 sync/polling, `backup-format.ts` restore planning, UI components, i18n files, service worker.
 - Simulator fields (`NumberField.tsx`) still use `parseDecimal` for both € and %; a `money` flag could follow plan 016.
 
 ## Findings considered and rejected

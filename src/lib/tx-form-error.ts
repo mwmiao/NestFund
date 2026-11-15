@@ -1,11 +1,12 @@
 /** The reasons the transaction form can be sent back to the user, carried in the form URL as `?error=`. */
-export const TX_FORM_ERRORS = ['transfer', 'amount'] as const;
+export const TX_FORM_ERRORS = ['transfer', 'amount', 'date'] as const;
 export type TxFormError = (typeof TX_FORM_ERRORS)[number];
 
 /** Translation key of the message shown for each error. */
 export const TX_FORM_ERROR_MESSAGE: Record<TxFormError, string> = {
   transfer: 'tx.transferError',
   amount: 'tx.amountError',
+  date: 'tx.dateError',
 };
 
 /** The `error` query value if it is one of ours, otherwise undefined. */

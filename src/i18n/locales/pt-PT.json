@@ -203,6 +203,7 @@
   },
   "tx": {
     "amountError": "Não foi possível ler o valor. Usa algarismos e vírgula, por exemplo 12,50.",
+    "dateError": "Não foi possível ler a data. Escolhe uma data válida do calendário.",
     "title": "Transações",
     "new": "Nova transação",
     "editTitle": "Editar transação",

@@ -658,7 +658,7 @@ export function deleteSnapshot(id: number) {
   getDb().prepare('DELETE FROM snapshots WHERE id = ?').run(id);
 }
 
-/** Monthly outflow totals per category, for history charts. */
+/** Monthly spending totals per category (purchases, expenses and payments only; not income or transfers), for history charts. */
 export function spendingByMonthAndCategory(fromMonth: string): { month: string; categoryId: number | null; total: number }[] {
   return memo(`spending:${fromMonth}`, () => readSpendingByMonthAndCategory(fromMonth));
 }
@@ -668,7 +668,7 @@ function readSpendingByMonthAndCategory(fromMonth: string): { month: string; cat
     .prepare(
       `SELECT substr(t.date, 1, 7) AS month, t.category_id AS categoryId, SUM(t.amount) AS total
        FROM transactions t LEFT JOIN categories c ON c.id = t.category_id
-       WHERE t.type != 'income' AND t.date >= ? AND (c.kind IS NULL OR c.kind = 'expense')
+       WHERE t.type IN ('purchase', 'expense', 'payment') AND t.date >= ? AND (c.kind IS NULL OR c.kind = 'expense')
        GROUP BY month, t.category_id ORDER BY month`,
     )
     .all(`${fromMonth}-01`) as Row[];

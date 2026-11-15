@@ -733,6 +733,17 @@
     "nowTitle": "Criar backup agora",
     "nowHint": "Guarda uma cópia completa da base de dados e um ficheiro JSON portátil no volume de dados (pasta backups). Nada é alterado nem apagado.",
     "now": "Criar backup agora",
+    "scheduleTitle": "Backups automáticos",
+    "scheduleHint": "Guarda sozinha uma cópia completa e um ficheiro portátil na pasta de backups, para haver sempre uma cópia recente. As cópias ficam junto da base de dados; copia a pasta para outro sítio para ficares protegido também contra a perda do disco.",
+    "scheduleMode": "Com que frequência",
+    "scheduleModes": {
+      "off": "Desligado",
+      "daily": "Todos os dias",
+      "weekly": "Todas as semanas"
+    },
+    "scheduleSaved": "Definição dos backups automáticos guardada.",
+    "scheduleLast": "Último backup automático: {when}",
+    "scheduleNever": "Ainda não foi feito nenhum backup automático.",
     "created": "Backup criado.",
     "download": "Descarregar",
     "volumeOnly": "cópia completa, fica no volume de dados",

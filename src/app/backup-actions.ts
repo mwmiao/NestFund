@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { appVersion, applyRestore, createBackupNow, discardStaged, readStaged, stageImport } from '@/lib/backup';
+import { saveBackupSchedule } from '@/lib/backup-schedule';
 import { buildImportPlan } from '@/lib/import-plan';
 import { tooMany } from '@/lib/rate-limit';
 
@@ -14,6 +15,12 @@ export async function createBackupAction() {
   createBackupNow(appVersion());
   revalidatePath('/settings/backup');
   redirect('/settings/backup?created=1');
+}
+
+export async function saveBackupScheduleAction(fd: FormData) {
+  saveBackupSchedule(String(fd.get('mode') ?? ''));
+  revalidatePath('/settings/backup');
+  redirect('/settings/backup?schedule=saved');
 }
 
 /** Step 1 of an import: only stores the upload. Nothing in the database changes until the preview is confirmed. */

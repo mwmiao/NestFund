@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { createBackupAction, stageImportAction } from '@/app/backup-actions';
+import { createBackupAction, saveBackupScheduleAction, stageImportAction } from '@/app/backup-actions';
 import { Alert, Card, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
 import { listBackups } from '@/lib/backup';
+import { SCHEDULE_MODES, getBackupSchedule, lastAutomaticBackupMs } from '@/lib/backup-schedule';
 import { formatDateTime } from '@/lib/dates';
 import { SubmitButton } from '@/components/SubmitButton';
 
@@ -10,10 +11,11 @@ const DATASETS = ['transactions', 'accounts', 'snapshots', 'categories', 'budget
 const kb = (n: number) => (n > 1024 * 1024 ? `${(n / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(n / 1024))} KB`);
 
 export const generateMetadata = pageTitle('backup.title');
-export default async function BackupPage({ searchParams }: { searchParams: Promise<{ created?: string; imported?: string; importError?: string }> }) {
+export default async function BackupPage({ searchParams }: { searchParams: Promise<{ created?: string; imported?: string; importError?: string; schedule?: string }> }) {
   const sp = await searchParams;
   const { t, locale } = await getI18n();
   const backups = listBackups();
+  const lastAuto = lastAutomaticBackupMs();
   const [created, updated] = (sp.imported ?? '').split('-').map(Number);
 
   return (
@@ -29,6 +31,7 @@ export default async function BackupPage({ searchParams }: { searchParams: Promi
 
       <div className="mb-4 space-y-2 empty:hidden">
         {sp.created && <Alert tone="success">{t('backup.created')}</Alert>}
+        {sp.schedule && <Alert tone="success">{t('backup.scheduleSaved')}</Alert>}
         {sp.imported && <Alert tone="success">{t('backup.imported', { created: created || 0, updated: updated || 0 })}</Alert>}
         {sp.importError && <Alert tone="danger">{t(`backup.importErrors.${sp.importError}`)}</Alert>}
       </div>
@@ -56,6 +59,25 @@ export default async function BackupPage({ searchParams }: { searchParams: Promi
             ))}
           </ul>
         )}
+      </Card>
+
+      <Card title={t('backup.scheduleTitle')} subtitle={t('backup.scheduleHint')} className="mb-4">
+        <form action={saveBackupScheduleAction} className="flex flex-wrap items-end gap-2">
+          <label className="block min-w-0 flex-1 basis-48">
+            <span className="label">{t('backup.scheduleMode')}</span>
+            <select name="mode" defaultValue={getBackupSchedule()} className="input">
+              {SCHEDULE_MODES.map((m) => (
+                <option key={m} value={m}>
+                  {t(`backup.scheduleModes.${m}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <SubmitButton className="btn-secondary">{t('common.save')}</SubmitButton>
+        </form>
+        <p className="muted mt-3 text-xs">
+          {lastAuto === null ? t('backup.scheduleNever') : t('backup.scheduleLast', { when: formatDateTime(new Date(lastAuto).toISOString(), locale) })}
+        </p>
       </Card>
 
       <Card title={t('backup.exportTitle')} subtitle={t('backup.exportHint')} className="mb-4">

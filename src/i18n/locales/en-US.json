@@ -734,6 +734,17 @@
     "nowHint": "Saves a full copy of the database and a portable JSON file inside the data volume (the backups folder). Nothing is changed or deleted.",
     "now": "Create backup now",
     "created": "Backup created.",
+    "scheduleTitle": "Automatic backups",
+    "scheduleHint": "Saves a full copy and a portable file in the backups folder on its own, so a recent copy always exists. Copies are kept next to the database; copy the folder elsewhere to also be safe against losing the disk.",
+    "scheduleMode": "How often",
+    "scheduleModes": {
+      "off": "Off",
+      "daily": "Daily",
+      "weekly": "Weekly"
+    },
+    "scheduleSaved": "Automatic backup setting saved.",
+    "scheduleLast": "Last automatic backup: {when}",
+    "scheduleNever": "No automatic backup has been made yet.",
     "download": "Download",
     "volumeOnly": "full copy, stays in the data volume",
     "exportTitle": "Export",

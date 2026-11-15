@@ -20,7 +20,7 @@ A NestFund é uma app **pessoal e self-hosted**, sem contas de utilizador. Por d
 | **Limites de pedidos** | Exportações, descarga de backups, criar backup, importar, ligar Trading 212 e repor dados. |
 | **Logs** | Só tipo de erro e mensagem truncada e com segredos mascarados; nunca stacks, corpos de pedidos ou cabeçalhos. |
 | **Ações destrutivas** | Apagar transações, categorias, objetivos, linhas de orçamento, saldos, regras, desligar o Trading 212 e repor dados pedem confirmação. Antes de repor, importar ou aplicar uma regra a transações antigas é guardada uma cópia da base de dados. |
-| **Backups** | Pasta `0700` e ficheiros `0600`; a pasta `…-uploads` com os recibos de cada backup também é `0700`. Só os `.json` (sem segredos) podem ser descarregados pela web; as cópias `.db` ficam no volume. |
+| **Backups** | Pasta `0700` e ficheiros `0600`; a pasta `…-uploads` com os recibos de cada backup também é `0700`. Só os `.json` (sem segredos) podem ser descarregados pela web; as cópias `.db` ficam no volume. As cópias de segurança antigas em `/data/backups/` (e as respetivas pastas de recibos) são limpas automaticamente: guardam-se sempre as 10 mais recentes de cada tipo e nunca se apaga nada com menos de 30 dias. |
 
 ## Limitações conhecidas
 

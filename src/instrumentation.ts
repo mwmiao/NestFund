@@ -4,5 +4,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startT212Scheduler } = await import('./lib/t212-scheduler');
     startT212Scheduler();
+    const { pruneBackups } = await import('./lib/backup');
+    try { pruneBackups(); } catch (err) { console.error('[backup] prune failed:', (await import('./lib/security')).describeError(err)); }
   }
 }

@@ -135,6 +135,7 @@ export function createBackupNow(appVersion?: string): { db: string; json: string
   } catch {
     // The database copy and JSON are already safe; a receipts problem must not fail the whole backup.
   }
+  try { pruneBackups(); } catch { /* pruning is housekeeping; a failure must not fail the backup */ }
   return { db, json };
 }
 
@@ -149,6 +150,37 @@ export function listBackups(limit = 12): BackupEntry[] {
     })
     .sort((a, b) => b.modified.localeCompare(a.modified))
     .slice(0, limit);
+}
+
+export const KEEP_PER_KIND = 10;
+export const MIN_PRUNE_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const STAMP_IN_NAME = /-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z/;
+
+/**
+ * Deletes old safety copies; returns the names removed. Never touches the newest copies of each kind or anything under 30 days.
+ * When a `.db` is removed, the receipts folder next to it (same name with `.db` -> `-uploads`) goes too; orphan folders are left alone.
+ */
+export function pruneBackups(dir: string = BACKUP_DIR, now: number = Date.now()): string[] {
+  if (!fs.existsSync(dir)) return [];
+  const kinds = new Map<string, { name: string; mtime: number }[]>();
+  for (const name of fs.readdirSync(dir)) {
+    if (!BACKUP_NAME.test(name)) continue;
+    const kind = name.replace(STAMP_IN_NAME, '');
+    const list = kinds.get(kind) ?? [];
+    list.push({ name, mtime: fs.statSync(path.join(dir, name)).mtimeMs });
+    kinds.set(kind, list);
+  }
+  const removed: string[] = [];
+  for (const list of kinds.values()) {
+    list.sort((a, b) => b.mtime - a.mtime);
+    for (const f of list.slice(KEEP_PER_KIND)) {
+      if (now - f.mtime < MIN_PRUNE_AGE_MS) continue;
+      fs.rmSync(path.join(dir, f.name), { force: true });
+      if (f.name.endsWith('.db')) fs.rmSync(path.join(dir, f.name.replace(/\.db$/, '-uploads')), { recursive: true, force: true });
+      removed.push(f.name);
+    }
+  }
+  return removed;
 }
 
 /** Only the portable .json backups can be downloaded; the .db copies stay inside the data volume (they hold the encrypted Trading 212 key). */

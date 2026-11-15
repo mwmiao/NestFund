@@ -27,6 +27,7 @@ and update your row when done.
 | [017](017-do-not-lower-schema-version-on-rollback.md) | Never lower `user_version` when an older app opens a newer database | P3 | S | LOW | — | DONE (reviewed: typecheck + 335 tests pass, scope clean, new test fails without the fix; merged to main as e26cf63 from branch `advisor/017-keep-newer-schema-version`) |
 | [018](018-history-chart-ignore-transfers.md) | History spending chart counted transfers as spending | P2 | S | LOW | — | DONE (typecheck + 386 tests pass, scope clean, 2 of 4 new tests fail without the fix; merged to main from branch `advisor/018-history-ignore-transfers`) |
 | [019](019-reject-unreadable-transaction-date.md) | Unreadable transaction date goes back to the form instead of being saved as today | P3 | S | LOW | — | DONE (typecheck + 384 tests pass, scope clean; the action itself is not unit-tested, see plan; merged to main from branch `advisor/019-reject-bad-date`) |
+| [020](020-translate-main-nav-label.md) | Translate the hard-coded "Main" label of the two navigation landmarks | P3 | S | LOW | — | DONE (typecheck + 390 tests pass, scope clean, new test fails with the hard-coded label; not checked in a browser; merged to main from branch `advisor/020-translate-nav-label`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 

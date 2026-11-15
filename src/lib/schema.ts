@@ -232,5 +232,7 @@ export function migrate(db: Database.Database, opts: { backupDir?: string } = {}
       for (let v = version; v <= MIGRATIONS.length; v++) db.exec(MIGRATIONS[v - 1]);
     })();
   }
-  db.pragma(`user_version = ${MIGRATIONS.length + 1}`);
+  // Only ever raise the version: a database written by a newer release keeps its number if an older release opens it,
+  // otherwise upgrading again would re-run migrations that already happened.
+  if (version <= MIGRATIONS.length) db.pragma(`user_version = ${MIGRATIONS.length + 1}`);
 }

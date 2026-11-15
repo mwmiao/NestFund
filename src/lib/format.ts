@@ -60,6 +60,20 @@ export function parseDecimal(input: unknown): number | null {
 }
 
 /**
+ * Like parseDecimal, for amounts of money. Money has two decimals, so "1.500" or "1,500" (one separator, exactly three
+ * digits after it) can only be a thousands separator: it is read as 1500, not 1.5. Everything else is read as parseDecimal does.
+ * Use parseDecimal (not this) for fields that are not money, such as percentages and days worked.
+ */
+export function parseMoney(input: unknown): number | null {
+  if (typeof input === 'string') {
+    const s = input.trim().replace(/[€\s ]/g, '');
+    const m = s.match(/^(-?)([1-9]\d{0,2})[.,](\d{3})$/);
+    if (m) return parseDecimal(`${m[1]}${m[2]}${m[3]}`);
+  }
+  return parseDecimal(input);
+}
+
+/**
  * HTML `pattern` for an amount field: the (unsigned) numbers `parseDecimal` accepts, written out so the browser rejects what the
  * server would. Plain digits with one `,` or `.` for the cents, or digit groups with the other symbol as thousands separator
  * ("1.234,56" / "1,234.56"). Anything it matches, `parseDecimal` reads.

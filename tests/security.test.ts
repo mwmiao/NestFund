@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fromCents, toCents } from '@/lib/db';
-import { AMOUNT_PATTERN, parseDecimal, round2 } from '@/lib/format';
+import { AMOUNT_PATTERN, parseDecimal, parseMoney, round2 } from '@/lib/format';
 import { MAX_AMOUNT, RateLimiter, clampText, clientKey, constantTimeEqual, describeError, neutralizeFormula, parseBasicAuth, redact, safeLocalPath } from '@/lib/security';
 import { T212_BASE_URLS, T212Error, t212Get } from '@/lib/t212-core';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from '@/lib/secret-box';
@@ -188,5 +188,29 @@ describe('Trading 212 credentials', () => {
     const flipped = box.slice(0, -4) + (box.endsWith('AAAA') ? 'BBBB' : 'AAAA');
     expect(() => decryptSecret(flipped, key)).toThrow();
     expect(() => decryptSecret('v2:' + box.slice(3), key)).toThrow();
+  });
+});
+
+describe('parseMoney', () => {
+  it('reads a separator followed by exactly three digits as thousands', () => {
+    expect(parseMoney('1.500')).toBe(1500);
+    expect(parseMoney('1,500')).toBe(1500);
+    expect(parseMoney('12.345')).toBe(12345);
+    expect(parseMoney('-2.000')).toBe(-2000);
+    expect(parseMoney('€ 1.500')).toBe(1500);
+  });
+  it('reads everything else exactly like parseDecimal', () => {
+    for (const s of ['12,50', '39.90', '1.234,56', '1,234.56', '0.125', '1.5', '1.50', '1.5000', '1234.567', '25', '-5', '9 242,30 €']) expect(parseMoney(s), s).toBe(parseDecimal(s));
+    for (const bad of ['abc', '', '1,2,3']) expect(parseMoney(bad), bad).toBeNull();
+  });
+  it('still reads whatever the amount field pattern accepts', () => {
+    const field = new RegExp(`^(?:${AMOUNT_PATTERN})$`);
+    const alphabet = ['0', '1', '5', ',', '.', ' '];
+    const build = (len: number): string[] => (len === 0 ? [''] : build(len - 1).flatMap((s) => alphabet.map((c) => s + c)));
+    for (let len = 1; len <= 6; len++) for (const s of build(len)) if (field.test(s)) expect(parseMoney(s), JSON.stringify(s)).not.toBeNull();
+  });
+  it('leaves parseDecimal alone, so percentages keep their decimals', () => {
+    expect(parseDecimal('2,125')).toBe(2.125);
+    expect(parseDecimal('1.500')).toBe(1.5);
   });
 });

@@ -11,7 +11,7 @@ import { getI18n } from '@/i18n/server';
 import { UPLOADS_DIR } from '@/lib/db';
 import { currentMonth, isISODate, isMonth, todayISO } from '@/lib/dates';
 import { expectedPayDate } from '@/lib/payday';
-import { parseDecimal } from '@/lib/format';
+import { parseDecimal, parseMoney } from '@/lib/format';
 import { tooMany } from '@/lib/rate-limit';
 import { moveUploadsTo } from '@/lib/uploads';
 import * as repo from '@/lib/repo';
@@ -53,8 +53,8 @@ const existingCategoryId = (fd: FormData, k: string) => {
   const id = optId(fd, k);
   return id && repo.listCategories().some((c) => c.id === id) ? id : null;
 };
-const num = (fd: FormData, k: string, fallback = 0) => parseDecimal(str(fd, k)) ?? fallback;
-const optNum = (fd: FormData, k: string) => parseDecimal(str(fd, k));
+const num = (fd: FormData, k: string, fallback = 0) => parseMoney(str(fd, k)) ?? fallback;
+const optNum = (fd: FormData, k: string) => parseMoney(str(fd, k));
 const optId = (fd: FormData, k: string) => {
   const n = Number(str(fd, k));
   return Number.isInteger(n) && n > 0 ? n : null;
@@ -224,7 +224,7 @@ export async function saveMonthIncomeAction(fd: FormData) {
   if (!month) return;
   const profile = repo.getProfile();
   const date = (k: string) => (isISODate(str(fd, k)) ? str(fd, k) : null);
-  const days = (k: string) => Math.min(Math.max(num(fd, k), 0), 31);
+  const days = (k: string) => Math.min(Math.max(parseDecimal(str(fd, k)) ?? 0, 0), 31);
   const rate = (k: string) => {
     const v = optNum(fd, k);
     return v == null || v < 0 ? null : v;
@@ -373,7 +373,7 @@ export async function setupFixedAction(fd: FormData) {
   const categoryIds = fd.getAll('categoryId').map((v) => Number(v));
   names.forEach((raw, i) => {
     const name = raw.trim();
-    const amount = parseDecimal(amounts[i] ?? '');
+    const amount = parseMoney(amounts[i] ?? '');
     if (!name || amount == null || amount <= 0) return;
     repo.upsertBudgetItem({
       name,

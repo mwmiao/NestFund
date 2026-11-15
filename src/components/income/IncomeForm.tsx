@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { saveMonthIncomeAction } from '@/app/actions';
 import { useI18n } from '@/i18n/client';
-import { formatMoney, parseDecimal, toInputDecimal } from '@/lib/format';
+import { formatMoney, parseDecimal, parseMoney, toInputDecimal } from '@/lib/format';
 import { estimateFromDays, paidDayEquivalents } from '@/lib/payday';
 import { SubmitButton } from '@/components/SubmitButton';
 
@@ -41,8 +41,8 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
 
   const n = parseDecimal(normal) ?? 0;
   const h = parseDecimal(holiday) ?? 0;
-  const salaryEstimate = estimateFromDays({ normalDays: n, holidayDays: h, perDay: parseDecimal(salaryDay) ?? 0 });
-  const mealEstimate = estimateFromDays({ normalDays: n, holidayDays: h, perDay: parseDecimal(mealDay) ?? 0 });
+  const salaryEstimate = estimateFromDays({ normalDays: n, holidayDays: h, perDay: parseMoney(salaryDay) ?? 0 });
+  const mealEstimate = estimateFromDays({ normalDays: n, holidayDays: h, perDay: parseMoney(mealDay) ?? 0 });
   const equivalents = paidDayEquivalents(n, h);
 
   return (

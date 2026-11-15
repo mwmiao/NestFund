@@ -122,9 +122,11 @@ export async function saveTransactionAction(fd: FormData) {
   // An amount that cannot be read (or is zero) goes back to the form with a message instead of vanishing silently.
   if (!amount) redirect(txFormErrorUrl(id, 'amount'));
   if (!description) redirect(safeBack(fd, '/transactions'));
+  const date = str(fd, 'date');
+  // A date that is not a real calendar day goes back to the form instead of being saved under today.
+  if (!isISODate(date)) redirect(txFormErrorUrl(id, 'date'));
 
   const recurring = str(fd, 'recurring') === '1';
-  const date = str(fd, 'date');
   const type = oneOf<TxType>(TX_TYPES, str(fd, 'type'), 'purchase');
   const account = optAccount(fd, 'account') ?? 'ctt';
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
@@ -140,7 +142,7 @@ export async function saveTransactionAction(fd: FormData) {
   try {
     repo.upsertTransaction({
       id: id ?? undefined,
-      date: isISODate(date) ? date : todayISO(),
+      date,
       amount,
       type,
       description,

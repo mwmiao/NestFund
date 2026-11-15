@@ -203,6 +203,7 @@
   },
   "tx": {
     "amountError": "That amount could not be read. Use digits and a comma, for example 12,50.",
+    "dateError": "That date could not be read. Pick a real calendar date.",
     "title": "Transactions",
     "new": "New transaction",
     "editTitle": "Edit transaction",

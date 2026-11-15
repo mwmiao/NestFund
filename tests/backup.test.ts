@@ -32,6 +32,14 @@ describe('validateBackup', () => {
     expect(r.invalid.map((i) => `${i.section}#${i.index}`)).toEqual(['transactions#1', 'transactions#2', 'transactions#3', 'transactions#4', 'transactions#5', 'goals#1']);
   });
 
+  it('rejects impossible calendar dates such as 2026-02-31', () => {
+    const r = validateBackup(wrap({ transactions: [tx(), { ...tx(), date: '2026-02-31' }] }));
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.file.data.transactions).toHaveLength(1);
+    expect(r.invalid.map((i) => `${i.section}#${i.index}`)).toEqual(['transactions#1']);
+  });
+
   it('never reads a Trading 212 key even if one is smuggled into the file', () => {
     const r = validateBackup(wrap({ goals: [{ kind: 'house', name: 'Casa', target: 1 }], t212Key: 'secret' }).replace('"data"', '"apiKey":"secret","data"'));
     expect(r.ok && JSON.stringify(r.file)).not.toContain('secret');
@@ -122,6 +130,11 @@ describe('transactions CSV', () => {
     expect(r.invalid).toEqual([
       { line: 4, reason: 'date' }, { line: 5, reason: 'amount' }, { line: 6, reason: 'type' }, { line: 7, reason: 'account' }, { line: 8, reason: 'transfer' },
     ]);
+  });
+  it('rejects impossible calendar dates in CSV rows', () => {
+    const r = parseTransactionsCsv('date,amount,description\n31/02/2026,10,Lunch\n28/02/2026,10,Lunch', () => null);
+    expect(r.transactions.map((t) => t.date)).toEqual(['2026-02-28']);
+    expect(r.invalid).toEqual([{ line: 2, reason: 'date' }]);
   });
   it('skips identical lines repeated inside the same CSV, so a double-pasted export never duplicates', () => {
     const r = parseTransactionsCsv(['date,amount,description', '2026-11-02,5,Pizza', '2026-11-02,5.00,pizza', '2026-11-03,5,Pizza'].join('\n'), resolve);

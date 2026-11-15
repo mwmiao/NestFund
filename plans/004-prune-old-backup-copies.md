@@ -19,7 +19,7 @@
 - **Risk**: MED (it deletes files; the policy below is deliberately conservative)
 - **Depends on**: none
 - **Category**: tech-debt (reliability)
-- **Planned at**: commit `ca98cb9`, 2026-11-13
+- **Planned at**: commit `ca98cb9`, 2026-11-13; refreshed against `c3b3b76` on 2026-11-15 (plans 014/015 added receipt folders next to the `.db` copies: pruning must remove them together with their `.db`; see Step 1b)
 
 ## Why this matters
 
@@ -134,9 +134,21 @@ export function pruneBackups(dir: string = BACKUP_DIR, now: number = Date.now())
 
 **Verify**: `npm run typecheck` → exit 0.
 
+### Step 1b: Remove the receipts folder that belongs to a pruned `.db`
+
+Since plans 014/015, two writers also create a **directory** next to a `.db`, named `<db name without ".db">-uploads`: `createBackupNow` makes `nestfund-backup-<stamp>-uploads/` (hard links to the receipts) and "Delete all data" moves the receipts to `nestfund-before-reset-<stamp>-uploads/`. The `BACKUP_NAME` regex only matches `.db`/`.json` files, so without this step those folders would never be deleted. In `pruneBackups`, when a `.db` file is removed, also remove its folder: after `fs.rmSync(path.join(dir, f.name), { force: true });` add
+
+```ts
+if (f.name.endsWith('.db')) fs.rmSync(path.join(dir, f.name.replace(/\.db$/, '-uploads')), { recursive: true, force: true });
+```
+
+Rules: only the folder whose name is exactly the pruned `.db` name with `.db` replaced by `-uploads`; never any other directory; `.json` files have no folder; a folder with no matching `.db` (orphan) is left alone. Deleting a hard-link folder does not touch the live `/data/uploads` files (a hard link is just another name for the same file).
+
+**Verify**: `npm run typecheck` → exit 0.
+
 ### Step 2: Call it (never letting it fail a backup)
 
-- At the end of `createBackupNow`, before `return`, add: `try { pruneBackups(); } catch { /* pruning is housekeeping; a failure must not fail the backup */ }`.
+- At the end of `createBackupNow` (after the existing `try { snapshotUploadsTo(...) } catch { ... }` block, before `return { db, json }`), add: `try { pruneBackups(); } catch { /* pruning is housekeeping; a failure must not fail the backup */ }`.
 - In `src/instrumentation.ts`, inside the existing `nodejs` check after `startT212Scheduler();` add:
 
 ```ts
@@ -154,6 +166,7 @@ Create `tests/backup-prune.test.ts`. Set `process.env.DATA_DIR` to a tmp dir bef
 3. Mixed kinds: 12 old `nestfund-before-import-*.db` and 3 old `nestfund-before-reset-*.db` → only the 2 oldest imports are removed; the 3 resets stay (kinds are independent).
 4. `nestfund-before-rule-1-*.db` and `nestfund-before-rule-2-*.db` are separate kinds (different rule ids).
 5. Files that do not match `BACKUP_NAME` (`notes.txt`, `random.db`) and a missing directory are ignored (no throw, returns `[]`).
+7. Receipts folders: for 12 old `nestfund-backup-<stamp>.db` files, each with a directory `nestfund-backup-<stamp>-uploads/` containing one file, the 2 oldest `.db` files **and their `-uploads` directories** are removed, the other 10 `.db` files and directories remain; a directory `nestfund-backup-<old stamp>-uploads/` with no matching `.db` is left untouched; an unrelated directory (e.g. `somedir/`) is left untouched. Also: pruning a `.db` that has no uploads folder does not throw.
 6. `.db` and `.json` files of manual backups are different kinds (the extension stays in the kind name): with 12 old `.db` and 12 old `.json` files, 2 of each are removed, i.e. each extension is pruned independently.
 
 **Verify**: `npx vitest run tests/backup-prune.test.ts` → all pass.

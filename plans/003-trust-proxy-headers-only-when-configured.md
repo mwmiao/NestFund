@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat ca98cb9..HEAD -- src/lib/security.ts src/middleware.ts src/lib/rate-limit.ts tests/security.test.ts tests/middleware.test.ts docker-compose.yml .env.example SECURITY.md`
+> **Drift check (run first)**: `git diff --stat b5df460..HEAD -- src/lib/security.ts src/middleware.ts src/lib/rate-limit.ts tests/security.test.ts tests/middleware.test.ts docker-compose.yml .env.example SECURITY.md`
 > If any in-scope file changed since this plan was written (other than by plan
 > 002 adding `tests/middleware.test.ts`), compare the "Current state" excerpts
 > against the live code before proceeding; on a mismatch, treat it as a STOP
@@ -20,7 +20,7 @@
 - **Risk**: LOW (code) / MED (behavior change for existing proxy users — see Maintenance notes)
 - **Depends on**: `plans/002-test-middleware-and-routes.md` (the middleware tests must exist first)
 - **Category**: security
-- **Planned at**: commit `ca98cb9`, 2026-11-13
+- **Planned at**: commit `ca98cb9`, 2026-11-13; refreshed against `b5df460` on 2026-11-15 (002 merged; test line numbers and lockout counts corrected)
 
 ## Why this matters
 
@@ -42,7 +42,7 @@ export function clientKey(headers: { get(name: string): string | null }): string
 
 - `src/middleware.ts` — calls `clientKey(req.headers)` (line ~20). Reads `process.env.BASIC_AUTH_USER` / `BASIC_AUTH_PASSWORD` the same way env vars should be read here.
 - `src/lib/rate-limit.ts` — `tooMany()` and `rateLimited()` also call `clientKey(...)` for server actions and route handlers. They need no edits if `clientKey`'s default does the right thing.
-- `tests/security.test.ts` lines 113-118 — current test "identifies clients behind a proxy":
+- `tests/security.test.ts` lines 131-136 — current test "identifies clients behind a proxy":
 
 ```ts
 it('identifies clients behind a proxy', () => {
@@ -119,8 +119,10 @@ Replace the "identifies clients behind a proxy" test with two tests: (a) with th
 ### Step 3: Update `tests/middleware.test.ts`
 
 - In `beforeEach` add `delete process.env.TRUST_PROXY`; in `afterEach` delete it again.
-- Rewrite test 9 (the one marked "Current behavior") as: **without** `TRUST_PROXY`, 10 wrong attempts with rotating `cf-connecting-ip` values (`1.0.0.1` … `1.0.0.10`) followed by an 11th wrong attempt with yet another fake address → `429`. (This is the bypass this plan closes.)
-- Add: **with** `process.env.TRUST_PROXY = '1'`, 10 wrong attempts from `9.9.9.9` block `9.9.9.9` (11th → 429), but a request with the correct password from `8.8.8.8` passes.
+- The lockout in this codebase answers 401 to the first **11** wrong attempts and 429 from the **12th** (the block is checked before the attempt is counted; plan 002's test "locks out a client once more than 10 wrong attempts…" pins this). Keep that count; do not change `RateLimiter`.
+- Rewrite the last test (marked "Current behavior: clients are told apart by proxy headers", named "does not block a different client address while another is blocked") as: **without** `TRUST_PROXY`, 11 wrong attempts with rotating `cf-connecting-ip` values (`1.0.0.1` … `1.0.0.11`, each answered 401), then a 12th wrong attempt with yet another fake address → `429`, and a correct-password request from a further fake address → `429` too. (This is the bypass this plan closes.)
+- The other lockout tests that send `cf-connecting-ip: 9.9.9.9` without `TRUST_PROXY` still pass (everyone shares the key `'local'`); leave them alone.
+- Add: **with** `process.env.TRUST_PROXY = '1'`, 11 wrong attempts from `9.9.9.9` (each 401), then a 12th from `9.9.9.9` → 429 and a correct-password request from `9.9.9.9` → 429, but a correct-password request from `8.8.8.8` passes.
 
 **Verify**: `npx vitest run tests/middleware.test.ts` → all pass.
 

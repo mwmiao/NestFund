@@ -8,11 +8,11 @@ and update your row when done.
 
 | Plan | Title | Priority | Effort | Risk | Depends on | Status |
 |------|-------|----------|--------|------|------------|--------|
-| [001](001-fix-attachment-loss-on-failed-save.md) | Never delete or orphan a receipt when a transaction save fails | P1 | S | LOW | — | TODO |
-| [002](002-test-middleware-and-routes.md) | Add tests for the auth middleware and the file-serving routes | P2 | M | LOW | — | TODO |
-| [003](003-trust-proxy-headers-only-when-configured.md) | Ignore client-supplied proxy headers unless `TRUST_PROXY=1` | P1 | S | LOW code / MED behavior | 002 | TODO |
-| [004](004-prune-old-backup-copies.md) | Prune old safety copies (newest 10 per kind, nothing under 30 days) | P2 | S | MED | — | TODO |
-| [005](005-reject-impossible-calendar-dates.md) | Reject impossible calendar dates (such as 2026-02-31) | P3 | S | LOW | — | TODO |
+| [001](001-fix-attachment-loss-on-failed-save.md) | Never delete or orphan a receipt when a transaction save fails | P1 | S | LOW | — | DONE (reviewed: typecheck + 338 tests pass, scope clean, test fails without the fix; merged to main from branch `advisor/001-attachment-loss`) |
+| [002](002-test-middleware-and-routes.md) | Add tests for the auth middleware and the file-serving routes | P2 | M | LOW | — | DONE (reviewed: typecheck + 359 tests pass, tests only; merged to main from branch `advisor/002-middleware-route-tests`; 003 is now unblocked) |
+| [003](003-trust-proxy-headers-only-when-configured.md) | Ignore client-supplied proxy headers unless `TRUST_PROXY=1` | P1 | S | LOW code / MED behavior | 002 | DONE (reviewed: typecheck + 370 tests pass, scope clean, bypass test covers rotating fake addresses; on branch `advisor/003-trust-proxy`, merged to main from this branch; proxy users must set `TRUST_PROXY=1`) |
+| [004](004-prune-old-backup-copies.md) | Prune old safety copies (newest 10 per kind, nothing under 30 days) | P2 | S | MED | — | DONE (reviewed: typecheck + 378 tests pass, scope clean, also prunes the `-uploads` folders; on branch `advisor/004-prune-backups`, merged to main from this branch) |
+| [005](005-reject-impossible-calendar-dates.md) | Reject impossible calendar dates (such as 2026-02-31) | P3 | S | LOW | — | DONE (reviewed: typecheck + 374 tests pass, scope clean, new tests fail without the fix; on branch `advisor/005-strict-dates`, merged to main from this branch) |
 | [006](006-unique-page-titles.md) | Give every page its own translated browser title | P1 | S–M | LOW | — | DONE (reviewed; on branch `advisor/006-unique-page-titles`, commit de39052, not merged) |
 | [007](007-submit-feedback-on-all-forms.md) | Show progress and block double-submits on every server-action form | P1 | M | LOW | — | DONE (reviewed; on branch `advisor/007-submit-feedback`, commits 39ddc82 + 39d0e19, not merged) |
 | [008](008-accessible-labelled-more-menu.md) | Replace the hidden mobile hamburger with a labelled, keyboard-accessible "More" tab | P1 | M | MED | — | DONE (reviewed in a browser at 375px; one focus bug found and fixed; merged to main) |
@@ -23,6 +23,8 @@ and update your row when done.
 | [013](013-skip-to-content-link.md) | Add a "Skip to main content" link | P3 | S | LOW | — | DONE (reviewed in a browser; padding fix; merged to main) |
 | [014](014-keep-receipts-on-reset.md) | "Delete all data" moves receipts next to the safety copy instead of erasing them | P2 | S | LOW | — | DONE (reviewed: typecheck + tests pass, scope clean; merged to main) |
 | [015](015-include-receipts-in-backup-now.md) | "Create backup now" also snapshots the receipts (hard links) | P3 | S–M | LOW | 014 (004 interacts, see notes) | DONE (reviewed: typecheck + 334 tests pass, scope clean; merged to main; plan 004 must also prune the `-uploads` folders) |
+| [016](016-read-thousands-separators-in-money-fields.md) | Read `1.500` / `1,500` as 1500 in money fields (not €1.50); percentages and days unchanged | P2 | S | LOW code / MED behavior | — | DONE (reviewed: typecheck + 338 tests pass, scope clean, diff matches plan; merged to main as dd1edef from branch `advisor/016-money-thousands`) |
+| [017](017-do-not-lower-schema-version-on-rollback.md) | Never lower `user_version` when an older app opens a newer database | P3 | S | LOW | — | DONE (reviewed: typecheck + 335 tests pass, scope clean, new test fails without the fix; merged to main as e26cf63 from branch `advisor/017-keep-newer-schema-version`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -54,6 +56,10 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **014–015 (written against `ef09949`, 2026-11-14, third audit)**: 015 reuses `src/lib/uploads.ts`, which 014 creates, so 014 goes first. 004 (pruning) and 015 both edit `src/lib/backup.ts`; whichever lands second must make pruning delete the `<stem>-uploads` folder together with its `.db` (015 Step 3 spells this out). 014 and 015 only touch receipts folders, never the database or the JSON format. The READMEs already say receipts are not in the `.db`; 014 and 015 reduce that gap but do not put receipts in the portable JSON (a format decision left to the maintainer).
 
+- **002 finding for 003**: the lockout allows 11 wrong attempts, not 10 (`blocked()` trips at count > 10, and the 11th wrong attempt is still answered 401). 002's lockout test pins this; 003 may fix it (`>=`) but must update that test deliberately.
+
+- **016–017 (written against `0a31f89`, 2026-11-15, fourth audit)** are independent of each other and of everything else. 016 edits `src/lib/format.ts`, `src/app/actions.ts`, `src/lib/tx-csv.ts`, `IncomeForm.tsx` and `tests/security.test.ts`; 017 edits `src/lib/schema.ts` and `tests/fresh-start.test.ts`. **Decision for 016**: it reads a lone separator followed by exactly three digits as thousands (confirm, or switch to "reject"; see the plan). Before running anything: plans 001 and 002 are DONE on unmerged branches (`advisor/001-attachment-loss` fixes a P1 receipt-loss bug); merge them first. Four stale `worktree-agent-*` branches and an untracked `.claude/worktrees/` folder can be cleaned up.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -72,8 +78,13 @@ From the UX and accessibility audit (3ca9a94): all three remaining findings are 
 
 - Portable JSON export/import does not carry receipts (needs a format decision: zip vs embedded base64, `BACKUP_VERSION` bump).
 
+- Direction (fourth audit): automatic scheduled backups (today only the manual "Create backup now"; do plan 004 first), receipts in the portable JSON, Next 16 upgrade.
+- Simulator fields (`NumberField.tsx`) still use `parseDecimal` for both € and %; a `money` flag could follow plan 016.
+
 ## Findings considered and rejected
 
+- Backup import accepts arbitrary numeric `profile` keys: values are clamped where used (`payday.ts:82`), so no impact.
+- `%` and `_` in the transaction search are not escaped: cosmetic only.
 - CSP `unsafe-inline`, in-memory rate limits, `secret.key` on the same volume as the database: documented limitations in `SECURITY.md`.
 - Attachment type trust: files are served with a fixed type derived from the extension, `nosniff` and a `sandbox` CSP — safe.
 - Unbounded `listTransactions()` in history/reports/backup: fine at personal-finance scale and memoized.

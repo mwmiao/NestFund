@@ -7,7 +7,7 @@
 > in `plans/README.md` — unless a reviewer dispatched you and told you they
 > maintain the index.
 >
-> **Drift check (run first)**: `git diff --stat ca98cb9..HEAD -- src/app/actions.ts src/lib/repo.ts`
+> **Drift check (run first)**: `git diff --stat 0a31f89..HEAD -- src/app/actions.ts src/lib/repo.ts`
 > If either file changed since this plan was written, compare the "Current
 > state" excerpts against the live code before proceeding; on a mismatch,
 > treat it as a STOP condition.
@@ -19,7 +19,7 @@
 - **Risk**: LOW
 - **Depends on**: none
 - **Category**: bug
-- **Planned at**: commit `ca98cb9`, 2026-11-13
+- **Planned at**: commit `0a31f89`, 2026-11-13 (refreshed 2026-11-15: plan 012 added the amount-error redirect and `txFormErrorUrl`; plan 014 changed only `resetDataAction`)
 
 ## Why this matters
 
@@ -28,7 +28,7 @@
 ## Current state
 
 Files:
-- `src/app/actions.ts` — server actions. `saveTransactionAction` is at lines ~115–159 (file starts with `'use server';`).
+- `src/app/actions.ts` — server actions. `saveTransactionAction` is at lines ~116–163 (file starts with `'use server';`).
 - `src/lib/repo.ts` — `upsertTransaction`, `getTransaction`, `deleteTransaction` (returns the attachment name to delete).
 - `src/lib/db.ts` — exports `UPLOADS_DIR` (`<DATA_DIR>/uploads`) and `DATA_DIR` (env `DATA_DIR`, default `./data`).
 
@@ -49,13 +49,15 @@ async function removeAttachment(name: string | null) {
   await fs.unlink(path.join(UPLOADS_DIR, path.basename(name))).catch(() => undefined);
 }
 
-// lines 115-146 (abridged to the load-bearing order)
+// lines 116-146 (abridged to the load-bearing order)
 export async function saveTransactionAction(fd: FormData) {
   const id = optId(fd, 'id');
   const existing = id ? repo.getTransaction(id) : null;
   const amount = Math.abs(num(fd, 'amount'));
   const description = text(fd, 'description', MAX_TEXT.description);
-  if (!amount || !description) redirect(safeBack(fd, '/transactions'));
+  // An amount that cannot be read (or is zero) goes back to the form with a message instead of vanishing silently.
+  if (!amount) redirect(txFormErrorUrl(id, 'amount'));
+  if (!description) redirect(safeBack(fd, '/transactions'));
 
   let attachment = existing?.attachment ?? null;
   const file = fd.get('attachment');
@@ -74,7 +76,7 @@ export async function saveTransactionAction(fd: FormData) {
   const account = optAccount(fd, 'account') ?? 'ctt';
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
   // A transfer needs a different destination; otherwise fall back to the form so the user can fix it.
-  if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(`/transactions/${id ?? 'new'}?error=transfer`);   // <-- throws AFTER the file changes
+  if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(txFormErrorUrl(id, 'transfer'));   // <-- throws AFTER the file changes
   repo.upsertTransaction({ id: id ?? undefined, /* ... */ attachment, /* ... */ });
   repo.materializeRecurring();
   refresh();
@@ -119,7 +121,7 @@ Conventions to match:
 
 ### Step 1: Move all validation ahead of any file operation
 
-In `saveTransactionAction`, move the block that computes `recurring`, `date`, `type`, `account`, `toAccount` and the `redirect(\`/transactions/${id ?? 'new'}?error=transfer\`)` check so that it sits **directly after** the `if (!amount || !description) redirect(...)` line and **before** `let attachment = ...`. Do not change any expression, only the order. (`recurring` and `date` are used later by `upsertTransaction`; keep them as `const`s declared in the new position.)
+In `saveTransactionAction`, move the block that computes `recurring`, `date`, `type`, `account`, `toAccount` and the `redirect(txFormErrorUrl(id, 'transfer'))` check so that it sits **directly after** the `if (!description) redirect(safeBack(fd, '/transactions'));` line and **before** `let attachment = ...`. Do not change any expression, only the order. (`recurring` and `date` are used later by `upsertTransaction`; keep them as `const`s declared in the new position.)
 
 **Verify**: `npm run typecheck` → exit 0.
 
@@ -170,7 +172,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('next/headers', () => ({ cookies: async () => ({ set: vi.fn(), get: vi.fn() }), headers: async () => new Headers() }));
 ```
 
-If `src/app/actions.ts` imports something else that fails to load under Vitest (for example `@/i18n/server`), mock that module the same way with the smallest stub that satisfies the import.
+`src/app/actions.ts` also imports `@/i18n/server` (`getI18n`, which reads cookies/headers) and `@/lib/t212`; if either fails to load under Vitest, mock that module the same way with the smallest stub that satisfies the import.
 
 Helper: `call(fd)` runs `await actions.saveTransactionAction(fd)` inside `try/catch` and returns the redirect URL from the `NEXT_REDIRECT:` message (rethrow anything else).
 Build forms with `new FormData()`; attach files with `new File([new Uint8Array([1,2,3])], 'r.png', { type: 'image/png' })`. Required fields: `type=purchase`, `amount=10`, `description=Lunch`, `date=2026-11-02`, `account=ctt`.

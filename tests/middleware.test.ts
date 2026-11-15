@@ -12,12 +12,14 @@ const BAD = { authorization: basic('owner', 'wrong') };
 beforeEach(() => {
   process.env.BASIC_AUTH_USER = 'owner';
   process.env.BASIC_AUTH_PASSWORD = 'correct-horse';
+  delete process.env.TRUST_PROXY;
   (globalThis as { __nestfundLimiters?: Map<string, unknown> }).__nestfundLimiters?.clear();
 });
 
 afterEach(() => {
   delete process.env.BASIC_AUTH_USER;
   delete process.env.BASIC_AUTH_PASSWORD;
+  delete process.env.TRUST_PROXY;
 });
 
 describe('auth middleware', () => {
@@ -75,10 +77,17 @@ describe('auth middleware', () => {
     for (let i = 0; i < 9; i++) expect(middleware(req({ ...BAD, ...ip })).status).toBe(401);
   });
 
-  // Current behavior: clients are told apart by proxy headers. Plan 003 changes this.
-  it('does not block a different client address while another is blocked', () => {
+  it('cannot be bypassed with rotating fake addresses unless TRUST_PROXY=1', () => {
+    for (let i = 1; i <= 11; i++) expect(middleware(req({ ...BAD, 'cf-connecting-ip': `1.0.0.${i}` })).status).toBe(401);
+    expect(middleware(req({ ...BAD, 'cf-connecting-ip': '1.0.0.100' })).status).toBe(429);
+    expect(middleware(req({ ...GOOD, 'cf-connecting-ip': '1.0.0.200' })).status).toBe(429);
+  });
+
+  it('tells clients apart by address header when TRUST_PROXY=1', () => {
+    process.env.TRUST_PROXY = '1';
     const ip = { 'cf-connecting-ip': '9.9.9.9' };
-    for (let i = 0; i < 11; i++) middleware(req({ ...BAD, ...ip }));
+    for (let i = 0; i < 11; i++) expect(middleware(req({ ...BAD, ...ip })).status).toBe(401);
+    expect(middleware(req({ ...BAD, ...ip })).status).toBe(429);
     expect(middleware(req({ ...GOOD, ...ip })).status).toBe(429);
     expect(passed(middleware(req({ ...GOOD, 'cf-connecting-ip': '8.8.8.8' })))).toBe(true);
   });

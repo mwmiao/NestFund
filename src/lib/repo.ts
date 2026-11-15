@@ -151,8 +151,8 @@ export function upsertCategory(cat: Omit<Category, 'id' | 'key' | 'builtin' | 'n
 }
 
 export function deleteCategory(id: number) {
-  // Only custom categories can be removed; their transactions fall back to "no category".
-  getDb().prepare('DELETE FROM categories WHERE id = ? AND builtin = 0').run(id);
+  // Transactions in a removed category fall back to "no category".
+  getDb().prepare('DELETE FROM categories WHERE id = ?').run(id);
 }
 
 export function findOrCreateCategory(name: string): number | null {

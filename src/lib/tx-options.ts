@@ -9,7 +9,8 @@ import { ACCOUNT_IDS, type AccountId } from './types';
 /** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
 export function transactionFormOptions(t: TFunction) {
   const db = getDb();
-  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }));
+  const categories = listCategories().map((c) => ({ id: c.id, key: c.key, label: categoryName(c, t), color: c.color, kind: c.kind }))
+    .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
   const column = (col: 'merchant' | 'subcategory') =>
     (db.prepare(`SELECT ${col} AS v FROM transactions WHERE ${col} IS NOT NULL AND ${col} != '' GROUP BY ${col} ORDER BY COUNT(*) DESC LIMIT 50`).all() as { v: string }[]).map(
       (r) => r.v,

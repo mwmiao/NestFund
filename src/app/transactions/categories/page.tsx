@@ -10,7 +10,7 @@ import { SubmitButton } from '@/components/SubmitButton';
 export const generateMetadata = pageTitle('categories.title');
 export default async function CategoriesPage() {
   const { t } = await getI18n();
-  const categories = listCategories();
+  const categories = listCategories().sort((a, b) => categoryName(a, t).localeCompare(categoryName(b, t), undefined, { sensitivity: 'base' }));
 
   const kindSelect = (value: string) => (
     <select name="kind" defaultValue={value} className="input">
@@ -60,11 +60,7 @@ export default async function CategoriesPage() {
                   <input name="monthlyBudget" inputMode="decimal" defaultValue={c.monthlyBudget ?? ''} className="input" />
                 </Field>
                 <SubmitButton className="btn-secondary">{t('common.save')}</SubmitButton>
-                {!c.builtin ? (
-                  <ConfirmButton formAction={deleteCategoryAction}>{t('common.delete')}</ConfirmButton>
-                ) : (
-                  <span className="hidden sm:block" />
-                )}
+                <ConfirmButton formAction={deleteCategoryAction}>{t('common.delete')}</ConfirmButton>
               </form>
             </li>
           ))}

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { saveTransactionAction } from '@/app/actions';
 import { useAccounts } from '@/components/AccountsProvider';
@@ -231,6 +232,9 @@ export function TransactionForm({
             </option>
           ))}
         </select>
+        <Link href="/transactions/categories" className="link mt-1 inline-block text-xs">
+          {t('tx.manageCategories')}
+        </Link>
       </div>
 
       <div>

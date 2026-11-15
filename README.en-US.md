@@ -110,7 +110,7 @@ docker run --rm --volumes-from nestfund alpine sh -c \
 docker compose start nestfund
 ```
 
-Attachments live in `/data/uploads` and are not part of the `.db`; copy that folder separately if you want them. To keep backups off the server, copy `/data/backups/` elsewhere (for example `docker cp nestfund:/data/backups ./backups`).
+Attachments live in `/data/uploads` and are not part of the `.db`; copy that folder separately if you want them. After "Delete all data", the receipts are in `/data/backups/nestfund-before-reset-…-uploads/`; to undo a reset, restore the matching `.db` and move that folder back to `/data/uploads`. To keep backups off the server, copy `/data/backups/` elsewhere (for example `docker cp nestfund:/data/backups ./backups`).
 
 > Anyone who can reach the app's address can download exports. If you expose it to the Internet, protect it (for example with Cloudflare Access).
 

@@ -110,7 +110,7 @@ docker run --rm --volumes-from nestfund alpine sh -c \
 docker compose start nestfund
 ```
 
-Os anexos ficam em `/data/uploads` e não fazem parte do `.db`; copia essa pasta à parte se os quiseres guardar. Para ter o backup fora do servidor, copia `/data/backups/` para outro sítio (por exemplo, com `docker cp nestfund:/data/backups ./backups`).
+Os anexos ficam em `/data/uploads` e não fazem parte do `.db`; copia essa pasta à parte se os quiseres guardar. Depois de "Apagar todos os dados", os recibos ficam em `/data/backups/nestfund-before-reset-…-uploads/`; para desfazer um reset, restaura o `.db` correspondente e move essa pasta de volta para `/data/uploads`. Para ter o backup fora do servidor, copia `/data/backups/` para outro sítio (por exemplo, com `docker cp nestfund:/data/backups ./backups`).
 
 > Qualquer pessoa com acesso ao endereço da app pode descarregar exportações. Se a expuseres na Internet, protege-a (por exemplo, com Cloudflare Access).
 

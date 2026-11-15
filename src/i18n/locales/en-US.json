@@ -493,7 +493,7 @@
     "notNow": "Not now",
     "sampleDetected": "This database still contains the sample data from the first version.",
     "resetTitle": "Delete all data",
-    "resetHint": "Removes transactions, balances, budgets, goals, custom categories, attachments and the Trading 212 connection. A full copy is saved to /data/backups automatically before anything is deleted. Built-in categories and preferences are kept.",
+    "resetHint": "Removes transactions, balances, budgets, goals, custom categories and the Trading 212 connection. Before anything is deleted, a full copy of the database is saved to /data/backups, and your receipts are moved to a folder next to it (not deleted). Built-in categories and preferences are kept.",
     "resetConfirm": "I understand all data will be deleted",
     "resetButton": "Start from scratch",
     "resetDone": "Data deleted. The app is ready for your real numbers.",

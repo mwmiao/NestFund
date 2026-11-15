@@ -14,8 +14,12 @@ export function isMonth(v: unknown): v is string {
   return typeof v === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 }
 
+/** Real calendar date in YYYY-MM-DD form. Date.parse alone accepts "2026-02-31" (it rolls over to March), so the parts are re-checked. */
 export function isISODate(v: unknown): boolean {
-  return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
+  if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [y, m, d] = v.split('-').map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === m - 1 && date.getUTCDate() === d;
 }
 
 export function addMonths(month: string, n: number): string {

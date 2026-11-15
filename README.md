@@ -110,7 +110,7 @@ docker run --rm --volumes-from nestfund alpine sh -c \
 docker compose start nestfund
 ```
 
-Os anexos ficam em `/data/uploads` e não fazem parte do `.db`. **Criar backup agora** guarda também uma pasta de recibos (`nestfund-backup-…-uploads/`) ao lado do `.db`; para restaurar tudo, repõe o `.db` e copia os ficheiros dessa pasta para `/data/uploads`. Depois de "Apagar todos os dados", os recibos ficam em `/data/backups/nestfund-before-reset-…-uploads/`; para desfazer um reset, restaura o `.db` correspondente e move essa pasta de volta para `/data/uploads`. Para ter o backup fora do servidor, copia `/data/backups/` para outro sítio (por exemplo, com `docker cp nestfund:/data/backups ./backups`).
+Os anexos ficam em `/data/uploads` e não fazem parte do `.db`. **Criar backup agora** guarda também uma pasta de recibos (`nestfund-backup-…-uploads/`) ao lado do `.db`; para restaurar tudo, repõe o `.db` e copia os ficheiros dessa pasta para `/data/uploads`. Depois de "Apagar todos os dados", os recibos ficam em `/data/backups/nestfund-before-reset-…-uploads/`; para desfazer um reset, restaura o `.db` correspondente e move essa pasta de volta para `/data/uploads`. Para ter o backup fora do servidor, copia `/data/backups/` para outro sítio (por exemplo, com `docker cp nestfund:/data/backups ./backups`). As cópias de segurança antigas em `/data/backups/` (e as respetivas pastas de recibos) são limpas automaticamente: guardam-se sempre as 10 mais recentes de cada tipo e nunca se apaga nada com menos de 30 dias.
 
 > Qualquer pessoa com acesso ao endereço da app pode descarregar exportações. Se a expuseres na Internet, protege-a (por exemplo, com Cloudflare Access).
 

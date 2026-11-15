@@ -28,6 +28,7 @@ and update your row when done.
 | [018](018-history-chart-ignore-transfers.md) | History spending chart counted transfers as spending | P2 | S | LOW | — | DONE (typecheck + 386 tests pass, scope clean, 2 of 4 new tests fail without the fix; merged to main from branch `advisor/018-history-ignore-transfers`) |
 | [019](019-reject-unreadable-transaction-date.md) | Unreadable transaction date goes back to the form instead of being saved as today | P3 | S | LOW | — | DONE (typecheck + 384 tests pass, scope clean; the action itself is not unit-tested, see plan; merged to main from branch `advisor/019-reject-bad-date`) |
 | [020](020-translate-main-nav-label.md) | Translate the hard-coded "Main" label of the two navigation landmarks | P3 | S | LOW | — | DONE (typecheck + 390 tests pass, scope clean, new test fails with the hard-coded label; not checked in a browser; merged to main from branch `advisor/020-translate-nav-label`) |
+| [021](021-scheduled-automatic-backups.md) | Automatic scheduled backups (off / daily / weekly) in Settings › Backup | P2 | M | LOW-MED | — | DONE (typecheck + 397 tests pass, scope clean, cases 3-4 fail when the due check is bypassed; settings card rendered in pt-PT against the dev server; merged to main from branch `advisor/021-scheduled-backups`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -65,6 +66,8 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **018–019 (written against `e051a5d`, 2026-11-15, fifth audit)** are independent of each other and of everything else. 018 edits `src/lib/repo.ts` and adds `tests/history-spending.test.ts`; 019 edits `src/lib/tx-form-error.ts`, `saveTransactionAction` in `src/app/actions.ts`, both locale files and adds `tests/tx-form-error.test.ts`. No file overlaps, so they can run in parallel.
 
+- **021 (written against `e5e57c4`, 2026-11-15, direction item from the fourth audit)** is independent of everything else (plans 004 pruning and 015 receipts-in-backups are already merged and are reused). **Decision for 021**: default mode is weekly (off / daily / weekly are selectable); automatic copies are named `nestfund-auto-…`, pruned as their own kind, and live on the same volume as the database.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -83,7 +86,7 @@ From the UX and accessibility audit (3ca9a94): all three remaining findings are 
 
 - Portable JSON export/import does not carry receipts (needs a format decision: zip vs embedded base64, `BACKUP_VERSION` bump).
 
-- Direction (fourth audit): automatic scheduled backups (today only the manual "Create backup now"; do plan 004 first), receipts in the portable JSON, Next 16 upgrade.
+- Direction (fourth audit): receipts in the portable JSON, Next 16 upgrade.
 - Direction (fifth audit): see the earlier line; nothing new. Not audited this time: Trading 212 sync/polling, `backup-format.ts` restore planning, UI components, i18n files, service worker.
 - Simulator fields (`NumberField.tsx`) still use `parseDecimal` for both € and %; a `money` flag could follow plan 016.
 

@@ -8,7 +8,7 @@ import { AmountInput } from '@/components/AmountInput';
 import { SubmitButton } from '@/components/SubmitButton';
 import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
-import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
+import { splitCategoriesForKind, suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
 import { TX_FORM_ERROR_MESSAGE, transferNeedsDestination, type TxFormError } from '@/lib/tx-form-error';
 import { ACCOUNTS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
@@ -79,6 +79,7 @@ export function TransactionForm({
   merchants = [],
   subcategories = [],
   defaultAccount = 'ctt',
+  defaultIncomeAccount = 'ctt',
   initialType,
   topCategoryIds = [],
   suggest,
@@ -91,6 +92,7 @@ export function TransactionForm({
   merchants?: string[];
   subcategories?: string[];
   defaultAccount?: AccountId;
+  defaultIncomeAccount?: AccountId;
   initialType?: string;
   topCategoryIds?: number[];
   /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
@@ -105,7 +107,7 @@ export function TransactionForm({
   const [spendType, setSpendType] = useState<TxType>(isSpending(initial) ? initial : 'purchase');
   const type: TxType = kind === 'spending' ? spendType : kind;
   const [categoryId, setCategoryId] = useState<string>(transaction?.categoryId ? String(transaction.categoryId) : '');
-  const [account, setAccount] = useState<AccountId>(transaction?.account ?? defaultAccount);
+  const [account, setAccount] = useState<AccountId>(transaction?.account ?? (kindOf(initial) === 'income' ? defaultIncomeAccount : defaultAccount));
   const [toAccount, setToAccount] = useState<AccountId | ''>(transaction?.toAccount ?? '');
   const [needsDestination, setNeedsDestination] = useState(false);
   const [accountTouched, setAccountTouched] = useState(!!transaction);
@@ -114,7 +116,17 @@ export function TransactionForm({
   const [date, setDate] = useState(transaction?.date ?? today);
   const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
   const isTransfer = type === 'transfer';
+  const { fitting, others } = splitCategoriesForKind(categories, kind);
   const topCategories = topCategoryIds.map((id) => categories.find((c) => c.id === id)).filter((c): c is CategoryOption => !!c);
+  // Spending: the six most used. Income / transfer: the few categories that fit (salary, income / investment, savings).
+  const chipCategories = kind === 'spending' ? topCategories : fitting.slice(0, 6);
+  const changeKind = (next: Kind) => {
+    setKind(next);
+    if (transaction) return;
+    const selected = categories.find((c) => String(c.id) === categoryId);
+    if (selected && !splitCategoriesForKind([selected], next).fitting.length) setCategoryId('');
+    if (!accountTouched) setAccount(next === 'income' ? defaultIncomeAccount : defaultAccount);
+  };
   const pickCategory = (value: string) => {
     setCategoryId(value);
     const key = categories.find((c) => String(c.id) === value)?.key;
@@ -169,7 +181,7 @@ export function TransactionForm({
             type="button"
             role="radio"
             aria-checked={kind === k}
-            onClick={() => setKind(k)}
+            onClick={() => changeKind(k)}
             className={`min-h-11 truncate rounded-[0.6rem] px-1 py-2 text-[13px] font-medium transition sm:text-sm ${kind === k ? 'bg-surface text-ink shadow-sm' : 'text-subtle hover:text-ink'}`}
           >
             {t(`tx.kinds.${k}`)}
@@ -215,9 +227,9 @@ export function TransactionForm({
             <span className="shrink-0 rounded-full bg-brand-700 px-3 py-1.5 text-xs font-semibold text-white">{t('tx.suggestAccept')}</span>
           </button>
         )}
-        {topCategories.length > 0 && (
+        {chipCategories.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
-            {topCategories.map((c) => (
+            {chipCategories.map((c) => (
               <button
                 key={c.id}
                 type="button"
@@ -233,11 +245,20 @@ export function TransactionForm({
         )}
         <select name="categoryId" value={categoryId} aria-label={t('tx.category')} className="input" onChange={(e) => pickCategory(e.target.value)}>
           <option value="">{t('tx.noCategory')}</option>
-          {categories.map((c) => (
+          {fitting.map((c) => (
             <option key={c.id} value={c.id}>
               {c.label}
             </option>
           ))}
+          {others.length > 0 && (
+            <optgroup label={t('tx.otherCategories')}>
+              {others.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
         <Link href="/transactions/categories" className="link mt-1 inline-block text-xs">
           {t('tx.manageCategories')}

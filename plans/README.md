@@ -30,7 +30,7 @@ and update your row when done.
 | [020](020-translate-main-nav-label.md) | Translate the hard-coded "Main" label of the two navigation landmarks | P3 | S | LOW | — | DONE (typecheck + 390 tests pass, scope clean, new test fails with the hard-coded label; not checked in a browser; merged to main from branch `advisor/020-translate-nav-label`) |
 | [021](021-scheduled-automatic-backups.md) | Automatic scheduled backups (off / daily / weekly) in Settings › Backup | P2 | M | LOW-MED | — | DONE (typecheck + 397 tests pass, scope clean, cases 3-4 fail when the due check is bypassed; settings card rendered in pt-PT against the dev server; merged to main from branch `advisor/021-scheduled-backups`) |
 | [022](022-keep-transfer-form-on-missing-destination.md) | A transfer without a destination is stopped in the form instead of wiping it | P1 | S | LOW | — | DONE |
-| [023](023-category-picker-follows-transaction-kind.md) | The category picker and the default account follow the kind of transaction | P1 | S | LOW | 022 (same file) | TODO |
+| [023](023-category-picker-follows-transaction-kind.md) | The category picker and the default account follow the kind of transaction | P1 | S | LOW | 022 (same file) | DONE |
 | [024](024-save-and-add-another.md) | "Save + new" on the new-transaction form (keeps kind and date) | P2 | S | LOW | 022, 023 (same files) | TODO |
 | [025](025-return-to-where-you-came-from-after-editing.md) | Editing a transaction returns to the page it was opened from | P2 | S–M | LOW | 022–024 (same files) | TODO |
 | [026](026-repeat-a-recent-purchase-in-one-tap.md) | Repeat a recent purchase in one tap, and autocomplete the description | P2 | M | LOW–MED | 022–025 (same files) | TODO |

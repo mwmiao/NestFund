@@ -94,6 +94,14 @@ export function categoryFitsKind(category: Pick<CategoryLike, 'kind'>, kind: Sug
   return category.kind === 'investment' || category.kind === 'savings';
 }
 
+/** The categories that fit `kind` first, then the rest; both keep the order they came in. */
+export function splitCategoriesForKind<C extends { kind?: string }>(categories: readonly C[], kind: SuggestKind): { fitting: C[]; others: C[] } {
+  const fitting: C[] = [];
+  const others: C[] = [];
+  for (const c of categories) (categoryFitsKind({ kind: c.kind ?? 'expense' }, kind) ? fitting : others).push(c);
+  return { fitting, others };
+}
+
 export function suggestCategory(
   input: SuggestInput,
   ctx: { rules: RuleLike[]; history: HistoryHints; categories: CategoryLike[] },

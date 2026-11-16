@@ -242,6 +242,7 @@
     },
     "recurringHint": "Upcoming occurrences are created automatically on the right date.",
     "generated": "Generated automatically",
+    "otherCategories": "Other categories",
     "noCategory": "No category",
     "filters": "Filters",
     "search": "Search description, store, notes…",

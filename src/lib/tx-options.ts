@@ -20,6 +20,10 @@ export function transactionFormOptions(t: TFunction) {
   const accounts = visibleAccounts();
   const wanted = recent && ACCOUNT_IDS.includes(recent.account as AccountId) ? (recent.account as AccountId) : 'ctt';
   const defaultAccount: AccountId = accounts.includes(wanted) ? wanted : (accounts[0] ?? 'ctt');
+  // Income usually lands in one account; when nothing was logged yet it is the main bank account.
+  const incomeRecent = db.prepare("SELECT account FROM transactions WHERE type = 'income' GROUP BY account ORDER BY COUNT(*) DESC LIMIT 1").get() as { account: string } | undefined;
+  const incomeWanted = incomeRecent && ACCOUNT_IDS.includes(incomeRecent.account as AccountId) ? (incomeRecent.account as AccountId) : 'ctt';
+  const defaultIncomeAccount: AccountId = accounts.includes(incomeWanted) ? incomeWanted : (accounts[0] ?? 'ctt');
   // One-tap chips: the six categories used most for spending in the last 90 days.
   const topCategoryIds = (
     db
@@ -31,5 +35,5 @@ export function transactionFormOptions(t: TFunction) {
       .all() as { id: number }[]
   ).map((r) => r.id);
   const suggest = { rules: listRules().map((r) => ({ id: r.id, enabled: r.enabled, text: r.text, account: r.account, categoryId: r.categoryId })), history: historyHints() };
-  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, topCategoryIds };
+  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, defaultIncomeAccount, topCategoryIds };
 }

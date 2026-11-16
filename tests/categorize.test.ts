@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalize, ruleMatches, suggestCategory, type CategoryLike, type RuleLike } from '@/lib/categorize';
+import { normalize, ruleMatches, splitCategoriesForKind, suggestCategory, type CategoryLike, type RuleLike } from '@/lib/categorize';
 
 const cats: CategoryLike[] = [
   { id: 1, key: 'food', kind: 'expense' },
@@ -88,5 +88,23 @@ describe('user rules', () => {
   it('matches the merchant too, ignoring case and accents', () => {
     expect(ruleMatches({ text: 'CAFÉ', account: null }, { description: 'bica', merchant: 'Café Central', account: 'ctt' })).toBe(true);
     expect(ruleMatches({ text: '', account: null }, { description: 'x', account: 'ctt' })).toBe(false);
+  });
+});
+
+describe('categories offered per kind of transaction', () => {
+  const ids = (list: { id: number }[]) => list.map((c) => c.id);
+  it('puts expense categories first for spending and keeps the order', () => {
+    const { fitting, others } = splitCategoriesForKind(cats, 'spending');
+    expect(ids(fitting)).toEqual([1, 2, 3, 4, 6, 7]);
+    expect(ids(others)).toEqual([5]);
+  });
+  it('offers only income and salary categories first for income', () => {
+    const { fitting, others } = splitCategoriesForKind(cats, 'income');
+    expect(ids(fitting)).toEqual([5]);
+    expect(others).toHaveLength(6);
+  });
+  it('treats a category without a kind as an expense', () => {
+    expect(splitCategoriesForKind([{ id: 9 }] as { id: number; kind?: string }[], 'spending').fitting).toHaveLength(1);
+    expect(splitCategoriesForKind([{ id: 9 }] as { id: number; kind?: string }[], 'transfer').fitting).toHaveLength(0);
   });
 });

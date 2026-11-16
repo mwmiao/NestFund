@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
+import { Suspense } from 'react';
 import '@fontsource-variable/inter';
 import './globals.css';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { AccountsProvider } from '@/components/AccountsProvider';
+import { Flash } from '@/components/Flash';
 import { PwaClient } from '@/components/pwa/PwaClient';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n } from '@/i18n/server';
@@ -78,6 +80,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </div>
             <BottomNav />
             <PwaClient />
+            <Suspense fallback={null}>
+              <Flash />
+            </Suspense>
           </AccountsProvider>
         </I18nProvider>
       </body>

@@ -73,7 +73,7 @@ export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?:
 
       <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-3 sm:col-span-2">
         {goal && <ConfirmButton formAction={deleteGoalAction}>{t('common.delete')}</ConfirmButton>}
-        <SubmitButton className="btn-primary">{goal ? t('common.save') : t('common.add')}</SubmitButton>
+        <SubmitButton savedTick className="btn-primary">{goal ? t('common.save') : t('common.add')}</SubmitButton>
       </div>
     </form>
   );

@@ -80,12 +80,6 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
         }
       />
 
-      {sp.saved && (
-        <div className="mb-4">
-          <Alert tone="success">{t('tx.added')}</Alert>
-        </div>
-      )}
-
       {/* The answer first: how much went out and came in for what is on screen. */}
       <div className={`mb-4 grid gap-3 ${meal > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         <Stat label={t('tx.outflow')} value={money(outflow)} />

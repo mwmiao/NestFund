@@ -181,7 +181,7 @@ export async function deleteTransactionAction(fd: FormData) {
   const id = optId(fd, 'id');
   if (id) await removeAttachment(repo.deleteTransaction(id));
   refresh();
-  redirect(safeBack(fd, '/transactions'));
+  redirect(withParam(safeBack(fd, '/transactions'), 'deleted', '1'));
 }
 
 // ---------------------------------------------------------------- categories

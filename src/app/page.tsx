@@ -36,8 +36,8 @@ const ACCOUNT_ROWS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepubli
 const NET_WORTH_ACCOUNTS: AccountId[] = ['ctt', 'revolut', 'trading212', 'traderepublic', 'cash', 'other'];
 
 export const generateMetadata = pageTitle('dashboard.title');
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ m?: string; saved?: string }> }) {
-  const { m, saved: justSaved } = await searchParams;
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ m?: string }> }) {
+  const { m } = await searchParams;
   const month = isMonth(m) ? m : currentMonth();
   const { t, locale } = await getI18n();
   const money = (v: number) => formatMoney(v, locale);
@@ -98,7 +98,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mb-4 space-y-2 empty:hidden">
-        {justSaved && <Alert tone="success">{t('common.saved')}</Alert>}
         {hasSampleData() && (
           <Alert tone="warning">
             {t('setup.sampleDetected')}{' '}

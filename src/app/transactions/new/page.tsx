@@ -1,5 +1,5 @@
 import { TransactionForm } from '@/components/transactions/TransactionForm';
-import { Alert, Card, PageHeader } from '@/components/ui';
+import { Card, PageHeader } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
 import { todayISO } from '@/lib/dates';
 import { parseAgainParams } from '@/lib/tx-again';
@@ -14,11 +14,6 @@ export default async function NewTransactionPage({ searchParams }: { searchParam
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader title={t('tx.new')} />
-      {again.saved && (
-        <div className="mb-4">
-          <Alert tone="success">{t('tx.added')}</Alert>
-        </div>
-      )}
       <Card>
         <TransactionForm
           key={again.formKey}

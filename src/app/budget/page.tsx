@@ -64,7 +64,7 @@ function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Cate
         <input type="month" name="endMonth" defaultValue={item?.endMonth ?? ''} className="input" />
       </Field>
       <div className="col-span-2 flex gap-2 sm:col-span-4">
-        <SubmitButton className={item ? 'btn-secondary' : 'btn-primary'}>{item ? t('common.save') : t('common.add')}</SubmitButton>
+        <SubmitButton savedTick className={item ? 'btn-secondary' : 'btn-primary'}>{item ? t('common.save') : t('common.add')}</SubmitButton>
         {item && <ConfirmButton formAction={deleteBudgetItemAction}>{t('common.delete')}</ConfirmButton>}
       </div>
     </form>
@@ -366,7 +366,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
             </Field>
           ))}
           <div className="col-span-2 md:col-span-3">
-            <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
+            <SubmitButton savedTick className="btn-primary">{t('common.save')}</SubmitButton>
           </div>
         </form>
       </details>

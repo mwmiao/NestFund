@@ -127,7 +127,7 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
           <input name="notes" defaultValue={init.notes} className="input" />
         </label>
       </div>
-      <SubmitButton className="btn-primary">{t('common.save')}</SubmitButton>
+      <SubmitButton savedTick className="btn-primary">{t('common.save')}</SubmitButton>
     </form>
   );
 }

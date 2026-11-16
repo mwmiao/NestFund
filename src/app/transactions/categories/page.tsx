@@ -39,7 +39,7 @@ export default async function CategoriesPage() {
           <Field label={`${t('categories.monthlyBudget')} (€)`}>
             <AmountInput name="monthlyBudget" className="input" />
           </Field>
-          <SubmitButton className="btn-primary col-span-2 sm:col-span-1">{t('common.add')}</SubmitButton>
+          <SubmitButton savedTick className="btn-primary col-span-2 sm:col-span-1">{t('common.add')}</SubmitButton>
         </form>
       </Card>
 
@@ -60,7 +60,7 @@ export default async function CategoriesPage() {
                 <Field label={`${t('categories.monthlyBudget')} (€)`}>
                   <AmountInput name="monthlyBudget" defaultValue={c.monthlyBudget ?? ''} className="input" />
                 </Field>
-                <SubmitButton className="btn-secondary">{t('common.save')}</SubmitButton>
+                <SubmitButton savedTick className="btn-secondary">{t('common.save')}</SubmitButton>
                 <ConfirmButton formAction={deleteCategoryAction}>{t('common.delete')}</ConfirmButton>
               </form>
             </li>

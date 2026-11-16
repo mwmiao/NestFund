@@ -12,5 +12,10 @@ export const TX_FORM_ERROR_MESSAGE: Record<TxFormError, string> = {
 /** The `error` query value if it is one of ours, otherwise undefined. */
 export const asTxFormError = (value: string | undefined): TxFormError | undefined => TX_FORM_ERRORS.find((e) => e === value);
 
-/** Where to send the user so the new/edit form shows `error`. */
-export const txFormErrorUrl = (id: number | null, error: TxFormError) => `/transactions/${id ?? 'new'}?error=${error}`;
+/** True when a transfer has no destination account, or the destination is the source. */
+export const transferNeedsDestination = (type: string, account: string, toAccount: string | null | undefined) =>
+  type === 'transfer' && (!toAccount || toAccount === account);
+
+/** Where to send the user so the new/edit form shows `error`. The transfer error reopens the new form on the Transfer tab. */
+export const txFormErrorUrl = (id: number | null, error: TxFormError) =>
+  `/transactions/${id ?? 'new'}?error=${error}${error === 'transfer' && id == null ? '&type=transfer' : ''}`;

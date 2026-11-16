@@ -10,7 +10,7 @@ import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
-import { TX_FORM_ERROR_MESSAGE, type TxFormError } from '@/lib/tx-form-error';
+import { TX_FORM_ERROR_MESSAGE, transferNeedsDestination, type TxFormError } from '@/lib/tx-form-error';
 import { ACCOUNTS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
 
 type Kind = 'spending' | 'income' | 'transfer';
@@ -107,6 +107,7 @@ export function TransactionForm({
   const [categoryId, setCategoryId] = useState<string>(transaction?.categoryId ? String(transaction.categoryId) : '');
   const [account, setAccount] = useState<AccountId>(transaction?.account ?? defaultAccount);
   const [toAccount, setToAccount] = useState<AccountId | ''>(transaction?.toAccount ?? '');
+  const [needsDestination, setNeedsDestination] = useState(false);
   const [accountTouched, setAccountTouched] = useState(!!transaction);
   const [description, setDescription] = useState(transaction?.description ?? '');
   const [merchant, setMerchant] = useState(transaction?.merchant ?? '');
@@ -136,6 +137,12 @@ export function TransactionForm({
       action={saveTransactionAction}
       className="space-y-4"
       onSubmit={(e) => {
+        if (transferNeedsDestination(type, account, toAccount)) {
+          e.preventDefault();
+          setNeedsDestination(true);
+          document.getElementById('tx-to-account')?.scrollIntoView({ block: 'center' });
+          return;
+        }
         // Description is optional in the UI: fall back to the merchant, the category or the type so a log takes seconds.
         const f = e.currentTarget.elements;
         const desc = f.namedItem('description') as HTMLInputElement | null;
@@ -251,9 +258,23 @@ export function TransactionForm({
         />
       </div>
       {isTransfer && (
-        <div>
+        <div id="tx-to-account">
           <span className="label">{t('tx.toAccount')}</span>
-          <AccountChips name="toAccount" accounts={accounts} value={toAccount} onChange={setToAccount} exclude={account} />
+          <AccountChips
+            name="toAccount"
+            accounts={accounts}
+            value={toAccount}
+            onChange={(a) => {
+              setToAccount(a);
+              setNeedsDestination(false);
+            }}
+            exclude={account}
+          />
+          {needsDestination && (
+            <p role="alert" className="mt-2 rounded-control border border-negative/30 bg-negative/10 px-3 py-2 text-sm">
+              {t(TX_FORM_ERROR_MESSAGE.transfer)}
+            </p>
+          )}
           <p className="muted mt-1 text-xs">{t('tx.transferNote')}</p>
         </div>
       )}

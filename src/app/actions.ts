@@ -16,7 +16,7 @@ import { tooMany } from '@/lib/rate-limit';
 import { moveUploadsTo } from '@/lib/uploads';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
-import { txFormErrorUrl } from '@/lib/tx-form-error';
+import { transferNeedsDestination, txFormErrorUrl } from '@/lib/tx-form-error';
 import { connectT212, disconnectT212, pollT212, syncT212 } from '@/lib/t212';
 import type { PollResult } from '@/lib/t212-polling';
 import {
@@ -131,7 +131,7 @@ export async function saveTransactionAction(fd: FormData) {
   const account = optAccount(fd, 'account') ?? 'ctt';
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
   // A transfer needs a different destination; otherwise fall back to the form so the user can fix it.
-  if (type === 'transfer' && (!toAccount || toAccount === account)) redirect(txFormErrorUrl(id, 'transfer'));
+  if (transferNeedsDestination(type, account, toAccount)) redirect(txFormErrorUrl(id, 'transfer'));
   const previousAttachment = existing?.attachment ?? null;
   let attachment = previousAttachment;
   if (str(fd, 'removeAttachment') === '1') attachment = null;

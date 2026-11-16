@@ -29,6 +29,13 @@ and update your row when done.
 | [019](019-reject-unreadable-transaction-date.md) | Unreadable transaction date goes back to the form instead of being saved as today | P3 | S | LOW | — | DONE (typecheck + 384 tests pass, scope clean; the action itself is not unit-tested, see plan; merged to main from branch `advisor/019-reject-bad-date`) |
 | [020](020-translate-main-nav-label.md) | Translate the hard-coded "Main" label of the two navigation landmarks | P3 | S | LOW | — | DONE (typecheck + 390 tests pass, scope clean, new test fails with the hard-coded label; not checked in a browser; merged to main from branch `advisor/020-translate-nav-label`) |
 | [021](021-scheduled-automatic-backups.md) | Automatic scheduled backups (off / daily / weekly) in Settings › Backup | P2 | M | LOW-MED | — | DONE (typecheck + 397 tests pass, scope clean, cases 3-4 fail when the due check is bypassed; settings card rendered in pt-PT against the dev server; merged to main from branch `advisor/021-scheduled-backups`) |
+| [022](022-keep-transfer-form-on-missing-destination.md) | A transfer without a destination is stopped in the form instead of wiping it | P1 | S | LOW | — | DONE |
+| [023](023-category-picker-follows-transaction-kind.md) | The category picker and the default account follow the kind of transaction | P1 | S | LOW | 022 (same file) | TODO |
+| [024](024-save-and-add-another.md) | "Save + new" on the new-transaction form (keeps kind and date) | P2 | S | LOW | 022, 023 (same files) | TODO |
+| [025](025-return-to-where-you-came-from-after-editing.md) | Editing a transaction returns to the page it was opened from | P2 | S–M | LOW | 022–024 (same files) | TODO |
+| [026](026-repeat-a-recent-purchase-in-one-tap.md) | Repeat a recent purchase in one tap, and autocomplete the description | P2 | M | LOW–MED | 022–025 (same files) | TODO |
+| [027](027-validated-money-fields-everywhere.md) | Every money field rejects a mistyped amount instead of saving 0 | P2 | S–M | LOW | — | TODO |
+| [028](028-consistent-save-feedback.md) | One consistent "saved" / "deleted" confirmation (toast + button tick) | P3 | M | MED | 024, 027; run last | TODO |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -68,6 +75,20 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **021 (written against `e5e57c4`, 2026-11-15, direction item from the fourth audit)** is independent of everything else (plans 004 pruning and 015 receipts-in-backups are already merged and are reused). **Decision for 021**: default mode is weekly (off / daily / weekly are selectable); automatic copies are named `nestfund-auto-…`, pruned as their own kind, and live on the same volume as the database.
 
+- **022–028 (written against `60bbf14`, 2026-11-15, daily-use audit: logging, editing, inputs, feedback)**. All seven
+  findings were reproduced in a browser at 375 px against a throwaway database (`DATA_DIR` pointed at an empty temp
+  folder; the real `data/` was never opened). 022 → 023 → 024 → 025 → 026 must run **one after another, in that
+  order**: they all edit `src/components/transactions/TransactionForm.tsx` (022, 024 and 025 also touch
+  `saveTransactionAction`), and each plan's drift check expects the earlier ones to have landed. 027 is independent
+  and can run at any time or in parallel in its own worktree. 028 runs last: it replaces the inline "saved" alert that
+  024 adds to the new-transaction page, and its button tick relies on 027's browser-side validation. **Decisions to
+  confirm**: 024 keeps only the kind and the date between entries (not the account); 026 fills the category and
+  account only when a chip is tapped, never while typing (the form's stated rule is that suggestions are never
+  applied on their own); 027 makes `saveGoalAction` / `saveBudgetItemAction` skip the save when a required amount is
+  unreadable instead of storing 0.
+- **Executors testing in a browser**: never run `npm run dev` as it is, because it opens the owner's real
+  `data/nestfund.db`. Set `DATA_DIR` to a new empty folder outside the repo and run `npx next dev -p 7788`.
+
 ## Audit numbering
 
 The audit table numbered these findings 1 (attachment bug), 2 (lockout bypass), 3 (backup pruning), 4 (tests).
@@ -89,6 +110,17 @@ From the UX and accessibility audit (3ca9a94): all three remaining findings are 
 - Direction (fourth audit): receipts in the portable JSON, Next 16 upgrade.
 - Direction (fifth audit): see the earlier line; nothing new. Not audited this time: Trading 212 sync/polling, `backup-format.ts` restore planning, UI components, i18n files, service worker.
 - Simulator fields (`NumberField.tsx`) still use `parseDecimal` for both € and %; a `money` flag could follow plan 016.
+
+- Daily-use audit (`60bbf14`), not planned:
+  - Direction: one-tap "salary received" on the dashboard income card (`IncomeCard.tsx:43` only links to the budget form);
+    home-screen shortcuts for income and transfer (`public/manifest.webmanifest:20` has only "Registar compra", and the
+    form already accepts `?type=`); the same account chips in the dashboard quick transfer as in the full form;
+    following the system light/dark setting (`layout.tsx:55` reads only a cookie and defaults to dark).
+  - Seen while testing: the list subtitle says "1 transactions" (`tx.count` has no singular form); in English at 375 px
+    the bottom tab label is cut to "Transacti…" (`BottomNav.tsx`, `truncate`).
+  - Deferred inside the plans: a "Duplicate" button on the edit page (026), "Undo" after deleting a transaction (028),
+    keeping typed values after the `amount` / `date` server errors (022).
+  - Not audited: reports, charts, simulators, portfolio, settings and the setup wizard.
 
 ## Findings considered and rejected
 

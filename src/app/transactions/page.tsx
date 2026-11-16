@@ -169,7 +169,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       )}
 
       <Card>
-        <TransactionList transactions={txs} categories={categories} locale={locale} />
+        <TransactionList transactions={txs} categories={categories} locale={locale} from={`/transactions${query({ page: page > 1 ? String(page) : undefined })}`} />
         {pages > 1 && (
           <nav className="mt-4 flex items-center justify-between gap-2 border-t border-line pt-3" aria-label={t('tx.pageOf', { page, pages })}>
             {page > 1 ? (

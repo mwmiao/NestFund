@@ -10,6 +10,7 @@ import { SubmitButton } from '@/components/SubmitButton';
 import { useI18n } from '@/i18n/client';
 import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
+import { txEditHref } from '@/lib/tx-links';
 import { ACCOUNTS, type AccountId } from '@/lib/types';
 
 export interface AccountRow {
@@ -127,7 +128,7 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
                       <span className="muted"> · {r.dateText}</span>
                     </span>
                     <span className="shrink-0 tabular-nums">{r.amountText}</span>
-                    <Link href={`/transactions/${r.id}`} className="link shrink-0 !text-xs">
+                    <Link href={txEditHref(r.id, '/')} className="link shrink-0 !text-xs">
                       {t('common.edit')}
                     </Link>
                   </li>

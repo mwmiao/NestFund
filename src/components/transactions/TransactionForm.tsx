@@ -408,9 +408,9 @@ export function TransactionForm({
       </details>
 
       <div className="sticky bottom-[calc(3.6rem+env(safe-area-inset-bottom))] -mx-4 flex gap-2 border-t border-line bg-surface/95 px-4 py-2.5 backdrop-blur sm:static sm:mx-0 sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
-        <a href={back} className={`btn-ghost order-1 sm:flex-none ${transaction ? 'flex-1' : '!px-3'}`}>
+        <Link href={back} className={`btn-ghost order-1 sm:flex-none ${transaction ? 'flex-1' : '!px-3'}`}>
           {t('common.cancel')}
-        </a>
+        </Link>
         <SubmitButton className={`btn-primary order-3 min-h-12 sm:flex-none ${transaction ? 'flex-[2]' : 'flex-1'}`}>{t('common.save')}</SubmitButton>
         {!transaction && (
           <SubmitButton name="again" value="1" className="btn-secondary order-2 min-h-12 flex-1 whitespace-nowrap !px-2 sm:flex-none sm:!px-4">

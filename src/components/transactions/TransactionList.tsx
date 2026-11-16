@@ -6,6 +6,7 @@ import { todayISO } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { isSpending, type Category, type Transaction } from '@/lib/types';
+import { txEditHref } from '@/lib/tx-links';
 
 /** "Hoje", "Ontem", or "seg., 3 nov." (with the year only when it is not the current one). */
 function dayLabel(date: string, locale: string, t: (k: string) => string) {
@@ -27,11 +28,13 @@ export async function TransactionList({
   categories,
   locale,
   compact = false,
+  from,
 }: {
   transactions: Transaction[];
   categories: Category[];
   locale: string;
   compact?: boolean;
+  from?: string;
 }) {
   const { t } = await getI18n();
   if (!transactions.length) return <EmptyState title={t('tx.emptyTitle')} hint={t('tx.emptyHint')} action={{ href: '/transactions/new', label: t('common.quickAdd') }} />;
@@ -59,7 +62,7 @@ export async function TransactionList({
                 const transfer = tx.type === 'transfer';
                 return (
                   <li key={tx.id}>
-                    <Link href={`/transactions/${tx.id}`} className="-mx-2 flex items-center gap-3 rounded-control px-2 py-2.5 transition hover:bg-raised/60">
+                    <Link href={txEditHref(tx.id, from)} className="-mx-2 flex items-center gap-3 rounded-control px-2 py-2.5 transition hover:bg-raised/60">
                       <span
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold"
                         style={{ background: `${color}1f`, color }}

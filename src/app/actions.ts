@@ -17,7 +17,7 @@ import { moveUploadsTo } from '@/lib/uploads';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
 import { addAnotherUrl } from '@/lib/tx-again';
-import { transferNeedsDestination, txFormErrorUrl } from '@/lib/tx-form-error';
+import { transferNeedsDestination, txFormErrorUrl, type TxFormError } from '@/lib/tx-form-error';
 import { connectT212, disconnectT212, pollT212, syncT212 } from '@/lib/t212';
 import type { PollResult } from '@/lib/t212-polling';
 import {
@@ -118,21 +118,26 @@ async function removeAttachment(name: string | null) {
 export async function saveTransactionAction(fd: FormData) {
   const id = optId(fd, 'id');
   const existing = id ? repo.getTransaction(id) : null;
+  // Back to the form with a message; when editing, the form keeps knowing which page it was opened from.
+  const formError = (error: TxFormError) => {
+    const url = txFormErrorUrl(id, error);
+    return id && str(fd, 'back') ? `${url}&from=${encodeURIComponent(safeBack(fd, '/transactions'))}` : url;
+  };
   const amount = Math.abs(num(fd, 'amount'));
   const description = text(fd, 'description', MAX_TEXT.description);
   // An amount that cannot be read (or is zero) goes back to the form with a message instead of vanishing silently.
-  if (!amount) redirect(txFormErrorUrl(id, 'amount'));
+  if (!amount) redirect(formError('amount'));
   if (!description) redirect(safeBack(fd, '/transactions'));
   const date = str(fd, 'date');
   // A date that is not a real calendar day goes back to the form instead of being saved under today.
-  if (!isISODate(date)) redirect(txFormErrorUrl(id, 'date'));
+  if (!isISODate(date)) redirect(formError('date'));
 
   const recurring = str(fd, 'recurring') === '1';
   const type = oneOf<TxType>(TX_TYPES, str(fd, 'type'), 'purchase');
   const account = optAccount(fd, 'account') ?? 'ctt';
   const toAccount = type === 'transfer' ? optAccount(fd, 'toAccount') : null;
   // A transfer needs a different destination; otherwise fall back to the form so the user can fix it.
-  if (transferNeedsDestination(type, account, toAccount)) redirect(txFormErrorUrl(id, 'transfer'));
+  if (transferNeedsDestination(type, account, toAccount)) redirect(formError('transfer'));
   const previousAttachment = existing?.attachment ?? null;
   let attachment = previousAttachment;
   if (str(fd, 'removeAttachment') === '1') attachment = null;

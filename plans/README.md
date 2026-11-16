@@ -32,7 +32,7 @@ and update your row when done.
 | [022](022-keep-transfer-form-on-missing-destination.md) | A transfer without a destination is stopped in the form instead of wiping it | P1 | S | LOW | — | DONE |
 | [023](023-category-picker-follows-transaction-kind.md) | The category picker and the default account follow the kind of transaction | P1 | S | LOW | 022 (same file) | DONE |
 | [024](024-save-and-add-another.md) | "Save + new" on the new-transaction form (keeps kind and date) | P2 | S | LOW | 022, 023 (same files) | DONE |
-| [025](025-return-to-where-you-came-from-after-editing.md) | Editing a transaction returns to the page it was opened from | P2 | S–M | LOW | 022–024 (same files) | TODO |
+| [025](025-return-to-where-you-came-from-after-editing.md) | Editing a transaction returns to the page it was opened from | P2 | S–M | LOW | 022–024 (same files) | DONE |
 | [026](026-repeat-a-recent-purchase-in-one-tap.md) | Repeat a recent purchase in one tap, and autocomplete the description | P2 | M | LOW–MED | 022–025 (same files) | TODO |
 | [027](027-validated-money-fields-everywhere.md) | Every money field rejects a mistyped amount instead of saving 0 | P2 | S–M | LOW | — | TODO |
 | [028](028-consistent-save-feedback.md) | One consistent "saved" / "deleted" confirmation (toast + button tick) | P3 | M | MED | 024, 027; run last | TODO |

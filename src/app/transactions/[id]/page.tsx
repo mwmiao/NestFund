@@ -7,16 +7,17 @@ import { getI18n, pageTitle } from '@/i18n/server';
 import { todayISO } from '@/lib/dates';
 import { getTransaction } from '@/lib/repo';
 import { asTxFormError } from '@/lib/tx-form-error';
+import { txBackTarget } from '@/lib/tx-links';
 import { transactionFormOptions } from '@/lib/tx-options';
 
 export const generateMetadata = pageTitle('tx.editTitle');
-export default async function EditTransactionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string }> }) {
+export default async function EditTransactionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ error?: string; from?: string }> }) {
   const { id } = await params;
-  const { error } = await searchParams;
+  const { error, from } = await searchParams;
   const tx = getTransaction(Number(id));
   if (!tx) notFound();
   const { t } = await getI18n();
-  const back = `/transactions?month=${tx.date.slice(0, 7)}`;
+  const back = txBackTarget(from, tx.date);
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader

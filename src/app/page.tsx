@@ -172,7 +172,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )
         }
       >
-        <TransactionList transactions={txs.slice(0, 6)} categories={categories} locale={locale} compact />
+        <TransactionList transactions={txs.slice(0, 6)} categories={categories} locale={locale} compact from={isMonth(m) ? `/?m=${month}` : '/'} />
       </Card>
     </>
   );

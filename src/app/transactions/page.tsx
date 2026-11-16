@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { AutoSubmitForm } from '@/components/AutoSubmitForm';
 import { ImportCsvForm } from '@/components/transactions/ImportCsvForm';
 import { TransactionList } from '@/components/transactions/TransactionList';
-import { Alert, Card, PageHeader, Stat } from '@/components/ui';
+import { Card, PageHeader, Stat } from '@/components/ui';
 import { getI18n, pageTitle } from '@/i18n/server';
 import { currentMonth, monthLabel } from '@/lib/dates';
 import { formatMoney } from '@/lib/format';

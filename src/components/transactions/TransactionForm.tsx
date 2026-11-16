@@ -81,6 +81,7 @@ export function TransactionForm({
   defaultAccount = 'ctt',
   defaultIncomeAccount = 'ctt',
   initialType,
+  initialDate,
   topCategoryIds = [],
   suggest,
   error,
@@ -94,6 +95,7 @@ export function TransactionForm({
   defaultAccount?: AccountId;
   defaultIncomeAccount?: AccountId;
   initialType?: string;
+  initialDate?: string;
   topCategoryIds?: number[];
   /** Rules + history used to suggest a category; suggestions are only ever offered, never applied on their own. */
   suggest?: { rules: RuleLike[]; history: HistoryHints };
@@ -113,7 +115,7 @@ export function TransactionForm({
   const [accountTouched, setAccountTouched] = useState(!!transaction);
   const [description, setDescription] = useState(transaction?.description ?? '');
   const [merchant, setMerchant] = useState(transaction?.merchant ?? '');
-  const [date, setDate] = useState(transaction?.date ?? today);
+  const [date, setDate] = useState(transaction?.date ?? initialDate ?? today);
   const [recurring, setRecurring] = useState(transaction?.recurring ?? false);
   const isTransfer = type === 'transfer';
   const { fitting, others } = splitCategoriesForKind(categories, kind);
@@ -406,10 +408,15 @@ export function TransactionForm({
       </details>
 
       <div className="sticky bottom-[calc(3.6rem+env(safe-area-inset-bottom))] -mx-4 flex gap-2 border-t border-line bg-surface/95 px-4 py-2.5 backdrop-blur sm:static sm:mx-0 sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
-        <a href={back} className="btn-ghost flex-1 sm:flex-none">
+        <a href={back} className={`btn-ghost order-1 sm:flex-none ${transaction ? 'flex-1' : '!px-3'}`}>
           {t('common.cancel')}
         </a>
-        <SubmitButton className="btn-primary min-h-12 flex-[2] sm:flex-none">{t('common.save')}</SubmitButton>
+        <SubmitButton className={`btn-primary order-3 min-h-12 sm:flex-none ${transaction ? 'flex-[2]' : 'flex-1'}`}>{t('common.save')}</SubmitButton>
+        {!transaction && (
+          <SubmitButton name="again" value="1" className="btn-secondary order-2 min-h-12 flex-1 whitespace-nowrap !px-2 sm:flex-none sm:!px-4">
+            {t('tx.saveAndNew')}
+          </SubmitButton>
+        )}
       </div>
     </form>
   );

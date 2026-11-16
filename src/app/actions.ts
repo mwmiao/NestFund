@@ -16,6 +16,7 @@ import { tooMany } from '@/lib/rate-limit';
 import { moveUploadsTo } from '@/lib/uploads';
 import * as repo from '@/lib/repo';
 import { MAX_TEXT, clampText, safeLocalPath } from '@/lib/security';
+import { addAnotherUrl } from '@/lib/tx-again';
 import { transferNeedsDestination, txFormErrorUrl } from '@/lib/tx-form-error';
 import { connectT212, disconnectT212, pollT212, syncT212 } from '@/lib/t212';
 import type { PollResult } from '@/lib/t212-polling';
@@ -166,6 +167,8 @@ export async function saveTransactionAction(fd: FormData) {
   if (previousAttachment && previousAttachment !== attachment) await removeAttachment(previousAttachment);
   repo.materializeRecurring();
   refresh();
+  // "Save + new" (new transactions only): straight back to an empty form that keeps the kind and the date.
+  if (!id && str(fd, 'again') === '1') redirect(addAnotherUrl({ type, date }, Date.now()));
   redirect(withParam(safeBack(fd, '/transactions'), 'saved', '1'));
 }
 

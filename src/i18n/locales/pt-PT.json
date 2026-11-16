@@ -242,6 +242,7 @@
     },
     "recurringHint": "As próximas ocorrências são criadas automaticamente na data certa.",
     "generated": "Gerada automaticamente",
+    "saveAndNew": "Guardar + nova",
     "otherCategories": "Outras categorias",
     "noCategory": "Sem categoria",
     "filters": "Filtros",

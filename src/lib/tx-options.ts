@@ -4,6 +4,7 @@ import { getDb } from './db';
 import { categoryName, sortedByName } from './labels';
 import { listCategories, visibleAccounts } from './repo';
 import { historyHints, listRules } from './rules-repo';
+import { recentEntries } from './tx-recent';
 import { ACCOUNT_IDS, type AccountId } from './types';
 
 /** Data the transaction form needs: translated categories, autocomplete suggestions and the most-used recent account. */
@@ -35,5 +36,5 @@ export function transactionFormOptions(t: TFunction) {
       .all() as { id: number }[]
   ).map((r) => r.id);
   const suggest = { rules: listRules().map((r) => ({ id: r.id, enabled: r.enabled, text: r.text, account: r.account, categoryId: r.categoryId })), history: historyHints() };
-  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, defaultIncomeAccount, topCategoryIds };
+  return { categories, suggest, merchants: column('merchant'), subcategories: column('subcategory'), defaultAccount, defaultIncomeAccount, topCategoryIds, recents: recentEntries(db) };
 }

@@ -10,6 +10,7 @@ import { Field } from '@/components/ui';
 import { useI18n } from '@/i18n/client';
 import { splitCategoriesForKind, suggestCategory, type HistoryHints, type RuleLike } from '@/lib/categorize';
 import { accountName } from '@/lib/labels';
+import type { RecentEntry } from '@/lib/tx-recent';
 import { TX_FORM_ERROR_MESSAGE, transferNeedsDestination, type TxFormError } from '@/lib/tx-form-error';
 import { ACCOUNTS, PAYMENT_METHODS, RECURRENCES, TX_TYPES, isSpending, type AccountId, type Transaction, type TxType } from '@/lib/types';
 
@@ -77,6 +78,7 @@ export function TransactionForm({
   today,
   back,
   merchants = [],
+  recents = [],
   subcategories = [],
   defaultAccount = 'ctt',
   defaultIncomeAccount = 'ctt',
@@ -91,6 +93,7 @@ export function TransactionForm({
   today: string;
   back: string;
   merchants?: string[];
+  recents?: RecentEntry[];
   subcategories?: string[];
   defaultAccount?: AccountId;
   defaultIncomeAccount?: AccountId;
@@ -144,6 +147,16 @@ export function TransactionForm({
   );
   const suggested = suggestion ? categories.find((c) => c.id === suggestion.categoryId) : undefined;
   const yesterday = shiftDay(today, -1);
+  // One-tap repeat: only for a new expense, and only while nothing was typed yet.
+  const recentChips = !transaction && kind === 'spending' && !description.trim() ? recents.slice(0, 5) : [];
+  const applyRecent = (r: RecentEntry) => {
+    setDescription(r.description);
+    if (r.categoryId != null && categories.some((c) => c.id === r.categoryId)) setCategoryId(String(r.categoryId));
+    if (accounts.includes(r.account as AccountId)) {
+      setAccount(r.account as AccountId);
+      setAccountTouched(true);
+    }
+  };
   const hasDetails = !!(transaction && (transaction.merchant || transaction.subcategory || transaction.notes || transaction.attachment || transaction.recurring));
 
   return (
@@ -205,9 +218,26 @@ export function TransactionForm({
         </Field>
       </div>
 
-      <Field label={t('tx.description')}>
-        <input name="description" value={description} onChange={(e) => setDescription(e.target.value)} enterKeyHint="done" placeholder={categories.find((c) => String(c.id) === categoryId)?.label ?? t(`tx.kinds.${kind}`)} className="input" />
-      </Field>
+      <div>
+        <Field label={t('tx.description')}>
+          <input name="description" list="tx-descriptions" value={description} onChange={(e) => setDescription(e.target.value)} enterKeyHint="done" placeholder={categories.find((c) => String(c.id) === categoryId)?.label ?? t(`tx.kinds.${kind}`)} className="input" />
+          <datalist id="tx-descriptions">
+            {recents.map((r) => (
+              <option key={r.description} value={r.description} />
+            ))}
+          </datalist>
+        </Field>
+        {recentChips.length > 0 && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label={t('tx.recent')}>
+            <span className="muted text-xs">{t('tx.recent')}</span>
+            {recentChips.map((r) => (
+              <button key={r.description} type="button" onClick={() => applyRecent(r)} className="chip max-w-[11rem]">
+                <span className="truncate">{r.description}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div>
         <span className="label">{t('tx.category')}</span>

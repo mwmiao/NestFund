@@ -189,12 +189,12 @@ export function AccountsPanel({ rows, recentTransfers, today, wide = false }: { 
                       <input type="hidden" name="back" value="/" />
                       <label className="block min-w-[8rem] flex-1">
                         <span className="label">{t('dashboard.currentBalance')} (€)</span>
-                        <input name="value" required inputMode="decimal" autoFocus defaultValue={row.balanceText ? toInputDecimal(row.balance) : ''} className="input tabular-nums" />
+                        <AmountInput name="value" signed required autoFocus defaultValue={row.balanceText ? toInputDecimal(row.balance) : ''} className="input tabular-nums" />
                       </label>
                       {row.id === 'trading212' && (
                         <label className="block min-w-[8rem] flex-1">
                           <span className="label">{t('t212.investedCapital')} (€)</span>
-                          <input name="invested" inputMode="decimal" defaultValue={row.invested ? toInputDecimal(row.invested) : ''} className="input tabular-nums" />
+                          <AmountInput name="invested" defaultValue={row.invested ? toInputDecimal(row.invested) : ''} className="input tabular-nums" />
                         </label>
                       )}
                       <div className="flex gap-2">

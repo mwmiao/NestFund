@@ -6,6 +6,7 @@ import { useI18n } from '@/i18n/client';
 import { formatMoney, parseDecimal, parseMoney, toInputDecimal } from '@/lib/format';
 import { estimateFromDays, paidDayEquivalents } from '@/lib/payday';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 export interface IncomeFormInitial {
   month: string;
@@ -53,7 +54,7 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
         <div className="space-y-2">
           <label className="block">
             <span className="label">{t('income.salary')} (€)</span>
-            <input name="salary" inputMode="decimal" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="0,00" className="input tabular-nums" />
+            <AmountInput name="salary" value={salary} onChange={(e) => setSalary(e.target.value)} placeholder="0,00" className="input tabular-nums" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="salaryConfirmed" defaultChecked={init.salaryConfirmed} className="h-4 w-4 accent-brand-500" />
@@ -68,7 +69,7 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
         <div className="space-y-2">
           <label className="block">
             <span className="label">{t('income.meal')} (€)</span>
-            <input name="meal" inputMode="decimal" value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="0,00" className="input tabular-nums" />
+            <AmountInput name="meal" value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="0,00" className="input tabular-nums" />
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="mealConfirmed" defaultChecked={init.mealConfirmed} className="h-4 w-4 accent-brand-500" />
@@ -97,11 +98,11 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
           </label>
           <label className="block">
             <span className="label">{t('income.salaryPerDay')} (€)</span>
-            <input name="salaryPerDay" inputMode="decimal" value={salaryDay} onChange={(e) => setSalaryDay(e.target.value)} className="input tabular-nums" />
+            <AmountInput name="salaryPerDay" value={salaryDay} onChange={(e) => setSalaryDay(e.target.value)} className="input tabular-nums" />
           </label>
           <label className="block">
             <span className="label">{t('income.mealPerDay')} (€)</span>
-            <input name="mealPerDay" inputMode="decimal" value={mealDay} onChange={(e) => setMealDay(e.target.value)} className="input tabular-nums" />
+            <AmountInput name="mealPerDay" value={mealDay} onChange={(e) => setMealDay(e.target.value)} className="input tabular-nums" />
           </label>
         </div>
         {init.ratesFromPast && <p className="muted mt-2 text-xs">{t('income.ratesSuggested')}</p>}
@@ -119,7 +120,7 @@ export function IncomeForm({ init, expectedSalaryText, expectedMealText }: { ini
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block">
           <span className="label">{t('budget.extraIncome')} (€)</span>
-          <input name="extraIncome" inputMode="decimal" defaultValue={init.extraIncome ? toInputDecimal(init.extraIncome) : ''} placeholder="0,00" className="input tabular-nums" />
+          <AmountInput name="extraIncome" defaultValue={init.extraIncome ? toInputDecimal(init.extraIncome) : ''} placeholder="0,00" className="input tabular-nums" />
         </label>
         <label className="block">
           <span className="label">{t('common.notes')}</span>

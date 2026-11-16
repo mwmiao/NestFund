@@ -16,6 +16,7 @@ import { accountName, categoryName } from '@/lib/labels';
 import { ensureMonthBudget, getMonthIncome, getProfile, lastDailyRates, listBudgetItems, listCategories, listTransactions, visibleAccounts } from '@/lib/repo';
 import { BUDGET_ITEM_KINDS, type BudgetItem, type Category } from '@/lib/types';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Category[]; t: TFunction }) {
   return (
@@ -34,7 +35,7 @@ function ItemForm({ item, categories, t }: { item?: BudgetItem; categories: Cate
         </select>
       </Field>
       <Field label={`${t('common.amount')} (€)`}>
-        <input name="amount" required inputMode="decimal" defaultValue={item ? toInputDecimal(item.amount) : ''} className="input tabular-nums" />
+        <AmountInput name="amount" required defaultValue={item ? toInputDecimal(item.amount) : ''} className="input tabular-nums" />
       </Field>
       <Field label={t('budget.category')}>
         <select name="categoryId" defaultValue={item?.categoryId ?? ''} className="input">
@@ -361,7 +362,7 @@ export default async function BudgetPage({ searchParams }: { searchParams: Promi
             ] as const
           ).map(([name, label, value]) => (
             <Field key={name} label={`${label} (€)`}>
-              <input name={name} inputMode="decimal" defaultValue={toInputDecimal(value)} className="input tabular-nums" />
+              <AmountInput name={name} defaultValue={toInputDecimal(value)} className="input tabular-nums" />
             </Field>
           ))}
           <div className="col-span-2 md:col-span-3">

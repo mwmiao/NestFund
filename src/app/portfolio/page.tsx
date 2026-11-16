@@ -15,6 +15,7 @@ import { T212LiveStatus } from '@/components/portfolio/T212LiveStatus';
 import { getT212Status, listT212History } from '@/lib/t212';
 import { ACCOUNTS } from '@/lib/types';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 const dayMonth = (iso: string) => formatDate(iso).slice(0, 5);
 
@@ -190,10 +191,10 @@ export default async function PortfolioPage() {
             <input type="date" name="date" defaultValue={todayISO()} className="input" />
           </Field>
           <Field label={`${t('portfolio.value')} (€)`}>
-            <input name="value" required inputMode="decimal" className="input tabular-nums" />
+            <AmountInput name="value" signed required className="input tabular-nums" />
           </Field>
           <Field label={`${t('portfolio.invested')} (€) · Trading 212`}>
-            <input name="invested" inputMode="decimal" className="input tabular-nums" />
+            <AmountInput name="invested" className="input tabular-nums" />
           </Field>
           <Field label={t('common.notes')} className="sm:col-span-2">
             <input name="notes" className="input" />

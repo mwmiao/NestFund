@@ -9,6 +9,7 @@ import { formatMoney, toInputDecimal } from '@/lib/format';
 import { accountName, categoryName } from '@/lib/labels';
 import { ONBOARDING_STEPS, accountBalances, getOnboarding, getProfile, hasSampleData, listBudgetItems, listCategories, listGoals, visibleAccounts, type OnboardingStep } from '@/lib/repo';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 type Step = OnboardingStep | 'done';
 
@@ -43,7 +44,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
     </div>
   );
   const amountInput = (name: string, value?: number) => (
-    <input name={name} inputMode="decimal" placeholder="0,00 €" defaultValue={value ? toInputDecimal(value) : ''} className="input tabular-nums" />
+    <AmountInput name={name} signed placeholder="0,00 €" defaultValue={value ? toInputDecimal(value) : ''} className="input tabular-nums" />
   );
 
   return (

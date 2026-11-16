@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fromCents, toCents } from '@/lib/db';
-import { AMOUNT_PATTERN, parseDecimal, parseMoney, round2 } from '@/lib/format';
+import { AMOUNT_PATTERN, SIGNED_AMOUNT_PATTERN, parseDecimal, parseMoney, round2 } from '@/lib/format';
 import { MAX_AMOUNT, RateLimiter, clampText, clientKey, constantTimeEqual, describeError, neutralizeFormula, parseBasicAuth, redact, safeLocalPath } from '@/lib/security';
 import { T212_BASE_URLS, T212Error, t212Get } from '@/lib/t212-core';
 import { decryptSecret, encryptSecret, keyFromPassphrase } from '@/lib/secret-box';
@@ -24,6 +24,15 @@ describe('redirect targets stay inside the app', () => {
 
 describe('amount field pattern', () => {
   const field = new RegExp(`^(?:${AMOUNT_PATTERN})$`);
+  it('has a signed variant for balances that parseMoney also reads', () => {
+    const signed = new RegExp(`^(?:${SIGNED_AMOUNT_PATTERN})$`);
+    for (const ok of ['-12', '-12,50', '12,50', '-1.234,56', ' -7 ']) {
+      expect(signed.test(ok), ok).toBe(true);
+      expect(parseMoney(ok), ok).not.toBeNull();
+    }
+    for (const bad of ['abc', '1oo', '--5', '5-', '-']) expect(signed.test(bad), bad).toBe(false);
+    expect(field.test('-12'), 'unsigned stays unsigned').toBe(false);
+  });
   it('accepts what people type and parseDecimal reads', () => {
     for (const ok of ['12', '12,50', '12.50', '0,5', ' 7 ', '1.234,56', '1,234.56', '1.234.567,89']) {
       expect(field.test(ok), ok).toBe(true);

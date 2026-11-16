@@ -6,6 +6,7 @@ import { useAccounts } from '@/components/AccountsProvider';
 import { useI18n } from '@/i18n/client';
 import { accountName } from '@/lib/labels';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 /** Editable list of fixed monthly costs; empty rows are ignored on save. */
 export function FixedExpensesForm({ categories, skipHref }: { categories: { id: number; label: string }[]; skipHref: string }) {
@@ -17,7 +18,7 @@ export function FixedExpensesForm({ categories, skipHref }: { categories: { id: 
       {rows.map((key, i) => (
         <div key={key} className="grid grid-cols-[1fr_6.5rem] gap-2 rounded-xl border border-line p-3 sm:grid-cols-[1.5fr_7rem_1fr_1fr]">
           <input name="name" placeholder={t('setup.fixedNamePlaceholder')} aria-label={`${t('common.name')} ${i + 1}`} className="input" />
-          <input name="amount" inputMode="decimal" placeholder="0,00 €" aria-label={`${t('common.amount')} ${i + 1}`} className="input tabular-nums" />
+          <AmountInput name="amount" placeholder="0,00 €" aria-label={`${t('common.amount')} ${i + 1}`} className="input tabular-nums" />
           <select name="categoryId" defaultValue="" aria-label={t('tx.category')} className="input">
             <option value="">{t('tx.noCategory')}</option>
             {categories.map((c) => (

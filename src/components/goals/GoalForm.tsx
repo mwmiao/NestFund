@@ -10,6 +10,7 @@ import { toInputDecimal } from '@/lib/format';
 import { accountName } from '@/lib/labels';
 import { GOAL_KINDS, type AccountId, type Goal } from '@/lib/types';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 /**
  * Create/edit a goal. A goal linked to an account takes its progress from that account's
@@ -37,10 +38,10 @@ export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?:
         </select>
       </Field>
       <Field label={`${t('goals.target')} (€)`}>
-        <input name="target" required inputMode="decimal" defaultValue={goal ? toInputDecimal(goal.target) : ''} className="input tabular-nums" />
+        <AmountInput name="target" required defaultValue={goal ? toInputDecimal(goal.target) : ''} className="input tabular-nums" />
       </Field>
       <Field label={`${t('goals.monthly')} (€)`}>
-        <input name="monthly" inputMode="decimal" defaultValue={goal ? toInputDecimal(goal.monthly) : ''} className="input tabular-nums" />
+        <AmountInput name="monthly" defaultValue={goal ? toInputDecimal(goal.monthly) : ''} className="input tabular-nums" />
       </Field>
 
       <Field label={t('goals.progressSource')} className="sm:col-span-2">
@@ -59,7 +60,7 @@ export function GoalForm({ goal, manualCurrent }: { goal?: Goal; manualCurrent?:
         </p>
       ) : (
         <Field label={`${t('goals.current')} (€)`} className="sm:col-span-2">
-          <input name="current" inputMode="decimal" defaultValue={toInputDecimal(manualCurrent ?? 0)} className="input tabular-nums" />
+          <AmountInput name="current" signed defaultValue={toInputDecimal(manualCurrent ?? 0)} className="input tabular-nums" />
         </Field>
       )}
 

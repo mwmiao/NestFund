@@ -211,6 +211,9 @@ export async function deleteCategoryAction(fd: FormData) {
 export async function saveBudgetItemAction(fd: FormData) {
   const name = text(fd, 'name', MAX_TEXT.name);
   if (!name) return;
+  // An amount that cannot be read is not saved as 0 (the field already blocks it in the browser).
+  const amount = optNum(fd, 'amount');
+  if (amount == null) return;
   const startMonth = optMonth(fd, 'startMonth');
   let endMonth = optMonth(fd, 'endMonth');
   if (startMonth && endMonth && endMonth < startMonth) endMonth = startMonth;
@@ -218,7 +221,7 @@ export async function saveBudgetItemAction(fd: FormData) {
     id: optId(fd, 'id') ?? undefined,
     name,
     kind: oneOf<BudgetItemKind>(BUDGET_ITEM_KINDS, str(fd, 'kind'), 'fixed'),
-    amount: Math.abs(num(fd, 'amount')),
+    amount: Math.abs(amount),
     categoryId: existingCategoryId(fd, 'categoryId'),
     account: optAccount(fd, 'account'),
     startMonth,
@@ -282,6 +285,8 @@ export async function saveProfileAction(fd: FormData) {
 export async function saveGoalAction(fd: FormData) {
   const name = text(fd, 'name', MAX_TEXT.name);
   if (!name) return;
+  const target = optNum(fd, 'target');
+  if (target == null) return;
   const id = optId(fd, 'id');
   // Linked goals don't send a manual amount: keep the stored one instead of overwriting it with 0.
   const stored = id ? repo.listGoalsStored().find((g) => g.id === id) : undefined;
@@ -289,7 +294,7 @@ export async function saveGoalAction(fd: FormData) {
     id: id ?? undefined,
     kind: oneOf<GoalKind>(GOAL_KINDS, str(fd, 'kind'), 'custom'),
     name,
-    target: Math.abs(num(fd, 'target')),
+    target: Math.abs(target),
     current: fd.has('current') ? num(fd, 'current') : (stored?.current ?? 0),
     monthly: Math.abs(num(fd, 'monthly')),
     targetDate: optMonth(fd, 'targetDate'),

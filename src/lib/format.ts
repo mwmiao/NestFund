@@ -80,6 +80,9 @@ export function parseMoney(input: unknown): number | null {
  */
 export const AMOUNT_PATTERN = String.raw`\s*(?:\d+(?:[.,]\d+)?|\d{1,3}(?:\.\d{3})+,\d+|\d{1,3}(?:,\d{3})+\.\d+)\s*`;
 
+/** The same, with an optional leading minus: for balances, which can be negative. */
+export const SIGNED_AMOUNT_PATTERN = String.raw`\s*-?(?:\d+(?:[.,]\d+)?|\d{1,3}(?:\.\d{3})+,\d+|\d{1,3}(?:,\d{3})+\.\d+)\s*`;
+
 /** Default value for a decimal text input, in Portuguese style ("39,9"). */
 export const toInputDecimal = (v: number) => String(v).replace('.', ',');
 

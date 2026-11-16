@@ -6,6 +6,7 @@ import { categoryName, sortedByName } from '@/lib/labels';
 import { listCategories } from '@/lib/repo';
 import { CATEGORY_KINDS } from '@/lib/types';
 import { SubmitButton } from '@/components/SubmitButton';
+import { AmountInput } from '@/components/AmountInput';
 
 export const generateMetadata = pageTitle('categories.title');
 export default async function CategoriesPage() {
@@ -36,7 +37,7 @@ export default async function CategoriesPage() {
           </Field>
           <Field label={t('common.kind')}>{kindSelect('expense')}</Field>
           <Field label={`${t('categories.monthlyBudget')} (€)`}>
-            <input name="monthlyBudget" inputMode="decimal" className="input" />
+            <AmountInput name="monthlyBudget" className="input" />
           </Field>
           <SubmitButton className="btn-primary col-span-2 sm:col-span-1">{t('common.add')}</SubmitButton>
         </form>
@@ -57,7 +58,7 @@ export default async function CategoriesPage() {
                 </Field>
                 <Field label={t('common.kind')}>{kindSelect(c.kind)}</Field>
                 <Field label={`${t('categories.monthlyBudget')} (€)`}>
-                  <input name="monthlyBudget" inputMode="decimal" defaultValue={c.monthlyBudget ?? ''} className="input" />
+                  <AmountInput name="monthlyBudget" defaultValue={c.monthlyBudget ?? ''} className="input" />
                 </Field>
                 <SubmitButton className="btn-secondary">{t('common.save')}</SubmitButton>
                 <ConfirmButton formAction={deleteCategoryAction}>{t('common.delete')}</ConfirmButton>
